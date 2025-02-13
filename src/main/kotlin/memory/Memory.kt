@@ -199,15 +199,23 @@ data class Memory(
         writeAll(*newArgs)
     }
 
-    private fun globalArrayName(name: String, type: Type) =
-        "$name:$type"
+    fun globalArrayName(ctxName: String, type: Type): String {
+        val globalArrayName = "$ctxName:${
+            if (type is StarType && type.fake)
+                type.elementType
+            else
+                type
+        }"
+        println("globalArrayName $globalArrayName")
+        if (globalValues[globalArrayName] == null) {
+//            todo null
+            globalValues += globalArrayName to (0 to InfiniteArraySymbolic.create(type, this))
+        }
+        return globalArrayName
+    }
 
     fun addNewStarObject(ctxName: String, value: Symbolic): Int {
         val globalArrayName = globalArrayName(ctxName, value.type)
-        if (globalValues[globalArrayName] == null) {
-//            todo null
-            globalValues += globalArrayName to (0 to InfiniteArraySymbolic.create(value.type, this))
-        }
         val (size, array) = globalValues[globalArrayName]!!
         array.put(size, value, this)
         globalValues[globalArrayName] = (size + 1) to array
@@ -216,10 +224,6 @@ data class Memory(
 
     fun putStarObject(ctxName: String, value: Symbolic, address: IntSymbolic) {
         val globalArrayName = globalArrayName(ctxName, value.type)
-        if (globalValues[globalArrayName] == null) {
-//            todo null
-            globalValues += globalArrayName to (0 to InfiniteArraySymbolic.create(value.type, this))
-        }
         val (_, array) = globalValues[globalArrayName]!!
         println("globalArrayName $globalArrayName")
         array.put(address, value, this)

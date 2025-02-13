@@ -16,7 +16,7 @@ class StaticSsaInterpreter(
             is LinkSsaNode -> createDefaultParam(value.deLink(), mem)
             is ParamSsaNode -> {
                 val name = value.name
-                val type = Type.fromSsa(value.valueType!!, mem, false)
+                val type = Type.fromSsa(value.valueType!!, mem, true)
                 println("createDefault $name $type")
 
                 return type.defaultSymbolic(mem, false)
@@ -379,10 +379,11 @@ class StaticSsaInterpreter(
             is StoreSsaNode -> Pair(
                 { _, _ -> listOf(node.addr, node.value) },
                 { mem, args ->
+                    println("args[0] ${args[0]}")
+                    println("args[1] ${args[1]}")
                     val address = args[0]!! as StarSymbolic
                     val value = args[1]!!
-                    println("VLAIALASA $address")
-                    println("VLAIALAS $value")
+
                     address.put(value, mem)
                     null
                 }
@@ -432,11 +433,11 @@ class StaticSsaInterpreter(
                         } else {
                             TODO()
                         }
-                        is ArraySimpleType -> if (value == "nil") {
-                            type.defaultSymbolic(mem, true)
-                        } else {
-                            TODO()
-                        }
+//                        is ArraySimpleType -> if (value == "nil") {
+//                            type.defaultSymbolic(mem, true)
+//                        } else {
+//                            TODO()
+//                        }
 
                         is StructType -> TODO()
 
@@ -511,6 +512,7 @@ class StaticSsaInterpreter(
                 { mem, args ->
                     val x = args[0]!!.arrayFinite()
                     val index = args[1]!!.int()
+                    println("indexAddr ${x.type}")
                     x.get(index, mem)
                 }
             )

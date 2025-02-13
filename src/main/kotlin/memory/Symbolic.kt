@@ -106,7 +106,8 @@ open class UninterpretedSymbolic(val expr: KExpr<KUninterpretedSort>) :
     override fun toString() = expr.sort.name
 }
 
-sealed class StarSymbolic(val elementType: Type) : Symbolic(StarType(elementType)) {
+// todo is it always not fake
+sealed class StarSymbolic(val elementType: Type) : Symbolic(StarType(elementType, false)) {
 //    /** if was local then will public Symbolic in global context
 //     *
 //     *  todo check it is unique

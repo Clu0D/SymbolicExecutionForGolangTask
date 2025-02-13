@@ -204,6 +204,25 @@ class InfiniteComplexArraySymbolic(
     override fun toString() = "InfArr($elementType)"
 }
 
+//class InfiniteStarArraySymbolic(
+//    override val elementType: SimpleType,
+//    val addressArray: InfiniteSimpleArraySymbolic
+//) : Symbolic(ArrayType(elementType)), InfiniteArraySymbolic {
+//
+//    override fun eqSameType(array: AbstractArraySymbolic, mem: Memory): BoolSymbolic {
+//        TODO("Not yet implemented")
+//    }
+//
+//    override fun get(address: IntSymbolic, mem: Memory): Symbolic {
+//        TODO("Not yet implemented")
+//    }
+//
+//    override fun put(address: IntSymbolic, value: Symbolic, mem: Memory) {
+//        TODO("Not yet implemented")
+//    }
+//
+//}
+
 class InfiniteSimpleArraySymbolic(
     override val elementType: SimpleType,
     val arrayExpr: KArrayConst<KArraySort<KBv32Sort, KSort>, KSort>
@@ -213,7 +232,7 @@ class InfiniteSimpleArraySymbolic(
         elementType,
         mem.ctx.mkArrayConst(
             mem.ctx.mkArraySort(IntType.intSort(mem), elementType.sort(mem)),
-            elementType.defaultSymbolic(mem, false).expr(mem)
+            elementType.defaultSymbolicExpr(mem, false) as KExpr<KSort>
         )
     )
 
@@ -225,8 +244,12 @@ class InfiniteSimpleArraySymbolic(
         ).toSymbolic()
     }
 
-    override fun get(address: IntSymbolic, mem: Memory): Symbolic =
-        elementType.asSymbolic(mem.ctx.mkArraySelect(arrayExpr, address.expr), mem)
+    override fun get(address: IntSymbolic, mem: Memory): Symbolic {
+        println("elementType $elementType")
+        println("elementType ${arrayExpr.sort}")
+        println("elementType ${mem.ctx.mkArraySelect(arrayExpr, address.expr).sort}")
+        return elementType.asSymbolic(mem.ctx.mkArraySelect(arrayExpr, address.expr), mem)
+    }
 
     override fun put(address: IntSymbolic, value: Symbolic, mem: Memory) {
         elementType.asSymbolic(mem.ctx.mkArrayStore(arrayExpr, address.expr, value.expr(mem)), mem)
