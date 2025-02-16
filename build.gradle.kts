@@ -1,4 +1,5 @@
 import org.apache.tools.ant.taskdefs.condition.Os
+import org.gradle.internal.classpath.Instrumented.systemProperty
 
 plugins {
     kotlin("jvm") version "1.9.24"
@@ -34,7 +35,10 @@ dependencies {
     implementation("org.graalvm.js:js:24.1.1")
     implementation("ch.qos.logback:logback-classic:1.5.12")
     implementation("org.slf4j:slf4j-api:2.0.16")
-    implementation ("guru.nidi:graphviz-kotlin:0.18.1")
+    implementation("guru.nidi:graphviz-kotlin:0.18.1")
+
+    // coroutines
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.1")
 }
 
 tasks.test {
@@ -43,6 +47,9 @@ tasks.test {
 
 kotlin {
     jvmToolchain(8)
+    compilerOptions {
+        freeCompilerArgs.add("-Xwhen-guards")
+    }
 }
 
 val isWindows = Os.isFamily(Os.FAMILY_WINDOWS)

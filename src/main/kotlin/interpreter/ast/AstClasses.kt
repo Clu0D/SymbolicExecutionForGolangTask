@@ -1,8 +1,7 @@
-package interpreter
+package interpreter.ast
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import memory.ArrayType
 import memory.Type
 
 @Serializable

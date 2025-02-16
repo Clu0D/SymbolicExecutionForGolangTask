@@ -10,8 +10,8 @@ import java.io.File
  *
  *  https://graphviz.org/
  */
-fun generateDotFile(initNode: FuncSsaNode) {
-    println("!@${initNode.name}")
+fun generateDotFile(file: String, initNode: FuncSsaNode) {
+    println("GENERATING DOT $file/${initNode.name}")
     guru.nidi.graphviz.graph(directed = true, name = initNode.name) {
         val set = mutableSetOf<SsaNode>()
         val queue = mutableListOf<SsaNode>(initNode)
@@ -61,6 +61,7 @@ fun generateDotFile(initNode: FuncSsaNode) {
                     draw(node, node.addr, "addr")
                     draw(node, node.value, "value")
                 }
+
                 is UnOpSsaNode -> draw(node, node.x)
                 is UnknownSsaNode -> {}
                 is AllocSsaNode -> {}
@@ -78,7 +79,9 @@ fun generateDotFile(initNode: FuncSsaNode) {
                 is ConstSsaNode -> {}
                 is ConvertSsaNode -> draw(node, node.x)
                 is ExtractSsaNode -> {}
-                is FieldAddrSsaNode -> {}
+                is FieldAddrSsaNode ->
+                    draw(node, node.x, "x")
+
                 is FuncSsaNode -> {
                     draw(node, node.params, "params")
                     if (node.body != null)
@@ -88,11 +91,11 @@ fun generateDotFile(initNode: FuncSsaNode) {
                 is GlobalSsaNode -> {}
                 is IndexAddrSsaNode -> {
                     draw(node, node.x, "params")
-                    draw(node, node.index, "params")
+                    draw(node, node.index, "index")
                 }
 
-                is MakeInterfaceSsaNode -> {}
-                is MakeSliceSsaNode -> {}
+                is MakeInterfaceSsaNode -> draw(node, node.x)
+                is MakeSliceSsaNode -> draw(node, node.len, "len")
                 is ParamSsaNode -> {}
                 is PhiSsaNode -> draw(node, node.edgesMap().map { it.value })
 
@@ -108,5 +111,37 @@ fun generateDotFile(initNode: FuncSsaNode) {
         // Engine.FDP and Engine.DOT look good
         .engine(Engine.DOT)
         .render(Format.PNG)
-        .toFile(File("${initNode.name}.png"))
+        .toFile(File("ssaGraphPictures/$file/${initNode.name}.png"))
 }
+
+//fun generateDotFileReachability(file: String, vararg initNodes: SsaNode) {
+//    guru.nidi.graphviz.graph(directed = true, name = "reach") {
+//        val set = mutableSetOf<SsaNode>()
+//        val queue = mutableListOf<SsaNode>(*initNodes)
+//
+//        fun draw(node: SsaNode, other: SsaNode, name: String = "") {
+//            ("${node.printItself()} ${node.toBestEnd}" - "${other.printItself()} ${node.toBestEnd}")[Color.BLACK, Label.of(
+//                name
+//            )]
+//            queue.add(other)
+//        }
+//
+//        fun draw(node: SsaNode, list: List<SsaNode>?, name: String = "") {
+//            list?.forEachIndexed { i, it ->
+//                draw(node, it, name + "$i")
+//            }
+//        }
+//
+//        while (queue.isNotEmpty()) {
+//            val node = queue.removeFirst()
+//            if (set.contains(node)) continue
+//            set.add(node)
+//            println("!${node.backlinks}")
+//            draw(node, node.backlinks.toList())
+//        }
+//    }.toGraphviz()
+//        // Engine.FDP and Engine.DOT look good
+//        .engine(Engine.DOT)
+//        .render(Format.PNG)
+//        .toFile(File("ssaGraphPictures/testing/reach.png"))
+//}

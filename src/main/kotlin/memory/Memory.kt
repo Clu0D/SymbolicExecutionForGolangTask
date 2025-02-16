@@ -3,8 +3,12 @@ package memory
 import interpreter.ssa.*
 import io.ksmt.KContext
 import io.ksmt.expr.KApp
+import io.ksmt.expr.KArrayConst
+import io.ksmt.expr.KExpr
 import io.ksmt.solver.KSolverStatus
 import io.ksmt.solver.z3.KZ3Solver
+import io.ksmt.sort.KArraySort
+import io.ksmt.sort.KBv64Sort
 import io.ksmt.sort.KSort
 import kotlin.time.Duration.Companion.seconds
 
@@ -16,32 +20,33 @@ data class Memory(
     private val returnsStack: MutableList<MutableList<SymbolicReturn>> = mutableListOf(mutableListOf()),
     private val instrOnPathStack: MutableList<MutableList<SsaNode>> = mutableListOf(mutableListOf()),
     val errors: MutableList<SymbolicError> = mutableListOf(),
-    private val globalValues: MutableMap<String, Pair<Int, InfiniteArraySymbolic>> = mutableMapOf(),
+    private val globalValues: MutableMap<String, Pair<Long, InfiniteArray>> = mutableMapOf(),
     private val declaredTypeFields: MutableMap<String, Map<String, Type>> = mutableMapOf(),
     private var pathCond: MutableList<Pair<BoolSymbolic, Boolean>> = mutableListOf(),
     val createdConsts: MutableMap<String, KSort> = mutableMapOf(),
     private val solver: KZ3Solver = KZ3Solver(ctx)
 ) {
+    val print = true
     private val SOLVER_TIMEOUT = 1.seconds
 
     private val uniqueCounter: GlobalUniqueCounter = globalUniqueCounter
 
-    private var fullErrorsCond = BoolType.FALSE(this)
+    private var fullErrorsCond = BoolType.`false`(this)
 
     private fun localVariables() = localVariablesStack.first()
 
     private fun returns() = returnsStack.first()
 
     private fun fullReturnCond(): BoolSymbolic = with(ctx) {
-        mkOr(returnsStack.flatten().map { it.cond.boolExpr() })
-    }.toSymbolic()
+        mkOr(returnsStack.flatten().map { it.cond.boolExpr(this@Memory) })
+    }.toBoolSymbolic()
 
     fun fullPathCond() = with(ctx) {
         mkAnd(
-            mkAnd(pathCond.map { it.first.boolExpr() }),
-            mkNot(fullErrorsCond.boolExpr()),
-            mkNot(fullReturnCond().boolExpr())
-        ).toSymbolic()
+            mkAnd(pathCond.map { it.first.boolExpr(this@Memory) }),
+            mkNot(fullErrorsCond.boolExpr(this@Memory)),
+            mkNot(fullReturnCond().boolExpr(this@Memory))
+        ).toBoolSymbolic()
     }
 
     fun enterFunction() {
@@ -56,8 +61,8 @@ data class Memory(
         localVariablesStack.removeFirst()
         val results = returns()
         addCond(with(ctx) {
-            mkOr(results.map { it.cond.boolExpr() })
-        }.toSymbolic(), false)
+            mkOr(results.map { it.cond.boolExpr(this@Memory) })
+        }.toBoolSymbolic(), false)
         returnsStack.removeFirst()
         instrOnPathStack.removeFirst()
         return results
@@ -75,9 +80,9 @@ data class Memory(
     }
 
     fun readValue(name: String): Symbolic = when (name) {
-//        todo should int be here?????
-        "int" -> Symbolic(IntType())
-        "nil" -> IntType.ZERO(this).toSymbolic()
+////        todo should int be here?????
+//        "int" -> Symbolic(IntType())
+        "nil" -> AddressType().zero(this)
         else -> localVariables()[name] ?: error("mem does not have \"$name\"")
     }
 
@@ -93,8 +98,6 @@ data class Memory(
     }
 
     fun writeValue(name: String, value: Symbolic) {
-        println("\nWRITE $name $value")
-
         val oldValue = localVariables()[name]
         localVariables()[name] =
             if (oldValue == null) {
@@ -120,9 +123,9 @@ data class Memory(
         val sat = solver.checkWithAssumptions(listOf(fullPathCond().expr, errorCond.expr), SOLVER_TIMEOUT)
         when (sat) {
             KSolverStatus.SAT -> {
-                val fullErrorCond = mkAnd(errorCond.expr, fullPathCond().boolExpr())
-                errors += SymbolicError(fullErrorCond.toSymbolic(), error)
-                fullErrorsCond = mkOr(errorCond.expr, fullErrorCond).toSymbolic()
+                val fullErrorCond = mkAnd(errorCond.expr, fullPathCond().boolExpr(this@Memory))
+                errors += SymbolicError(fullErrorCond.toBoolSymbolic(), error)
+                fullErrorsCond = mkOr(errorCond.expr, fullErrorCond).toBoolSymbolic()
             }
 
             KSolverStatus.UNSAT -> {
@@ -132,8 +135,8 @@ data class Memory(
             KSolverStatus.UNKNOWN -> {
                 println("UNKNOWN sat on error (saving as an error, but not removing from path):\n\treason:${solver.reasonOfUnknown()}")
 
-                val fullErrorCond = mkAnd(errorCond.expr, fullPathCond().boolExpr())
-                errors += SymbolicError(fullErrorCond.toSymbolic(), error)
+                val fullErrorCond = mkAnd(errorCond.expr, fullPathCond().boolExpr(this@Memory))
+                errors += SymbolicError(fullErrorCond.toBoolSymbolic(), error)
             }
         }
     }
@@ -153,8 +156,16 @@ data class Memory(
         solver.assert(cond.expr)
         val sat = solver.check(SOLVER_TIMEOUT)
         return when (sat) {
-            KSolverStatus.SAT -> true
-            KSolverStatus.UNSAT -> false
+            KSolverStatus.SAT -> {
+                if (print) println("SAT on path")
+                true
+            }
+
+            KSolverStatus.UNSAT -> {
+                if (print) println("UNSAT sat on path")
+                false
+            }
+
             KSolverStatus.UNKNOWN -> {
                 println("UNKNOWN sat on path (continuing this branch), reason: ${solver.reasonOfUnknown()}")
                 true
@@ -192,59 +203,45 @@ data class Memory(
     ) {
         var i = 1
         val newArgs = fields.map { (name, type) ->
-            println("GEN name $name ${args.getOrNull(i)}")
-//            todo check local
-            name to (args.getOrNull(i) ?: type.defaultSymbolic(this, true)).also { i++ }
+            if (print) println("GEN name $name ${args.getOrNull(i)}")
+            name to (args.getOrNull(i) ?: type.defaultSymbolic(this)).also { i++ }
         }.toTypedArray()
         writeAll(*newArgs)
     }
 
     fun globalArrayName(ctxName: String, type: Type): String {
-        val globalArrayName = "$ctxName:${
-            if (type is StarType && type.fake)
-                type.elementType
-            else
-                type
-        }"
-        println("globalArrayName $globalArrayName")
+        val arrayType = if (type is StarType && type.fake)
+            type.elementType
+        else
+            type
+
+        val globalArrayName = "$ctxName:$arrayType"
         if (globalValues[globalArrayName] == null) {
-//            todo null
-            globalValues += globalArrayName to (0 to InfiniteArraySymbolic.create(type, this))
+            if (print) println("creating global $globalArrayName")
+//            todo null?
+            globalValues += globalArrayName to (1L to InfiniteArray.create(arrayType, this, false))
         }
         return globalArrayName
     }
 
-    fun addNewStarObject(ctxName: String, value: Symbolic): Int {
-        val globalArrayName = globalArrayName(ctxName, value.type)
+    fun addNewStarObject(prefix: String, value: Symbolic): Int64Symbolic {
+        val globalArrayName = globalArrayName(prefix, value.type)
         val (size, array) = globalValues[globalArrayName]!!
         array.put(size, value, this)
         globalValues[globalArrayName] = (size + 1) to array
-        return size
+        return AddressType().fromInt(size, this)
     }
 
-    fun putStarObject(ctxName: String, value: Symbolic, address: IntSymbolic) {
-        val globalArrayName = globalArrayName(ctxName, value.type)
+    fun putStarObject(prefix: String, value: Symbolic, address: Int64Symbolic) {
+        val globalArrayName = globalArrayName(prefix, value.type)
         val (_, array) = globalValues[globalArrayName]!!
-        println("globalArrayName $globalArrayName")
         array.put(address, value, this)
     }
 
-    fun getStarObject(ctxName: String, type: Type, address: IntSymbolic): Symbolic {
-        val globalArrayName = globalArrayName(ctxName, type)
+    fun getStarObject(prefix: String, type: Type, address: Int64Symbolic): Symbolic {
+        val globalArrayName = globalArrayName(prefix, type)
         val (_, array) = globalValues[globalArrayName]!!
         return array.get(address, this)
-//        val typeName = type.elementType.toString()
-//        if (globalValues[typeName] == null) {
-//            println("AAAA ${typeName}")
-//            val infiniteArray = InfiniteArraySymbolic.create(type.elementType, this)
-//
-////       todo       val nilElement = typeName.defaultSymbolic(this, true)
-//
-//            globalValues += typeName to infiniteArray
-////            todo add null object everywhere
-//        }
-//        val fromGlobal = globalValues[typeName]!!.get(address, this)
-//        return fromGlobal
     }
 
     fun addType(name: String, fields: Map<String, Type>) {
@@ -266,13 +263,13 @@ data class Memory(
 
     fun ite(cond: BoolSymbolic, fromBody: Symbolic, fromElse: Symbolic): Symbolic =
         with(ctx) {
-            val condExpr = cond.boolExpr()
+            val condExpr = cond.boolExpr(this@Memory)
             when (fromBody) {
                 is ComplexSymbolic -> {
-                    val bodyReal = fromBody.complex().real.expr
-                    val bodyImg = fromBody.complex().img.expr
-                    val elseReal = fromBody.complex().real.expr
-                    val elseImg = fromBody.complex().img.expr
+                    val bodyReal = fromBody.complex(this@Memory).real.expr
+                    val bodyImg = fromBody.complex(this@Memory).img.expr
+                    val elseReal = fromBody.complex(this@Memory).real.expr
+                    val elseImg = fromBody.complex(this@Memory).img.expr
 
                     ComplexSymbolic(
                         mkIte(condExpr, bodyReal, elseReal),
@@ -280,29 +277,86 @@ data class Memory(
                     )
                 }
 
-                is IntSymbolic ->
-                    mkIte(condExpr, fromBody.intExpr(), fromElse.intExpr()).toSymbolic()
+                is BoolSymbolic -> mkIte(
+                    condExpr, fromBody.boolExpr(this@Memory), fromElse.boolExpr(this@Memory)
+                ).toBoolSymbolic()
 
-                is BoolSymbolic ->
-                    mkIte(condExpr, fromBody.boolExpr(), fromElse.boolExpr()).toSymbolic()
+                is IntSymbolic -> mkIte(
+                    condExpr,
+                    fromBody.expr as KExpr<KSort>,
+                    fromElse.intExpr(this@Memory) as KExpr<KSort>
+                ).let { Type.toSymbolic(it) }
 
-                is FloatSymbolic ->
-                    mkIte(condExpr, fromBody.floatExpr(this@Memory), fromElse.floatExpr(this@Memory)).toSymbolic()
+                is FloatSymbolic -> mkIte(
+                    condExpr, fromBody.floatExpr(this@Memory), fromElse.floatExpr(this@Memory)
+                ).let { Type.toSymbolic(it) }
 
-                is UninterpretedSymbolic ->
-                    mkIte(condExpr, fromBody.uninterpretedExpr(), fromElse.uninterpretedExpr()).toSymbolic()
+                is UninterpretedSymbolic -> mkIte(
+                    condExpr,
+                    fromBody.uninterpretedExpr(this@Memory),
+                    fromElse.uninterpretedExpr(this@Memory)
+                ).let { Type.toSymbolic(it) }
 
-                is StarSymbolic ->
-                    GlobalStarSymbolic(
-                        fromBody.type as StarType,
+                is FiniteArraySymbolic ->
+                    FiniteArraySymbolic(
+                        ite(cond, fromBody.length, fromElse.array(this@Memory).length).int64(this@Memory),
+                        this@Memory,
                         ite(
                             cond,
-                            fromBody.star().get(this@Memory),
-                            fromElse.star().get(this@Memory)
-                        ).int()
+                            fromBody.innerArray.toSymbolic(),
+                            fromElse.array(this@Memory).innerArray.toSymbolic()
+                        ) as InfiniteArraySymbolic
                     )
 
-                else -> error(fromBody.type)
+                is InfiniteArraySymbolic if(fromBody.elementType is StarType) ->
+                    InfiniteStarArray(
+                        fromBody.elementType,
+                        mkIte(condExpr, fromBody.arrayExpr, (fromElse as InfiniteArraySymbolic).arrayExpr)
+                                as KArrayConst<KArraySort<KBv64Sort, KSort>, KSort>
+                    ).toSymbolic()
+
+                is InfiniteArraySymbolic ->
+                    InfiniteSimpleArray(
+                        fromBody.elementType,
+                        mkIte(condExpr, fromBody.arrayExpr, (fromElse as InfiniteArraySymbolic).arrayExpr)
+                                as KArrayConst<KArraySort<KBv64Sort, KSort>, KSort>
+                    ).toSymbolic()
+
+                is ArrayStarSymbolic -> {
+                    when (fromElse) {
+                        is ArrayStarSymbolic -> {
+                            ArrayStarSymbolic(
+                                ite(cond, fromBody.address, fromElse.address).int64(this@Memory),
+                                ite(cond, fromBody.array, fromElse.array).array(this@Memory),
+                                fromBody.fake
+                            )
+                        }
+
+                        else ->
+                            ite(cond, fromBody.toGlobal(this@Memory), fromElse)
+                    }
+                }
+
+                is StarSymbolic -> {
+                    if (fromBody is GlobalStarSymbolic && fromElse is GlobalStarSymbolic) {
+                        GlobalStarSymbolic(
+                            "",
+                            fromBody.elementType,
+                            ite(cond, fromBody.address, fromElse.address).int64(this@Memory),
+                            fromBody.fake
+                        )
+                    } else {
+                        ite(
+                            cond,
+                            fromBody.toGlobal(this@Memory),
+                            (fromElse.star(this@Memory)).toGlobal(this@Memory)
+                        )
+                    }
+                }
+
+                is InfiniteArraySymbolic -> TODO()
+
+                else -> error(fromBody.javaClass.simpleName)
             }
         }
 
@@ -356,10 +410,6 @@ data class Memory(
             else -> instr
         }
         instrOnPathStack.first().add(0, deLinkedInstr)
-    }
-
-    fun removeInstrFromPath() {
-        instrOnPathStack.first().removeFirst()
     }
 
     fun instrOnPath(): List<SsaNode> {

@@ -1,15 +1,16 @@
-package interpreter
+package interpreter.ast
 
+import interpreter.InterpreterQueue
 import io.ksmt.KContext
 import io.ksmt.sort.KSort
 import memory.*
-import java.util.*
-import kotlin.random.Random
+import memory.ast.AstState
+import kotlin.collections.forEach
 
 class DynamicInterpreter(
     functionDeclarations: Map<String, AstFuncDecl>,
     typeDeclarations: List<AstType>,
-    val queue: Queue<State>
+    val interpreterQueue: InterpreterQueue<AstState>
 ) : StaticInterpreter(functionDeclarations, typeDeclarations) {
 
     var results = mutableSetOf<SymbolicResult>()
@@ -19,14 +20,14 @@ class DynamicInterpreter(
         func: AstFuncDecl,
         args: List<Symbolic?>?,
         ctx: KContext,
-        initialState: State
+        initialState: AstState
     ): Pair<Collection<SymbolicResult>, Map<String, KSort>> {
         typeDeclarations.forEach {
             initialState.waitingNodes.add(it to mutableListOf())
         }
         initialState.waitingNodes.add(StartFunctionNode(func.name) to (args ?: listOf()).toMutableList())
 
-        queue.add(initialState)
+        interpreterQueue.add(initialState)
 
         interpretLoop()
 
@@ -34,8 +35,8 @@ class DynamicInterpreter(
     }
 
     private fun interpretLoop() {
-        while (queue.size() > 0) {
-            val bestState = queue.get()
+        while (interpreterQueue.size() > 0) {
+            val bestState = interpreterQueue.get()
 
 //            println(
 //                "${bestState.stateId}/${queue.size() + 1}\t  " +
@@ -53,13 +54,13 @@ class DynamicInterpreter(
 
 //                force stop
                 -1 -> results.addAll(bestState.mem.errors)
-                else -> queue.add(bestState)
+                else -> interpreterQueue.add(bestState)
             }
         }
     }
 
     override fun finishDynamicReturnInterpretation(
-        state: State,
+        state: AstState,
         node: AstReturn,
         args: MutableList<Symbolic?>
     ): StartFunctionNode {
@@ -67,6 +68,7 @@ class DynamicInterpreter(
 
         while (true) {
             val startedNode = state.startedNodes.removeLast()
+            statisticsEndVisit(startedNode, state)
             while (true) {
                 state.waitingNodes.removeFirst().first ?: break
             }
@@ -82,13 +84,13 @@ class DynamicInterpreter(
     }
 
     override fun startDynamicNodeInterpretation(
-        state: State,
+        state: AstState,
         node: AstNode,
         args: MutableList<Symbolic?>
     ): Boolean {
         return when (node) {
             is BranchControlNode -> {
-                val cond = args[0]!!.bool()
+                val cond = args[0]!!.bool(state.mem)
 
                 val newState = state.clone()
 
@@ -106,7 +108,7 @@ class DynamicInterpreter(
                     )
                 }, args.map { it }.toMutableList())
 
-                queue.add(newState)
+                interpreterQueue.add(newState)
 
                 true
             }
@@ -115,7 +117,7 @@ class DynamicInterpreter(
         }
     }
 
-    override fun statisticsStartVisit(node: AstNode, state: State) {
+    override fun statisticsStartVisit(node: AstNode, state: AstState) {
         state.executionStatistics.startVisit(node)
         val oldInfo = globalStatistics.startVisit(node)
         if (!oldInfo.visitStarted) {
@@ -123,89 +125,9 @@ class DynamicInterpreter(
         }
     }
 
-    override fun statisticsEndVisit(node: AstNode, state: State) {
+    override fun statisticsEndVisit(node: AstNode, state: AstState) {
         state.executionStatistics.endVisit(node)
         globalStatistics.endVisit(node)
     }
 
-    companion object {
-        fun dfsQueue(): Queue<State> = StandardQueue(::priorityDfs)
-        fun bfsQueue(): Queue<State> = StandardQueue(::priorityBfs)
-        fun timeToNewCodeQueue(): Queue<State> = StandardQueue(::priorityTimeFromNewCodeFound)
-        fun randomQueue(): Queue<State> = WeightedRandomQueue(::priorityRandom)
-        fun randomTimeToNewCodeQueue(): Queue<State> =
-            WeightedRandomQueue(::priorityTimeFromNewCodeFound)
-
-        interface Queue<T> {
-            fun size(): Int
-
-            fun add(e: T)
-
-            fun get(): T
-        }
-
-        private var dfsCounter = 1.0
-        private fun priorityDfs(state: State): Double {
-            dfsCounter--
-            return dfsCounter
-        }
-
-        private var bfsCounter = 1.0
-        private fun priorityBfs(state: State): Double {
-            bfsCounter++
-            return bfsCounter
-        }
-
-        private fun priorityTimeFromNewCodeFound(state: State): Double {
-            return (state.time - state.newCodeTime + 1).toDouble()
-        }
-
-        private val rnd = Random
-
-        private fun priorityRandom(state: State): Double {
-            return rnd.nextDouble() + 0.01
-        }
-
-        private class StandardQueue<T>(val priorityF: (T) -> Double) : Queue<T> {
-            private val treeSet = TreeSet<Pair<T, Double>>(compareBy { it.second })
-
-            override fun size(): Int =
-                treeSet.size
-
-            override fun add(e: T) {
-                treeSet.add(e to priorityF(e))
-            }
-
-            override fun get(): T =
-                treeSet.pollFirst()!!.first
-        }
-
-        private class WeightedRandomQueue<T>(val priorityF: (T) -> Double) : Queue<T> {
-            private val list = mutableListOf<Pair<T, Double>>()
-            private var sumWeight = 0.0
-
-            override fun size(): Int =
-                list.size
-
-            override fun add(e: T) {
-                val weight = priorityF(e)
-                list.add(e to weight)
-                sumWeight += weight
-            }
-
-            override fun get(): T {
-                var randomWeight = rnd.nextDouble(sumWeight)
-                while (true) {
-                    val (e, w) = list.removeFirst()
-                    randomWeight -= w
-                    if (randomWeight <= 0) {
-                        sumWeight -= w
-                        return e
-                    }
-                    list.add(e to w)
-                }
-            }
-
-        }
-    }
 }

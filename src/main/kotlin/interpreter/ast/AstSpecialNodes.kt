@@ -1,4 +1,4 @@
-package interpreter
+package interpreter.ast
 
 import memory.BoolSymbolic
 

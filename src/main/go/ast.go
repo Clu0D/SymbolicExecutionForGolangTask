@@ -208,7 +208,7 @@ func convertSpecs(specs []ast.Spec, nodeIDCounter *int) []SpecNode {
         *nodeIDCounter++
         switch s := spec.(type) {
             case *ast.ImportSpec:
-                specNodes = append(specNodes, ImportSpecNode{NodeData{fmt.Sprintf("%T", spec), id}, s.Path.Value})
+                specNodes = append(specNodes, ImportSpecNode{NodeData{ParentF: node.Parent().String(), ParentF: node.Parent().String(), fmt.Sprintf("%T", spec), id}, s.Path.Value})
             case *ast.ValueSpec:
                 var names []string
                 for _, name := range s.Names {
@@ -219,10 +219,10 @@ func convertSpecs(specs []ast.Spec, nodeIDCounter *int) []SpecNode {
                 for _, value := range s.Values {
                     values = append(values, fmt.Sprintf("%v", value))
                 }
-                specNodes = append(specNodes, ValueSpecNode{NodeData{fmt.Sprintf("%T", spec), id}, names, typeNode, values})
+                specNodes = append(specNodes, ValueSpecNode{NodeData{ParentF: node.Parent().String(), ParentF: node.Parent().String(), fmt.Sprintf("%T", spec), id}, names, typeNode, values})
             case *ast.TypeSpec:
                 typeNode := encodeNode(s.Type, nodeIDCounter)
-                specNodes = append(specNodes, TypeSpecNode{NodeData{fmt.Sprintf("%T", spec), id}, s.Name.Name, typeNode})
+                specNodes = append(specNodes, TypeSpecNode{NodeData{ParentF: node.Parent().String(), ParentF: node.Parent().String(), fmt.Sprintf("%T", spec), id}, s.Name.Name, typeNode})
         }
         id++
     }
@@ -241,14 +241,14 @@ func encodeNode(node ast.Node, nodeIDCounter *int) (interface{}) {
     switch n := node.(type) {
 
     case *ast.File:
-        return FileNode{NodeData{fmt.Sprintf("%T", node), id}, encodeDeclarations(n.Decls, nodeIDCounter)}
+        return FileNode{NodeData{ParentF: node.Parent().String(), ParentF: node.Parent().String(), fmt.Sprintf("%T", node), id}, encodeDeclarations(n.Decls, nodeIDCounter)}
 
     case *ast.Ident:
-        return IdentNode{NodeData{fmt.Sprintf("%T", node), id}, n.Name}
+        return IdentNode{NodeData{ParentF: node.Parent().String(), ParentF: node.Parent().String(), fmt.Sprintf("%T", node), id}, n.Name}
 
     case *ast.FuncDecl:
         return FuncDeclNode{
-            NodeData{fmt.Sprintf("%T", node), id},
+            NodeData{ParentF: node.Parent().String(), ParentF: node.Parent().String(), fmt.Sprintf("%T", node), id},
             n.Name.Name,
             encodeNode(n.Body, nodeIDCounter),
             encodeNode(n.Recv, nodeIDCounter),
@@ -262,7 +262,7 @@ func encodeNode(node ast.Node, nodeIDCounter *int) (interface{}) {
             encodedStmt := encodeNode(stmt, nodeIDCounter)
             encodedList = append(encodedList, encodedStmt)
         }
-        return BlockStmtNode{NodeData{fmt.Sprintf("%T", node), id}, encodedList}
+        return BlockStmtNode{NodeData{ParentF: node.Parent().String(), ParentF: node.Parent().String(), fmt.Sprintf("%T", node), id}, encodedList}
 
     case *ast.ReturnStmt:
         var encodedResults []interface{}
@@ -270,7 +270,7 @@ func encodeNode(node ast.Node, nodeIDCounter *int) (interface{}) {
             encodedResult := encodeNode(result, nodeIDCounter)
             encodedResults = append(encodedResults, encodedResult)
         }
-        return ReturnStmtNode{NodeData{fmt.Sprintf("%T", node), id}, encodedResults}
+        return ReturnStmtNode{NodeData{ParentF: node.Parent().String(), ParentF: node.Parent().String(), fmt.Sprintf("%T", node), id}, encodedResults}
 
     case *ast.AssignStmt:
         var encodedLHS []interface{}
@@ -282,7 +282,7 @@ func encodeNode(node ast.Node, nodeIDCounter *int) (interface{}) {
             encodedRHS = append(encodedRHS, encodeNode(rhs, nodeIDCounter))
         }
         return AssignStmtNode{
-            NodeData{fmt.Sprintf("%T", node), id},
+            NodeData{ParentF: node.Parent().String(), fmt.Sprintf("%T", node), id},
             encodedLHS,
             encodedRHS,
             n.Tok.String(),
@@ -305,7 +305,7 @@ func encodeNode(node ast.Node, nodeIDCounter *int) (interface{}) {
 
     case *ast.UnaryExpr:
         return UnaryExprNode{
-            NodeData{fmt.Sprintf("%T", node), id},
+            NodeData{ParentF: node.Parent().String(), fmt.Sprintf("%T", node), id},
             n.Op.String(),
             encodeNode(n.X, nodeIDCounter),
         }
@@ -313,14 +313,14 @@ func encodeNode(node ast.Node, nodeIDCounter *int) (interface{}) {
 
     case *ast.CallExpr:
         return CallExprNode{
-            NodeData{fmt.Sprintf("%T", node), id},
+            NodeData{ParentF: node.Parent().String(), fmt.Sprintf("%T", node), id},
             encodeNode(n.Fun, nodeIDCounter),
             encodeArgs(n.Args, nodeIDCounter),
         }
 
     case *ast.IfStmt:
         return IfNode{
-            NodeData{fmt.Sprintf("%T", node), id},
+            NodeData{ParentF: node.Parent().String(), fmt.Sprintf("%T", node), id},
             encodeNode(n.Cond, nodeIDCounter),
             encodeNode(n.Body, nodeIDCounter),
             encodeNode(n.Else, nodeIDCounter),
@@ -328,7 +328,7 @@ func encodeNode(node ast.Node, nodeIDCounter *int) (interface{}) {
 
     case *ast.BinaryExpr:
         return BinaryExprNode{
-            NodeData{fmt.Sprintf("%T", node), id},
+            NodeData{ParentF: node.Parent().String(), fmt.Sprintf("%T", node), id},
             encodeNode(n.X, nodeIDCounter),
             n.Op.String(),
             encodeNode(n.Y, nodeIDCounter),
@@ -336,7 +336,7 @@ func encodeNode(node ast.Node, nodeIDCounter *int) (interface{}) {
 
     case *ast.BasicLit:
         return BasicLitNode{
-            NodeData{fmt.Sprintf("%T", node), id},
+            NodeData{ParentF: node.Parent().String(), fmt.Sprintf("%T", node), id},
             n.Kind.String(),
             n.Value,
         }
@@ -346,14 +346,14 @@ func encodeNode(node ast.Node, nodeIDCounter *int) (interface{}) {
 
     case *ast.GenDecl:
         return GenDeclNode{
-            NodeData{fmt.Sprintf("%T", node), id},
+            NodeData{ParentF: node.Parent().String(), fmt.Sprintf("%T", node), id},
             n.Tok.String(),
             convertSpecs(n.Specs, nodeIDCounter),
         }
 
     case *ast.ForStmt:
         return ForNode{
-            NodeData{fmt.Sprintf("%T", node), id},
+            NodeData{ParentF: node.Parent().String(), fmt.Sprintf("%T", node), id},
             encodeNode(n.Init, nodeIDCounter),
             encodeNode(n.Cond, nodeIDCounter),
             encodeNode(n.Post, nodeIDCounter),
@@ -362,7 +362,7 @@ func encodeNode(node ast.Node, nodeIDCounter *int) (interface{}) {
 
     case *ast.IncDecStmt:
         return IncDecNode{
-            NodeData{fmt.Sprintf("%T", node), id},
+            NodeData{ParentF: node.Parent().String(), fmt.Sprintf("%T", node), id},
             encodeNode(n.X, nodeIDCounter),
             n.Tok.String(),
         }
@@ -372,48 +372,48 @@ func encodeNode(node ast.Node, nodeIDCounter *int) (interface{}) {
 
     case *ast.IndexExpr:
         return IndexExprNode{
-            NodeData{fmt.Sprintf("%T", node), id},
+            NodeData{ParentF: node.Parent().String(), fmt.Sprintf("%T", node), id},
             encodeNode(n.X, nodeIDCounter),
             encodeNode(n.Index, nodeIDCounter),
         }
 
     case *ast.ArrayType:
         return ArrayTypeNode{
-            NodeData{fmt.Sprintf("%T", node), id},
+            NodeData{ParentF: node.Parent().String(), fmt.Sprintf("%T", node), id},
             encodeNode(n.Len, nodeIDCounter),
             encodeNode(n.Elt, nodeIDCounter),
         }
 
     case *ast.TypeSpec:
         return TypeSpecNode{
-            NodeData{fmt.Sprintf("%T", node), id},
+            NodeData{ParentF: node.Parent().String(), fmt.Sprintf("%T", node), id},
             n.Name.Name,
             encodeNode(n.Type, nodeIDCounter),
         }
 
     case *ast.StarExpr:
         return StarExprNode{
-            NodeData{fmt.Sprintf("%T", node), id},
+            NodeData{ParentF: node.Parent().String(), fmt.Sprintf("%T", node), id},
             encodeNode(n.X, nodeIDCounter),
         }
 
     case *ast.SelectorExpr:
         return SelectorExprNode{
-            NodeData{fmt.Sprintf("%T", node), id},
+            NodeData{ParentF: node.Parent().String(), fmt.Sprintf("%T", node), id},
             encodeNode(n.X, nodeIDCounter),
             encodeNode(n.Sel, nodeIDCounter),
         }
 
     case *ast.StructType:
         return StructTypeNode{
-            NodeData{fmt.Sprintf("%T", node), id},
+            NodeData{ParentF: node.Parent().String(), fmt.Sprintf("%T", node), id},
             encodeNode(n.Fields, nodeIDCounter),
             n.Incomplete,
         }
 
     case *ast.RangeStmt:
         return RangeStmtNode{
-            NodeData{fmt.Sprintf("%T", node), id},
+            NodeData{ParentF: node.Parent().String(), fmt.Sprintf("%T", node), id},
            encodeNode(n.Key, nodeIDCounter),
            encodeNode(n.Value, nodeIDCounter),
             n.Tok.String(),
@@ -422,11 +422,11 @@ func encodeNode(node ast.Node, nodeIDCounter *int) (interface{}) {
         }
 
     default:
-        return Unsupported{NodeData{"Unsupported", id}, fmt.Sprintf("%T", node)}
+        return Unsupported{NodeData{ParentF: node.Parent().String(), "Unsupported", id}, fmt.Sprintf("%T", node)}
     }
 
     //   nodeMap[id] = data
-    return Unsupported{NodeData{"Unsupported", id}, fmt.Sprintf("%T", node)}
+    return Unsupported{NodeData{ParentF: node.Parent().String(), "Unsupported", id}, fmt.Sprintf("%T", node)}
 }
 
 func EncodeAST(file *ast.File) ([]byte, error) {

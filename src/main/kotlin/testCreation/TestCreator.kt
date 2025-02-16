@@ -226,7 +226,7 @@ class TestCreator {
                         Random.nextInt()
                     ).random()
 
-                    val rand0mIntExpr = mkBv(randomInt).asExpr(bv32Sort)
+                    val randomIntExpr = mkBv(randomInt).asExpr(bv32Sort)
 
                     val operation = listOf<(KExpr<KBv32Sort>, KExpr<KBv32Sort>) -> KExpr<KBoolSort>>(
                         ::mkBvSignedLessExpr,
@@ -236,7 +236,7 @@ class TestCreator {
                         { a, b -> a eq b }
                     ).random()
 
-                    operation(x, rand0mIntExpr)
+                    operation(x, randomIntExpr)
                 }
 
                 is KFp64Sort -> {

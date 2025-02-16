@@ -1,6 +1,6 @@
 package memory
 
-import interpreter.AstNode
+import interpreter.ast.AstNode
 
 class ExecutionStatistics(val nodesInfo: MutableMap<AstNode, NodeInfo> = mutableMapOf()) {
     data class NodeInfo(

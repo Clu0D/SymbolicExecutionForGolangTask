@@ -1,64 +1,87 @@
 package memory
 
 import io.ksmt.expr.KExpr
-import io.ksmt.expr.KFpRoundingMode
 import io.ksmt.sort.*
 
-fun KExpr<KBoolSort>.toSymbolic() =
+fun KExpr<KBoolSort>.toBoolSymbolic(): BoolSymbolic =
     BoolSymbolic(this)
 
-fun KExpr<KBv32Sort>.toSymbolic() =
-    IntSymbolic(this)
+fun KExpr<KBvSort>.toIntSymbolic(): IntSymbolic = when (this.sort) {
+    is KBv64Sort -> Int64Symbolic(this as KExpr<KBv64Sort>)
+    is KBv32Sort -> Int32Symbolic(this as KExpr<KBv32Sort>)
+    is KBv16Sort -> Int16Symbolic(this as KExpr<KBv16Sort>)
+    is KBv8Sort -> Int8Symbolic(this as KExpr<KBv8Sort>)
+    else -> error("unsupported")
+}
 
-fun KExpr<KFp64Sort>.toSymbolic() =
-    FloatSymbolic(this)
-
-fun KExpr<out KSort>.toSymbolic() =
-    Type.toSymbolic(this)
+fun KExpr<KFpSort>.toFloatSymbolic(): FloatSymbolic = when (this.sort) {
+    is KFp64Sort -> Float64Symbolic(this as KExpr<KFp64Sort>)
+    is KFp32Sort -> Float32Symbolic(this as KExpr<KFp32Sort>)
+    else -> error("unsupported")
+}
 
 open class Symbolic(val type: Type) {
-    fun expr(mem: Memory): KExpr<KSort> {
+    /**
+     * only simple values
+     * local stars will be added to Global
+     */
+    fun toExpr(mem: Memory): KExpr<KSort> {
         return when {
-            type is BoolType -> this.boolExpr() as KExpr<KSort>
-            type is IntType -> this.intExpr() as KExpr<KSort>
+            this is BoolSymbolic -> this.expr as KExpr<KSort>
+            this is Int8Symbolic -> this.expr as KExpr<KSort>
+            this is Int16Symbolic -> this.expr as KExpr<KSort>
+            this is Int32Symbolic -> this.expr as KExpr<KSort>
+            this is Int64Symbolic -> this.expr as KExpr<KSort>
             type is FloatType -> this.floatExpr(mem) as KExpr<KSort>
-            this is InfiniteSimpleArraySymbolic -> this.arrayExpr as KExpr<KSort>
-            this is GlobalStarSymbolic -> this.address.intExpr() as KExpr<KSort>
-            this is ArrayStarSymbolic -> this.address.intExpr() as KExpr<KSort>
+            type is UninterpretedType -> this.uninterpretedExpr(mem) as KExpr<KSort>
+            this is InfiniteArraySymbolic -> this.arrayExpr as KExpr<KSort>
+            this is GlobalStarSymbolic -> this.address.expr as KExpr<KSort>
+            this is LocalStarSymbolic -> this.toGlobal(mem).address.expr as KExpr<KSort>
+            this is NilLocalStarSymbolic -> AddressType().zeroExpr(mem) as KExpr<KSort>
             else -> error("should be simple type $this ${this.type}")
         }
     }
 
-    fun bool(): BoolSymbolic = this as BoolSymbolic
-
-    fun boolExpr(): KExpr<KBoolSort> = (this as BoolSymbolic).expr
-
-    fun int(): IntSymbolic = this as IntSymbolic
-
-    fun intExpr(): KExpr<KBv32Sort> = (this as IntSymbolic).expr
-
-    fun floatExpr(mem: Memory): KExpr<KFp64Sort> = when (val x = this) {
-        is IntSymbolic -> with(mem.ctx) {
-            val roundingMode = mkFpRoundingModeExpr(KFpRoundingMode.RoundTowardZero)
-            mkBvToFpExpr(
-                mkFp64Sort(), roundingMode, x.expr as KExpr<KBvSort>, true
-            )
+    fun getDereferenced(mem: Memory): Symbolic =
+        when {
+            this is StarSymbolic && this.fake -> this.get(mem)
+            else -> this
         }
 
-        is FloatSymbolic -> (this as FloatSymbolic).expr
+    fun bool(mem: Memory): BoolSymbolic = getDereferenced(mem) as BoolSymbolic
 
+    fun boolExpr(mem: Memory): KExpr<KBoolSort> = bool(mem).expr
+
+    fun int(mem: Memory): IntSymbolic = getDereferenced(mem) as IntSymbolic
+
+    fun int64(mem: Memory): Int64Symbolic = getDereferenced(mem) as Int64Symbolic
+
+    fun intExpr(mem: Memory): KExpr<KBvSort> = int(mem).expr as KExpr<KBvSort>
+
+    fun float(mem: Memory): FloatSymbolic = getDereferenced(mem) as FloatSymbolic
+
+    fun float64(mem: Memory): Float64Symbolic = getDereferenced(mem) as Float64Symbolic
+
+    fun list(mem: Memory): ListSymbolic = getDereferenced(mem) as ListSymbolic
+
+    fun floatExpr(mem: Memory): KExpr<KFpSort> = when (val x = this.getDereferenced(mem)) {
+        is IntSymbolic -> Float64Type().round(x, mem) as KExpr<KFpSort>
+        is Float64Symbolic -> x.expr as KExpr<KFpSort>
+        is Float32Symbolic -> x.expr as KExpr<KFpSort>
         else -> error("can't cast $this to fp64Expr")
     }
 
-    fun star() = this as StarSymbolic
+    fun star(mem: Memory) = getDereferenced(mem) as StarSymbolic
 
-    fun complex() = this as ComplexSymbolic
+    fun complex(mem: Memory) = getDereferenced(mem) as ComplexSymbolic
 
-    fun uninterpretedExpr() = (this as UninterpretedSymbolic).expr
+    fun uninterpretedExpr(mem: Memory) = (getDereferenced(mem) as UninterpretedSymbolic).expr
 
-    fun arrayFinite(): FiniteArraySymbolic = (this as FiniteArraySymbolic)
+    fun array(mem: Memory): FiniteArraySymbolic = getDereferenced(mem) as FiniteArraySymbolic
 
-    fun struct() = this as StructSymbolic
+    fun struct(mem: Memory) = getDereferenced(mem) as StructSymbolic
+
+    fun named(mem: Memory) = getDereferenced(mem) as NamedSymbolic
 
     override fun toString() = type.toString()
 }
@@ -70,11 +93,11 @@ class ListSymbolic(val list: List<Symbolic>) : Symbolic(ListType(list.map { it.t
 }
 
 class ListType(val list: List<Type>) : Type {
-    override fun createSymbolic(name: String, mem: Memory, isLocal: Boolean): Symbolic {
+    override fun createSymbolic(name: String, mem: Memory): Symbolic {
         error("ListType is used only as call return")
     }
 
-    override fun defaultSymbolic(mem: Memory, isLocal: Boolean): Symbolic {
+    override fun defaultSymbolic(mem: Memory): Symbolic {
         error("ListType is used only as call return")
     }
 }
@@ -86,17 +109,34 @@ class BoolSymbolic(val expr: KExpr<KBoolSort>) : SimpleSymbolic(BoolType()) {
     override fun toString() = "bool $expr"
 }
 
-class IntSymbolic(val expr: KExpr<KBv32Sort>) : SimpleSymbolic(IntType()) {
-    override fun toString() = "int $expr"
+abstract class IntSymbolic(open val expr: KExpr<out KBvSort>, val intType: IntType) : SimpleSymbolic(intType) {
+    fun hasSign() = intType.hasSign
+    override fun toString() = "$type $expr"
 }
 
-class FloatSymbolic(val expr: KExpr<KFp64Sort>) : SimpleSymbolic(FloatType()) {
-    override fun toString() = "float $expr"
+class Int64Symbolic(override val expr: KExpr<KBv64Sort>) : IntSymbolic(expr, Int64Type())
+
+class Int32Symbolic(override val expr: KExpr<KBv32Sort>) : IntSymbolic(expr, Int32Type())
+
+class Int16Symbolic(override val expr: KExpr<KBv16Sort>) : IntSymbolic(expr, Int16Type())
+
+class Int8Symbolic(override val expr: KExpr<KBv8Sort>) : IntSymbolic(expr, Int8Type())
+
+abstract class FloatSymbolic(open val expr: KExpr<out KFpSort>, floatType: FloatType) : SimpleSymbolic(floatType) {
+    override fun toString() = "$type $expr"
+}
+
+class Float32Symbolic(override val expr: KExpr<KFp32Sort>) : FloatSymbolic(expr, Float32Type()) {
+    override fun toString() = "float32 $expr"
+}
+
+class Float64Symbolic(override val expr: KExpr<KFp64Sort>) : FloatSymbolic(expr, Float64Type()) {
+    override fun toString() = "float64 $expr"
 }
 
 class ComplexSymbolic(real: KExpr<KFp64Sort>, img: KExpr<KFp64Sort>) : SimpleSymbolic(ComplexType()) {
-    val real = FloatSymbolic(real)
-    val img = FloatSymbolic(img)
+    val real = Float64Symbolic(real)
+    val img = Float64Symbolic(img)
     override fun toString() = "complex $real $img"
 }
 
@@ -106,191 +146,293 @@ open class UninterpretedSymbolic(val expr: KExpr<KUninterpretedSort>) :
     override fun toString() = expr.sort.name
 }
 
-// todo is it always not fake
-sealed class StarSymbolic(val elementType: Type) : Symbolic(StarType(elementType, false)) {
-//    /** if was local then will public Symbolic in global context
-//     *
-//     *  todo check it is unique
-//     */
-//    abstract fun toGlobal(mem: Memory): GlobalStarSymbolic
+sealed class StarSymbolic(val elementType: Type, val fake: Boolean) : Symbolic(StarType(elementType, fake)) {
+
+    abstract fun toGlobal(mem: Memory): GlobalStarSymbolic
+
+    abstract fun dereference(): StarSymbolic
 
     abstract fun get(mem: Memory): Symbolic
-    abstract fun put(value: Symbolic, mem: Memory)
+    abstract fun put(value: Symbolic, mem: Memory): Boolean
 
     abstract fun eq(other: StarSymbolic, mem: Memory): BoolSymbolic
 
-    fun findField(field: Int): StarSymbolic {
-        elementType as NamedType
-        val (name, type) = (elementType.underlying as StructType).fields[field]!!
-        return toFieldStar(name, type)
+    open fun findField(field: Int, mem: Memory): Symbolic {
+        val namedType = when (val dereferenced = elementType.getDereferenced()) {
+            is NamedType -> dereferenced
+            is StarType -> dereferenced.elementType
+            else -> error("only named types have fields, not $elementType")
+        } as NamedType
+
+        val (name, type) = namedType.underlying.fields[field]
+        return toFieldStar(name, type, mem)
     }
 
-    abstract fun toFieldStar(name: String, type: Type): StarSymbolic
+    abstract fun toFieldStar(name: String, type: Type, mem: Memory): Symbolic
 }
 
-// we already checked bounds, so we can use InfiniteArray
-class ArrayStarSymbolic(val address: IntSymbolic, val array: InfiniteArraySymbolic) :
-    StarSymbolic(array.elementType) {
-//    override fun toGlobal(mem: Memory): GlobalStarSymbolic {
-//        return type.createSymbolic("star$", mem) as GlobalStarSymbolic
-//    }
+class ArrayStarSymbolic(val address: Int64Symbolic, val array: FiniteArraySymbolic, fake: Boolean) :
+    StarSymbolic(array.elementType, fake) {
 
-    override fun get(mem: Memory) = array.get(address, mem)
-    override fun put(value: Symbolic, mem: Memory) {
+    override fun toGlobal(mem: Memory): GlobalStarSymbolic {
+        println("toGLOBAL")
+        val globalAddress = mem.addNewStarObject("", get(mem))
+        return GlobalStarSymbolic("", array.elementType, globalAddress, fake)
+    }
+
+    override fun dereference(): ArrayStarSymbolic =
+        if (fake)
+            error("dereferencing dereferenced")
+        else
+            ArrayStarSymbolic(address, array, true)
+
+    override fun get(mem: Memory): Symbolic {
+        if (!fake) {
+            error("!")
+        }
+
+        return array.get(address, mem).dereference().getDereferenced(mem)
+    }
+
+    override fun put(value: Symbolic, mem: Memory): Boolean {
         array.put(address, value, mem)
-        TODO("Not yet implemented")
+        return true
     }
 
     override fun eq(other: StarSymbolic, mem: Memory) = when (other) {
         is ArrayStarSymbolic -> {
             if (array != other.array)
-                BoolType.FALSE(mem)
+                BoolType.`false`(mem)
             with(mem.ctx) {
-                address.intExpr() eq other.address.intExpr()
-            }.toSymbolic()
+                address.expr as KExpr<KSort> eq other.address.expr as KExpr<KSort>
+            }.toBoolSymbolic()
         }
 
         is LocalStarSymbolic -> {
 //                todo what if both null?
-            BoolType.FALSE(mem)
+            BoolType.`false`(mem)
         }
 
         is NilLocalStarSymbolic -> {
 //                todo what if null in array?
-            BoolType.FALSE(mem)
+            BoolType.`false`(mem)
         }
 
         is GlobalStarSymbolic -> {
 //                todo what if both null?
-            BoolType.FALSE(mem)
+            BoolType.`false`(mem)
         }
     }
 
-    override fun toFieldStar(name: String, type: Type): ArrayStarSymbolic {
-        val fieldArray = (array as InfiniteStructArraySymbolic).fields[name]!!
-        return ArrayStarSymbolic(address, fieldArray)
+    override fun toFieldStar(name: String, type: Type, mem: Memory): StarSymbolic {
+        return this.toGlobal(mem).toFieldStar(name, type, mem)
     }
 
-    override fun toString() = "StarA($elementType)"
+    override fun toString() =
+        if (fake)
+            "FA($elementType)"
+        else
+            "A*($elementType)"
 }
 
-class LocalStarSymbolic(private var symbolic: Symbolic) : StarSymbolic(symbolic.type) {
+class LocalStarSymbolic(private var symbolic: Symbolic, fake: Boolean) : StarSymbolic(symbolic.type, fake) {
+    override fun toGlobal(mem: Memory): GlobalStarSymbolic {
+        val globalAddress = mem.addNewStarObject("", symbolic)
+        return GlobalStarSymbolic("", symbolic.type, globalAddress, fake)
+    }
+
+
+    override fun dereference(): LocalStarSymbolic = if (fake) {
+        error("dereferencing dereferenced")
+    } else {
+        LocalStarSymbolic(symbolic, true)
+    }
 //    override fun toGlobal(mem: Memory): GlobalStarSymbolic {
 //        return type.createSymbolic("star$", mem) as GlobalStarSymbolic
 //    }
 
-    override fun get(mem: Memory) = symbolic
-    override fun put(value: Symbolic, mem: Memory) {
+    override fun get(mem: Memory): Symbolic {
+        if (!fake) {
+            error("!")
+        }
+        return symbolic.getDereferenced(mem)
+    }
+
+    override fun put(value: Symbolic, mem: Memory): Boolean {
         symbolic = value
+        return true
     }
 
     override fun eq(other: StarSymbolic, mem: Memory) = when (other) {
         is ArrayStarSymbolic -> {
 //                todo what if both null?
-            BoolType.FALSE(mem)
+            BoolType.`false`(mem)
         }
 
         is LocalStarSymbolic -> {
             // this LocalStarSymbolic will be used as a wrapper
             if (this == other) {
-                BoolType.TRUE(mem)
+                BoolType.`true`(mem)
             } else {
-                BoolType.FALSE(mem)
+                BoolType.`false`(mem)
             }
         }
 
         is NilLocalStarSymbolic -> {
 //                todo what if null in array?
-            BoolType.FALSE(mem)
+            BoolType.`false`(mem)
         }
 
         is GlobalStarSymbolic -> {
 //                todo what if both null?
-            BoolType.FALSE(mem)
+            BoolType.`false`(mem)
         }
     }
 
-    override fun toFieldStar(name: String, type: Type): LocalStarSymbolic {
-        return LocalStarSymbolic(FieldSymbolic((symbolic as NamedSymbolic).underlying, name))
+    override fun toFieldStar(name: String, type: Type, mem: Memory): LocalStarSymbolic {
+        return LocalStarSymbolic(FieldSymbolic((symbolic.named(mem)).underlying, name), fake)
     }
 
-    override fun toString() = "StarL($elementType)"
+    override fun toString() =
+        if (fake)
+            "FL($elementType)"
+        else
+            "L*($elementType)"
 }
 
-class NilLocalStarSymbolic(elementType: Type) : StarSymbolic(elementType) {
-//    override fun toGlobal(mem: Memory): GlobalStarSymbolic {
-//        return StarType(elementType).defaultSymbolic(mem, false) as GlobalStarSymbolic
-//    }
-
-    override fun get(mem: Memory) = TODO()
-    override fun put(value: Symbolic, mem: Memory) {
+class NilLocalStarSymbolic(elementType: Type, fake: Boolean) : StarSymbolic(elementType, fake) {
+    override fun toGlobal(mem: Memory): GlobalStarSymbolic {
         TODO("Not yet implemented")
+    }
+
+    override fun dereference(): StarSymbolic =
+        if (fake) {
+            error("dereferencing dereferenced")
+        } else {
+            NilLocalStarSymbolic(elementType, true)
+        }
+
+    override fun findField(field: Int, mem: Memory): Symbolic {
+        mem.addError(
+            (BoolType.`true`(mem)),
+            "something done with null"
+        )
+        return StopSymbolic
+    }
+
+    override fun get(mem: Memory): Symbolic {
+        if (!fake) {
+            error("!")
+        }
+        mem.addError(
+            (BoolType.`true`(mem)),
+            "something done with null"
+        )
+        return StopSymbolic
+    }
+
+    override fun put(value: Symbolic, mem: Memory): Boolean {
+        mem.addError(
+            (BoolType.`true`(mem)),
+            "something done with null"
+        )
+        return false
     }
 
     override fun eq(other: StarSymbolic, mem: Memory) = when (other) {
         is ArrayStarSymbolic -> {
 //                todo what if null in array?
-            BoolType.FALSE(mem)
+            BoolType.`false`(mem)
         }
 
         is LocalStarSymbolic -> {
 //                todo what if both null?
-            BoolType.FALSE(mem)
+            BoolType.`false`(mem)
         }
 
         is NilLocalStarSymbolic -> {
-            BoolType.TRUE(mem)
+            BoolType.`true`(mem)
         }
 
         is GlobalStarSymbolic -> {
 //                todo what if both null?
-            BoolType.FALSE(mem)
+            BoolType.`false`(mem)
         }
     }
 
-    override fun toFieldStar(name: String, type: Type): StarSymbolic {
-        TODO("Not yet implemented")
+    override fun toFieldStar(name: String, type: Type, mem: Memory): Symbolic {
+        mem.addError(
+            (BoolType.`true`(mem)),
+            "something done with null"
+        )
+        return StopSymbolic
     }
 
-    override fun toString() = "nil"
+    override fun toString() =
+        if (fake)
+            "nil"
+        else
+            "L*(nil)"
 }
 
-class GlobalStarSymbolic(elementType: Type, val address: IntSymbolic) : StarSymbolic(elementType) {
-    override fun get(mem: Memory) =
-        mem.getStarObject("", elementType, address)
+class GlobalStarSymbolic(val prefix: String, elementType: Type, val address: Int64Symbolic, fake: Boolean) :
+    StarSymbolic(elementType, fake) {
+    val name = elementType.toString()
 
-    override fun put(value: Symbolic, mem: Memory) {
-        mem.putStarObject("", value, address)
+    override fun toGlobal(mem: Memory): GlobalStarSymbolic =
+        this
+
+    override fun dereference(): GlobalStarSymbolic =
+        if (fake) {
+            error("dereferencing dereferenced")
+        } else {
+            GlobalStarSymbolic(prefix, elementType, address, true)
+        }
+
+    override fun get(mem: Memory): Symbolic {
+        if (!fake) {
+            error("!")
+        }
+        return mem.getStarObject(prefix, elementType, address).getDereferenced(mem)
+    }
+
+    override fun put(value: Symbolic, mem: Memory): Boolean {
+        mem.putStarObject(prefix, value, address)
+        return true
     }
 
     override fun eq(other: StarSymbolic, mem: Memory) = when (other) {
         is ArrayStarSymbolic -> {
 //                todo what if both null?
-            BoolType.FALSE(mem)
+            BoolType.`false`(mem)
         }
 
         is LocalStarSymbolic -> {
 //                todo what if both null?
-            BoolType.FALSE(mem)
+            BoolType.`false`(mem)
         }
 
         is NilLocalStarSymbolic -> {
 //                todo what if null in global?
-            BoolType.FALSE(mem)
+            BoolType.`false`(mem)
         }
 
         is GlobalStarSymbolic -> {
             with(mem.ctx) {
-                address.intExpr() eq other.address.intExpr()
-            }.toSymbolic()
+                address.expr eq other.address.expr
+            }.toBoolSymbolic()
         }
     }
 
-    override fun toFieldStar(name: String, type: Type): StarSymbolic {
-        return GlobalStarSymbolic(type, address)
+    override fun toFieldStar(name: String, type: Type, mem: Memory): StarSymbolic {
+        return GlobalStarSymbolic(name, type, address, fake)
     }
 
-    override fun toString() = "StarG($elementType)"
+    override fun toString() =
+        if (fake)
+            "FG($elementType)"
+        else
+            "G*($elementType)"
 }
 
 class StructSymbolic(
@@ -310,3 +452,5 @@ class FieldSymbolic(
 class NamedSymbolic(type: NamedType, val underlying: StructSymbolic) : Symbolic(type) {
     override fun toString() = "named $type $underlying"
 }
+
+object StopSymbolic : Symbolic(UnknownType)

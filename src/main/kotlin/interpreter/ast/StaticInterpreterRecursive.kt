@@ -1,14 +1,14 @@
-package interpreter
+package interpreter.ast
 
-import interpreter.Interpreter.Companion.STATIC_FOR_MAX_LENGTH
-import interpreter.Interpreter.Companion.knownFunctions
-import interpreter.Interpreter.Companion.visitAssignStmt
-import interpreter.Interpreter.Companion.visitBasicLit
-import interpreter.Interpreter.Companion.visitGenDeclaration
-import interpreter.Interpreter.Companion.visitIncDec
-import interpreter.Interpreter.Companion.visitOp
-import interpreter.Interpreter.Companion.visitSelector
-import interpreter.Interpreter.Companion.visitType
+import interpreter.ast.Interpreter.Companion.STATIC_FOR_MAX_LENGTH
+import interpreter.ast.Interpreter.Companion.visitAssignStmt
+import interpreter.ast.Interpreter.Companion.visitBasicLit
+import interpreter.ast.Interpreter.Companion.visitGenDeclaration
+import interpreter.ast.Interpreter.Companion.visitIncDec
+import interpreter.ast.Interpreter.Companion.visitSelector
+import interpreter.ast.Interpreter.Companion.visitType
+import interpreter.ssa.SsaInterpreter.Companion.knownFunctions
+import interpreter.ssa.SsaInterpreter.Companion.visitOp
 import memory.Memory
 import io.ksmt.KContext
 import memory.*
@@ -100,8 +100,8 @@ class StaticInterpreterRecursive(
             }
 
             is AstBinaryExpr -> {
-                val x = visit(node.x)
-                val y = visit(node.y)
+                val x = visit(node.x)!!
+                val y = visit(node.y)!!
                 visitOp(node.op, listOf(x, y), mem)
             }
 
@@ -138,7 +138,7 @@ class StaticInterpreterRecursive(
 
             is AstIf -> {
                 val cond = visit(node.cond)!!
-                visitIf(cond.bool(), node.body, node.elseBody)
+                visitIf(cond.bool(mem), node.body, node.elseBody)
             }
 
             is AstReturn -> {
@@ -150,7 +150,7 @@ class StaticInterpreterRecursive(
             }
 
             is AstUnaryExpr -> {
-                val x = visit(node.x)
+                val x = visit(node.x)!!
                 visitOp(node.op, listOf(x), mem)
             }
 
@@ -165,9 +165,9 @@ class StaticInterpreterRecursive(
                 var i = 0
                 while (true) {
                     val cond = if (i > STATIC_FOR_MAX_LENGTH) {
-                        BoolType.FALSE(mem)
+                        BoolType.`false`(mem)
                     } else {
-                        visit(node.cond)!!.bool()
+                        visit(node.cond)!!.bool(mem)
                     }
 
                     val body = visitIf(cond, node.body, null)
@@ -187,9 +187,9 @@ class StaticInterpreterRecursive(
             is AstIndexExpr -> {
                 val x = visit(node.x)
                 val index = visit(node.index)
-                val xArr = x!!.arrayFinite()
+                val xArr = x!!.array(mem)
 
-                xArr.get(index!!.int(), mem)
+                xArr.get(index!!.int64(mem), mem)
             }
 
             is AstSelector ->

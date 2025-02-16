@@ -1,56 +1,60 @@
 package memory
 
-import interpreter.AstArrayType
-import interpreter.AstIdent
-import interpreter.AstStar
-import interpreter.AstNode
+import interpreter.ast.AstArrayType
+import interpreter.ast.AstIdent
+import interpreter.ast.AstStar
+import interpreter.ast.AstNode
 import interpreter.ssa.*
+import io.ksmt.expr.KArrayConst
 import io.ksmt.expr.KExpr
+import io.ksmt.expr.KFpRoundingMode
 import io.ksmt.sort.*
 import io.ksmt.utils.asExpr
-import memory.IntType.Companion.intSort
 
 sealed class BaseType : Type {
     override fun toString() = "TYPE"
 
     override fun equals(other: Any?): Boolean {
-        return toString() == other.toString()
+        return getDereferenced().toString() == (other as BaseType).getDereferenced().toString()
     }
 
-    override fun hashCode() = toString().hashCode()
+    override fun hashCode() = getDereferenced().toString().hashCode()
 }
 
 sealed interface Type {
+    fun getDereferenced(): Type {
+        return when (this) {
+            is StarType if(this.fake == false) -> this.elementType.getDereferenced()
+            else -> this
+        }
+    }
+
     /**
      * creates a new symbolic variable
      */
-    fun createSymbolic(name: String, mem: Memory, isLocal: Boolean = true): Symbolic
+    fun createSymbolic(name: String, mem: Memory): Symbolic
 
     /**
      * creates a default value
      */
-    fun defaultSymbolic(mem: Memory, isLocal: Boolean): Symbolic
-
-//    override fun toString() = "TYPE"
-//
-//    override fun equals(other: Any?): Boolean {
-//        return toString() == other.toString()
-//    }
-//
-//    override fun hashCode() = toString().hashCode()
+    fun defaultSymbolic(mem: Memory): Symbolic
 
     companion object {
         fun toSymbolic(expr: KExpr<out KSort>): Symbolic = when (expr.sort) {
-            is KBv32Sort -> IntSymbolic(expr as KExpr<KBv32Sort>)
             is KBoolSort -> BoolSymbolic(expr as KExpr<KBoolSort>)
-            is KFp64Sort -> FloatSymbolic(expr as KExpr<KFp64Sort>)
+            is KBv8Sort -> Int8Symbolic(expr as KExpr<KBv8Sort>)
+            is KBv16Sort -> Int16Symbolic(expr as KExpr<KBv16Sort>)
+            is KBv32Sort -> Int32Symbolic(expr as KExpr<KBv32Sort>)
+            is KBv64Sort -> Int64Symbolic(expr as KExpr<KBv64Sort>)
+            is KFp32Sort -> Float32Symbolic(expr as KExpr<KFp32Sort>)
+            is KFp64Sort -> Float64Symbolic(expr as KExpr<KFp64Sort>)
             is KUninterpretedSort -> UninterpretedSymbolic(expr as KExpr<KUninterpretedSort>)
             else -> error("toSymbolic from ${expr.sort}")
         }
 
         fun fromAst(node: AstNode): Type = when (node) {
             is AstIdent -> fromName(node.name)
-            is AstArrayType -> ArrayType(fromAst(node.elementType) as StarType)
+            is AstArrayType -> ArrayType(fromAst(node.elementType) as StarType, null)
             is AstStar -> StarType(fromAst(node.x), false)
             else -> error("not type \"${node.javaClass.name}\"")
         }
@@ -62,106 +66,100 @@ sealed interface Type {
          */
         fun fromSsa(node: SsaType, mem: Memory, simplify: Boolean): Type {
             return when (node) {
-                is LinkSsaType -> fromSsa(node.deLink(), mem, simplify)
+                is LinkSsaType ->
+                    fromSsa(node.deLink(), mem, simplify)
 
                 is BasicTypeNode ->
                     return fromName(node.name)
 
                 is ArrayTypeNode ->
-                    if (simplify) {
-                        when (val x = fromSsa(node.elemType, mem, true)) {
-                            is ArrayType -> ArrayType(StarType(x, true))
-//                            is SimpleType -> ArraySimpleType(x)
-                            else -> ArrayType(x)
-                        }
-                    } else {
-                        ArrayType(
-                            fromSsa(node.elemType, mem, false),
-                            IntType.fromInt(node.len, mem)
-                        )
-                    }
-
-                is InterfaceTypeNode -> TODO()
-                is NamedTypeNode -> {
-                    val named = NamedType(
-                        node.name,
-                        fromSsa(node.underlying, mem, simplify) as StructType
+                    ArrayType(
+                        fromSsa(node.elemType, mem, false),
+                        Int64Type().fromInt(node.len, mem)
                     )
-//                    if (simplify)
-//                        StarType(named, true)
-//                    else
-                    named
-                }
 
-                is PointerTypeNode -> StarType(fromSsa(node.elemType, mem, simplify), false)
-                is StructTypeNode -> {
-                    val struct = StructType(
+                is NamedTypeNode ->
+                    if (node.underlying is InterfaceTypeNode)
+                        UnknownType
+                    else
+                        NamedType(
+                            node.name,
+                            lazy { fromSsa(node.underlying, mem, simplify) as StructType }
+                        )
+
+                is PointerTypeNode ->
+                    StarType(fromSsa(node.elemType, mem, simplify), false)
+
+                is StructTypeNode ->
+                    StructType(
                         node.fields.map {
                             val name = (it as StructFieldNode).name
                             val type = fromSsa(it.elemType, mem, simplify)
                             name to type
                         }
                     )
-//                    if (simplify)
-//                        StarType(struct, true)
-//                    else
-                    struct
+
+                is SliceTypeNode -> {
+                    val elem = fromSsa(node.elemType, mem, simplify)
+                    if (elem == UnknownType)
+                        UnknownType
+                    else
+                        ArrayType(
+                            elem,
+                            null
+                        )
                 }
 
-                is SignatureTypeNode -> TODO()
-                is SliceTypeNode ->
-                    if (simplify) {
-                        when (val x = fromSsa(node.elemType, mem, true)) {
-                            is ArrayType -> ArrayType(StarType(x, true))
-//                            is SimpleType -> ArraySimpleType(x)
-                            else -> ArrayType(x)
-                        }
-                    } else {
-                        ArrayType(fromSsa(node.elemType, mem, false))
-//                        when (val innerType = fromSsa(node.elemType, mem, false)) {
-//                            is SimpleType -> ArraySimpleType(innerType)
-//                            else -> ArrayType(innerType, null)
-//                        }
-                    }
+                is AliasTypeNode -> fromSsa(node.rhs, mem, simplify)
 
-                is AliasTypeNode -> TODO()
-                is FuncTypeNode -> FunctionType
+//                is InterfaceTypeNode -> UnknownType
+                is InterfaceTypeNode -> UninterpretedType("interface")
+                is SignatureTypeNode -> TODO()
                 is LinkFuncSsa -> TODO()
                 is StructFieldNode -> TODO()
                 is TupleTypeNode -> TODO()
                 is UnknownSsaTypeNode -> TODO()
+                is FuncTypeNode -> TODO()
             }
         }
 
         fun fromName(name: String): Type = when (name.lowercase()) {
             "bool" -> BoolType()
-            "int" -> IntType()
-            "int16" -> IntType()
-            "int32" -> IntType()
-            "int64" -> IntType()
-            "byte" -> IntType()
-//            todo add other lengths working properly
-            "float64" -> FloatType()
+            "byte" -> Int8Type()
+            "int8" -> Int8Type()
+            "int16" -> Int16Type()
+            "int32" -> Int32Type()
+            "int64" -> Int64Type()
+            "int" -> Int64Type()
+            // right now uint are just int
+            // use Int_Type(false)
+            "uint8" -> Int8Type()
+            "uint16" -> Int16Type()
+            "uint32" -> Int32Type()
+            "uint64" -> Int64Type()
+            "uint" -> Int64Type()
+
+            "float32" -> Float32Type()
+            "float64" -> Float64Type()
             "complex128" -> ComplexType()
             "string" -> UninterpretedType(String.Companion::class.java.name)
-//            TODO обратиться к памяти и найти класс?
             else -> error("only simple types here, not $name")
         }
     }
 }
 
 class StructType(val fields: List<Pair<String, Type>>) : BaseType() {
-    override fun createSymbolic(name: String, mem: Memory, isLocal: Boolean) =
+    override fun createSymbolic(name: String, mem: Memory) =
         StructSymbolic(
             this,
-            fields.associate { (name, type) -> name to type.defaultSymbolic(mem, isLocal) }.toMutableMap()
+            fields.associate { (name, type) -> name to type.defaultSymbolic(mem) }.toMutableMap()
         )
 
-    override fun defaultSymbolic(mem: Memory, isLocal: Boolean): Symbolic {
+    override fun defaultSymbolic(mem: Memory): Symbolic {
         return StructSymbolic(
             this,
             fields.associate { (name, type) ->
-                name to type.defaultSymbolic(mem, isLocal)
+                name to type.defaultSymbolic(mem)
             }.toMutableMap()
         )
     }
@@ -171,7 +169,8 @@ class StructType(val fields: List<Pair<String, Type>>) : BaseType() {
 
 // types that can be represented with KExpr
 sealed interface SimpleType : Type {
-    fun defaultSymbolicExpr(mem: Memory, isLocal: Boolean): KExpr<out KSort>
+    fun createSymbolicExpr(name: String, mem: Memory): KExpr<out KSort>
+    fun defaultSymbolicExpr(mem: Memory): KExpr<out KSort>
 
     fun asSymbolic(expr: KExpr<out KSort>, mem: Memory): Symbolic
 
@@ -179,98 +178,192 @@ sealed interface SimpleType : Type {
 }
 
 class BoolType : BaseType(), SimpleType {
-    override fun defaultSymbolicExpr(mem: Memory, isLocal: Boolean): KExpr<out KSort> =
-        defaultSymbolic(mem, isLocal).expr
+    override fun createSymbolicExpr(name: String, mem: Memory): KExpr<out KSort> =
+        createSymbolic(name, mem).expr
+
+    override fun defaultSymbolicExpr(mem: Memory): KExpr<out KSort> =
+        defaultSymbolic(mem).expr
 
     override fun asSymbolic(expr: KExpr<out KSort>, mem: Memory) =
         BoolSymbolic(expr as KExpr<KBoolSort>)
 
     override fun sort(mem: Memory) = with(mem.ctx) { boolSort }
 
-    override fun createSymbolic(name: String, mem: Memory, isLocal: Boolean) = with(mem.ctx) {
-        mem.addConst(name, mkBoolSort()).toSymbolic()
+    override fun createSymbolic(name: String, mem: Memory): BoolSymbolic = with(mem.ctx) {
+        mem.addConst(name, mkBoolSort()).asExpr(sort(mem)).toBoolSymbolic()
     }
 
-    override fun defaultSymbolic(mem: Memory, isLocal: Boolean) = with(mem.ctx) {
-        false.expr.toSymbolic()
+    override fun defaultSymbolic(mem: Memory) = with(mem.ctx) {
+        false.expr.toBoolSymbolic()
     }
 
     override fun toString() = "BOOL"
 
     companion object {
-        fun TRUE(mem: Memory) = BoolSymbolic(mem.ctx.trueExpr)
-        fun FALSE(mem: Memory) = BoolSymbolic(mem.ctx.falseExpr)
-        fun fromBool(bool: Boolean, mem: Memory) = with(mem.ctx) { mkBv(bool).toSymbolic() }
+        fun `true`(mem: Memory) = fromBool(true, mem)
+        fun `false`(mem: Memory) = fromBool(false, mem)
+        fun fromBool(bool: Boolean, mem: Memory) = with(mem.ctx) { mkBool(bool).toBoolSymbolic() }
     }
 }
 
-class IntType : BaseType(), SimpleType {
-    companion object {
-        fun intSort(mem: Memory) = with(mem.ctx) { bv32Sort }
+sealed class IntType(val hasSign: Boolean = true) : BaseType(), SimpleType {
+    fun zeroExpr(mem: Memory): KExpr<KBvSort> = fromInt(0, mem).expr as KExpr<KBvSort>
+    fun zero(mem: Memory): IntSymbolic = fromInt(0, mem)
+    abstract fun fromInt(int: Long, mem: Memory): IntSymbolic
 
-        fun ZERO(mem: Memory) = with(mem.ctx) { mkBv(0).asExpr(intSort(mem)) }
-
-        fun fromInt(int: Int, mem: Memory) = with(mem.ctx) { mkBv(int).asExpr(intSort(mem)).toSymbolic() }
+    override fun createSymbolic(name: String, mem: Memory): IntSymbolic = with(mem.ctx) {
+        mem.addConst(name, sort(mem)).let { Type.toSymbolic(it) }.int(mem)
     }
 
-    override fun defaultSymbolicExpr(mem: Memory, isLocal: Boolean): KExpr<out KSort> =
-        defaultSymbolic(mem, isLocal).expr
+    override fun defaultSymbolic(mem: Memory) =
+        zero(mem)
 
-    override fun asSymbolic(expr: KExpr<out KSort>, mem: Memory) =
-        IntSymbolic(expr as KExpr<KBv32Sort>)
+    override fun createSymbolicExpr(name: String, mem: Memory): KExpr<out KSort> =
+        createSymbolic(name, mem).expr
 
-    override fun sort(mem: Memory) = intSort(mem)
+    override fun defaultSymbolicExpr(mem: Memory): KExpr<out KSort> =
+        defaultSymbolic(mem).expr
 
-    override fun createSymbolic(name: String, mem: Memory, isLocal: Boolean): IntSymbolic = with(mem.ctx) {
-        mem.addConst(name, bv32Sort).toSymbolic().int()
-    }
+    abstract override fun sort(mem: Memory): KBvSort
 
-    override fun defaultSymbolic(mem: Memory, isLocal: Boolean) = with(mem.ctx) {
-        mkBv(0).toSymbolic()
-    }
-
-    override fun toString() = "INT"
+    fun hasSignString() =
+        if (hasSign)
+            ""
+        else
+            "U"
 }
 
-class FloatType : BaseType(), SimpleType {
-    companion object {
-        fun floatSort(mem: Memory) = with(mem.ctx) { fp64Sort }
+open class Int64Type(hasSign: Boolean = true) : IntType(hasSign) {
+    override fun asSymbolic(expr: KExpr<out KSort>, mem: Memory) =
+        Int64Symbolic(expr as KExpr<KBv64Sort>)
 
-        fun ZERO(mem: Memory) = with(mem.ctx) { mkFp(0.0f, fp64Sort) }
+    override fun fromInt(int: Long, mem: Memory): Int64Symbolic =
+        Int64Symbolic(mem.ctx.mkBv(int, sort(mem)) as KExpr<KBv64Sort>)
 
-        fun fromDouble(double: Double, mem: Memory) = with(mem.ctx) { mkFp(double, fp64Sort) }.toSymbolic()
+    override fun sort(mem: Memory): KBvSort =
+        mem.ctx.mkBv64Sort()
+
+    override fun toString() =
+        "${hasSignString()}INT64"
+}
+
+class Int32Type(hasSign: Boolean = true) : IntType(hasSign) {
+    override fun asSymbolic(expr: KExpr<out KSort>, mem: Memory) =
+        Int32Symbolic(expr as KExpr<KBv32Sort>)
+
+    override fun fromInt(int: Long, mem: Memory) =
+        Int32Symbolic(mem.ctx.mkBv(int, sort(mem)) as KExpr<KBv32Sort>)
+
+    override fun sort(mem: Memory): KBvSort =
+        mem.ctx.mkBv32Sort()
+
+    override fun toString() =
+        "${hasSignString()}INT32"
+}
+
+class Int16Type(hasSign: Boolean = true) : IntType(hasSign) {
+    override fun asSymbolic(expr: KExpr<out KSort>, mem: Memory) =
+        Int16Symbolic(expr as KExpr<KBv16Sort>)
+
+    override fun fromInt(int: Long, mem: Memory) =
+        Int16Symbolic(mem.ctx.mkBv(int, sort(mem)) as KExpr<KBv16Sort>)
+
+    override fun sort(mem: Memory): KBvSort =
+        mem.ctx.mkBv16Sort()
+
+    override fun toString() =
+        "${hasSignString()}INT16"
+}
+
+class Int8Type(hasSign: Boolean = true) : IntType(hasSign) {
+    override fun asSymbolic(expr: KExpr<out KSort>, mem: Memory) =
+        Int8Symbolic(expr as KExpr<KBv8Sort>)
+
+    override fun fromInt(int: Long, mem: Memory) =
+        Int8Symbolic(mem.ctx.mkBv(int, sort(mem)) as KExpr<KBv8Sort>)
+
+    override fun sort(mem: Memory): KBvSort =
+        mem.ctx.mkBv8Sort()
+
+    override fun toString() =
+        "${hasSignString()}INT8"
+}
+
+class AddressType : Int64Type()
+
+sealed class FloatType : BaseType(), SimpleType {
+    fun zero(mem: Memory) = fromDouble(0.0, mem)
+    abstract fun fromDouble(double: Double, mem: Memory): FloatSymbolic
+
+    override fun createSymbolic(name: String, mem: Memory) = with(mem.ctx) {
+        mem.addConst(name, sort(mem)).let { Type.toSymbolic(it) }.float(mem)
     }
 
-    override fun defaultSymbolicExpr(mem: Memory, isLocal: Boolean): KExpr<out KSort> =
-        defaultSymbolic(mem, isLocal).expr
+    override fun defaultSymbolic(mem: Memory) =
+        zero(mem)
+
+    override fun createSymbolicExpr(name: String, mem: Memory): KExpr<out KSort> =
+        createSymbolic(name, mem).expr
+
+    override fun defaultSymbolicExpr(mem: Memory): KExpr<out KSort> =
+        defaultSymbolic(mem).expr
+
+    fun roundingMode(mem: Memory) = mem.ctx.mkFpRoundingModeExpr(KFpRoundingMode.RoundTowardZero)
+
+    abstract override fun sort(mem: Memory): KFpSort
+}
+
+class Float32Type : FloatType() {
+    fun round(int: IntSymbolic, mem: Memory): FloatSymbolic = with(mem.ctx) {
+        Float32Symbolic(
+            mkBvToFpExpr(
+                mkFp32Sort(), roundingMode(mem), int.expr as KExpr<KBvSort>, true
+            )
+        )
+    }
+
+    override fun fromDouble(double: Double, mem: Memory) =
+        Float32Symbolic(mem.ctx.mkFp(double, sort(mem)) as KExpr<KFp32Sort>)
 
     override fun asSymbolic(expr: KExpr<out KSort>, mem: Memory) =
-        FloatSymbolic(expr as KExpr<KFp64Sort>)
+        Float32Symbolic(expr as KExpr<KFp32Sort>)
 
-    override fun sort(mem: Memory) = floatSort(mem)
+    override fun sort(mem: Memory) = mem.ctx.mkFp32Sort()
 
-    override fun createSymbolic(name: String, mem: Memory, isLocal: Boolean) = with(mem.ctx) {
-        mem.addConst(name, fp64Sort).toSymbolic()
+    override fun toString() = "FLOAT32"
+}
+
+class Float64Type : FloatType() {
+    fun round(int: IntSymbolic, mem: Memory): FloatSymbolic = with(mem.ctx) {
+        Float64Symbolic(
+            mkBvToFpExpr(
+                mkFp64Sort(), roundingMode(mem), int.expr as KExpr<KBvSort>, true
+            )
+        )
     }
 
-    override fun defaultSymbolic(mem: Memory, isLocal: Boolean) = with(mem.ctx) {
-        0.0.expr.toSymbolic()
-    }
+    override fun fromDouble(double: Double, mem: Memory) =
+        Float64Symbolic(mem.ctx.mkFp(double, sort(mem)) as KExpr<KFp64Sort>)
 
-    override fun toString() = "FLOAT"
+    override fun asSymbolic(expr: KExpr<out KSort>, mem: Memory) =
+        Float64Symbolic(expr as KExpr<KFp64Sort>)
+
+    override fun sort(mem: Memory) = mem.ctx.mkFp64Sort()
+
+    override fun toString() = "FLOAT64"
 }
 
 class ComplexType : BaseType() {
-    override fun createSymbolic(name: String, mem: Memory, isLocal: Boolean) =
+    override fun createSymbolic(name: String, mem: Memory) =
         ComplexSymbolic(
-            mem.addConst("$name.Real", FloatType.floatSort(mem)).toSymbolic().floatExpr(mem),
-            mem.addConst("$name.Img", FloatType.floatSort(mem)).toSymbolic().floatExpr(mem)
+            mem.addConst("$name.Real", Float64Type().sort(mem)) as KExpr<KFp64Sort>,
+            mem.addConst("$name.Img", Float64Type().sort(mem)) as KExpr<KFp64Sort>
         )
 
-    override fun defaultSymbolic(mem: Memory, isLocal: Boolean) =
+    override fun defaultSymbolic(mem: Memory) =
         ComplexSymbolic(
-            FloatType.ZERO(mem),
-            FloatType.ZERO(mem),
+            Float64Type().zero(mem).expr as KExpr<KFp64Sort>,
+            Float64Type().zero(mem).expr as KExpr<KFp64Sort>
         )
 
     override fun toString() = "COMPLEX"
@@ -288,8 +381,11 @@ class UninterpretedType(val typeName: String) : BaseType(), SimpleType {
         }
     }
 
-    override fun defaultSymbolicExpr(mem: Memory, isLocal: Boolean): KExpr<out KSort> =
-        defaultSymbolic(mem, isLocal).expr
+    override fun createSymbolicExpr(name: String, mem: Memory): KExpr<out KSort> =
+        createSymbolic(name, mem).expr
+
+    override fun defaultSymbolicExpr(mem: Memory): KExpr<out KSort> =
+        defaultSymbolic(mem).expr
 
     override fun asSymbolic(expr: KExpr<out KSort>, mem: Memory) =
         UninterpretedSymbolic(expr as KExpr<KUninterpretedSort>)
@@ -297,10 +393,10 @@ class UninterpretedType(val typeName: String) : BaseType(), SimpleType {
     override fun sort(mem: Memory) =
         mem.ctx.mkUninterpretedSort(typeName)
 
-    override fun createSymbolic(name: String, mem: Memory, isLocal: Boolean) =
+    override fun createSymbolic(name: String, mem: Memory) =
         UninterpretedSymbolic(mem.ctx.mkConst(name, sort(mem)))
 
-    override fun defaultSymbolic(mem: Memory, isLocal: Boolean) =
+    override fun defaultSymbolic(mem: Memory) =
         UninterpretedSymbolic(mem.ctx.mkConst("nil", sort(mem)))
 
     override fun toString() = "UNINTERPRETED"
@@ -312,135 +408,117 @@ class UninterpretedType(val typeName: String) : BaseType(), SimpleType {
  *  it is used to get arrays of non-simple types working
  */
 class StarType(val elementType: Type, val fake: Boolean) : BaseType(), SimpleType {
+    override fun createSymbolicExpr(name: String, mem: Memory): KExpr<out KSort> =
+        AddressType().createSymbolicExpr(name, mem)
 
-    override fun defaultSymbolicExpr(mem: Memory, isLocal: Boolean): KExpr<out KSort> {
-        return IntType().defaultSymbolicExpr(mem, isLocal)
+    override fun defaultSymbolicExpr(mem: Memory): KExpr<out KSort> {
+        return AddressType().defaultSymbolicExpr(mem)
     }
 
     override fun asSymbolic(expr: KExpr<out KSort>, mem: Memory): Symbolic {
-        val globalStar = GlobalStarSymbolic(this, IntType().asSymbolic(expr as KExpr<KBv32Sort>, mem))
-        return if (fake)
-            globalStar.get(mem)
-        else
-            globalStar
+        return GlobalStarSymbolic("", this, Int64Symbolic(expr as KExpr<KBv64Sort>), fake)
     }
 
-    override fun sort(mem: Memory): KSort = intSort(mem)
+    override fun sort(mem: Memory): KSort = AddressType().sort(mem)
 
-    override fun createSymbolic(name: String, mem: Memory, isLocal: Boolean): Symbolic {
-        return if (isLocal) {
-            println("StarType $elementType")
-            LocalStarSymbolic(elementType.createSymbolic(name, mem, true))
-        } else {
-            val address = mem.addNewStarObject("", elementType.defaultSymbolic(mem, false))
-            val addressToAllGlobal = IntType().createSymbolic(name, mem, false)
-            // can point to any global object created before
-            mem.addCond(
-                mem.ctx.mkBvSignedLessOrEqualExpr(
-                    addressToAllGlobal.intExpr(),
-                    IntType.fromInt(address, mem).intExpr()
-                ).toSymbolic(), false
-            )
-            GlobalStarSymbolic(this, IntType.fromInt(address, mem))
-        }
+    override fun createSymbolic(name: String, mem: Memory): Symbolic {
+        val address = mem.addNewStarObject("", elementType.defaultSymbolic(mem))
+        val addressToAllGlobal = AddressType().createSymbolic(name, mem).int64(mem)
+
+        mem.addCond(
+            mem.ctx.mkBvSignedLessOrEqualExpr(
+                addressToAllGlobal.expr,
+                address.expr
+            ).toBoolSymbolic(), false
+        )
+        return GlobalStarSymbolic("", this, address, false)
     }
 
-    override fun defaultSymbolic(mem: Memory, isLocal: Boolean): Symbolic {
-        return NilLocalStarSymbolic(elementType)
-//        //        todo not nil
-//        //        todo does not == to all of the old objects
-//        return if (isLocal) {
-//            LocalStarSymbolic(elementType.defaultSymbolic(mem, true))
-//        } else {
-////            val address = mem.addNewStarObject("", elementType.defaultSymbolic(mem, false))
-//            NilLocalStarSymbolic(elementType)
-//        }
+    override fun defaultSymbolic(mem: Memory): Symbolic {
+        return NilLocalStarSymbolic(elementType, false)
     }
 
     override fun toString() = if (fake) {
-        "FakeStar($elementType)"
+        "F($elementType)"
     } else {
-        "Star($elementType)"
+        "*($elementType)"
     }
 }
 
+class ArraySimpleType(override val elementType: SimpleType, length: Int64Symbolic?) :
+    ArrayType(elementType, length), SimpleType {
 
-//class ArraySimpleType(override val elementType: SimpleType) :
-//    ArrayType(elementType, null), SimpleType {
-//    override fun defaultSymbolicExpr(mem: Memory, isLocal: Boolean): KExpr<out KSort> {
-//        return mem.ctx.mkArrayConst(
-//            mem.ctx.mkArraySort(IntType().sort(mem), elementType.sort(mem)),
-//            elementType.defaultSymbolicExpr(mem, isLocal) as KExpr<KSort>
-//        )
-//    }
-//
-//    override fun asSymbolic(expr: KExpr<out KSort>, mem: Memory): Symbolic {
-//        return InfiniteSimpleArraySymbolic(elementType, expr as KArrayConst<KArraySort<KBv32Sort, KSort>, KSort>)
-////        println("ArrayType:asSymbolic")
-////        return if (expr.sort == intSort(mem))
-////            mem.getStarObject(GlobalStarSymbolic(StarType(elementType), expr as KExpr<KBv32Sort>))
-////        else
-////            error("should be link")
-//    }
-//
-//    override fun sort(mem: Memory) =
-//        mem.ctx.mkArraySort(intSort(mem), elementType.sort(mem))
-//
-//    override fun toString() = "S[${length ?: "_"}]($elementType)"
-//}
+    override fun createSymbolicExpr(
+        name: String,
+        mem: Memory
+    ): KExpr<out KSort> =
+        mem.ctx.mkArrayConst(
+            mem.ctx.mkArraySort(AddressType().sort(mem), elementType.sort(mem)),
+            elementType.createSymbolicExpr(name, mem) as KExpr<KSort>
+        )
 
-open class ArrayType(open val elementType: Type, val length: IntSymbolic? = null) : BaseType() {
-    override fun createSymbolic(name: String, mem: Memory, isLocal: Boolean): Symbolic {
-        val nonNullLength = length?.int() ?: (mem.addConst("${name}.len", intSort(mem)).toSymbolic().int())
-        return FiniteArraySymbolic(elementType, nonNullLength, mem)
-    }
+    override fun defaultSymbolicExpr(mem: Memory): KExpr<out KSort> =
+        mem.ctx.mkArrayConst(
+            mem.ctx.mkArraySort(AddressType().sort(mem), elementType.sort(mem)),
+            elementType.defaultSymbolicExpr(mem) as KExpr<KSort>
+        )
 
-    override fun defaultSymbolic(mem: Memory, isLocal: Boolean): Symbolic {
-        val nonNullLength = length?.int() ?: IntType().defaultSymbolic(mem, isLocal)
-        return FiniteArraySymbolic(elementType, nonNullLength.int(), mem)
-    }
+    override fun asSymbolic(expr: KExpr<out KSort>, mem: Memory): Symbolic =
+        InfiniteArraySymbolic(
+            StarType(elementType, true),
+            expr as KArrayConst<KArraySort<KBv64Sort, KSort>, KSort>
+        )
 
-    override fun toString() = "[${length ?: "_"}]($elementType)"
+    override fun sort(mem: Memory): KSort =
+        mem.ctx.mkArraySort(AddressType().sort(mem), elementType.sort(mem))
+
+    override fun toString() = "[]($elementType)"
 }
 
-// methods are unsupported
-class NamedType(val name: String, val underlying: StructType) : BaseType() {
-    override fun createSymbolic(name: String, mem: Memory, isLocal: Boolean) =
-        NamedSymbolic(this, underlying.createSymbolic(name, mem, isLocal))
+open class ArrayType(open val elementType: Type, val length: Int64Symbolic?) :
+    BaseType() {
 
-    override fun defaultSymbolic(mem: Memory, isLocal: Boolean) =
-        NamedSymbolic(this, underlying.defaultSymbolic(mem, isLocal).struct())
+    override fun createSymbolic(name: String, mem: Memory): Symbolic {
+        val nonNullLength =
+            length ?: (mem.addConst("${name}.len", AddressType().sort(mem)).let { Type.toSymbolic(it) }).int64(mem)
+        return FiniteArraySymbolic(elementType, nonNullLength, mem, false)
+    }
+
+    override fun defaultSymbolic(mem: Memory): Symbolic {
+        val nonNullLength = length ?: AddressType().defaultSymbolic(mem).int64(mem)
+        return FiniteArraySymbolic(elementType, nonNullLength, mem, true)
+    }
+
+    fun toSimple(): SimpleType =
+        ArraySimpleType(elementType as? SimpleType ?: StarType(elementType, true), length)
+//    todo star should be fake?
+
+    override fun toString() = "[]($elementType)"
+}
+
+/**
+ * methods are unsupported
+ *
+ * underlying is initialized lazily to support recursive structures
+ */
+class NamedType(val name: String, underlyingLazy: Lazy<StructType>) : BaseType() {
+    val underlying: StructType by underlyingLazy
+
+    override fun createSymbolic(name: String, mem: Memory) =
+        NamedSymbolic(this, underlying.createSymbolic(name, mem))
+
+    override fun defaultSymbolic(mem: Memory) =
+        NamedSymbolic(this, underlying.defaultSymbolic(mem).struct(mem))
 
     override fun toString() = "NAMED:$name"
 }
 
-data object FunctionType : BaseType() {
-    override fun createSymbolic(name: String, mem: Memory, isLocal: Boolean) =
+data object UnknownType : BaseType() {
+    override fun createSymbolic(name: String, mem: Memory) =
         error("can't be implemented")
 
-    override fun defaultSymbolic(mem: Memory, isLocal: Boolean) =
+    override fun defaultSymbolic(mem: Memory) =
         error("can't be implemented")
 
-    override fun toString() = "FUNCTION"
+    override fun toString() = "UNKNOWN TYPE"
 }
-
-//class FakeStarType(val type: Type) : BaseType(), SimpleType {
-//    override fun defaultSymbolicExpr(mem: Memory, isLocal: Boolean): KExpr<out KSort> {
-//        return IntType().defaultSymbolicExpr(mem, isLocal)
-//    }
-//
-//    override fun asSymbolic(expr: KExpr<out KSort>, mem: Memory): Symbolic {
-//        TODO("Not yet implemented")
-//    }
-//
-//    override fun sort(mem: Memory) = intSort(mem)
-//
-//    override fun createSymbolic(name: String, mem: Memory, isLocal: Boolean) =
-//        IntType().createSymbolic(name, mem, isLocal)
-//
-//    override fun defaultSymbolic(mem: Memory, isLocal: Boolean): Symbolic {
-//        TODO("Not yet implemented")
-//    }
-//
-//    override fun toString() = "FakeStar($type)"
-//}

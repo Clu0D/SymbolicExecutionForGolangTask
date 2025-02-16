@@ -1,56 +1,39 @@
 package interpreter.ssa
 
-import interpreter.Interpreter.Companion.knownFunctions
-import interpreter.Interpreter.Companion.visitOp
 import io.ksmt.KContext
 import io.ksmt.sort.KSort
+import kotlinx.coroutines.yield
 import memory.*
+import memory.ssa.SsaExecutionStatistics
 import memory.ssa.SsaState
 
-class StaticSsaInterpreter(
+open class SsaStaticInterpreter(
     functionDeclarations: Map<String, FuncSsaNode>
-) : SsaInterpreter(functionDeclarations) {
+) : SsaInterpreter() {
 
-    private fun createDefaultParam(value: SsaNode, mem: Memory): Symbolic {
-        return when (value) {
-            is LinkSsaNode -> createDefaultParam(value.deLink(), mem)
-            is ParamSsaNode -> {
-                val name = value.name
-                val type = Type.fromSsa(value.valueType!!, mem, true)
-                println("createDefault $name $type")
-
-                return type.defaultSymbolic(mem, false)
-            }
-
-            else -> error("should be link or param")
-        }
+    open fun updateDistancesToTerminal(vararg removedNodes: SsaNode) {
+        // static does nothing
     }
 
-    override fun startFunction(
+    open fun isNodeUseful(node: BlockSsaNode): Boolean {
+        // static does nothing
+        return true
+    }
+
+    override suspend fun startFunction(
         func: FuncSsaNode,
         args: List<Symbolic?>?,
         ctx: KContext,
         initialState: SsaState
     ): Pair<Collection<SymbolicResult>, Map<String, KSort>> {
-
-        println("FUNCTION!@#@!\t\t${func.name}")
-
-        val initializedArgs = func.params.mapIndexed { i, node ->
-            statisticsStartVisit(node, initialState)
-            (args?.getOrNull(i) ?: createDefaultParam(node, initialState.mem)).also {
-                statisticsEndVisit(node, initialState)
-            }
-        }.toMutableList<Symbolic?>()
-
-        initialState.waitingNodes.add(
-            SsaStartFunctionNode(func) to initializedArgs
-        )
+        prepareState(func, args, initialState)
 
         return interpretLoop(initialState) to initialState.mem.createdConsts
     }
 
-    private fun interpretLoop(state: SsaState): Collection<SymbolicResult> {
-        while (state.waitingNodes.size > 0) {
+    private suspend fun interpretLoop(state: SsaState): Collection<SymbolicResult> {
+        while (state.waitingNodes.isNotEmpty()) {
+            yield()
             val (cond, result, size) = interpretStep(state)
 //            execution ended
             if (size == 0) return listOf(
@@ -62,7 +45,7 @@ class StaticSsaInterpreter(
         error("should not happen")
     }
 
-    protected open fun statisticsStartVisit(node: SsaNode, state: SsaState) {
+    override fun statisticsStartVisit(node: SsaNode, state: SsaState) {
         state.time++
         state.mem.addInstrToPath(node)
         val oldInfo = state.executionStatistics.startVisit(node)
@@ -71,7 +54,7 @@ class StaticSsaInterpreter(
         }
     }
 
-    protected open fun statisticsEndVisit(node: SsaNode, state: SsaState) {
+    override fun statisticsEndVisit(node: SsaNode, state: SsaState) {
         state.executionStatistics.endVisit(node)
     }
 
@@ -101,8 +84,6 @@ class StaticSsaInterpreter(
         val newResults = mutableListOf<Symbolic?>()
         val childNodes = (function(state.mem, args) + null)
             .map { Pair(it, newResults) }
-
-        println("\t+\t ${childNodes.dropLast(1).map { it.first?.printItself() }}")
         state.waitingNodes.addAll(0, childNodes)
         state.startedNodes.add(node)
     }
@@ -115,8 +96,12 @@ class StaticSsaInterpreter(
         val pathCond = mem.fullPathCond()
 
         val (childNode, childrenResults) = waitingNodes.removeFirst()
-
-        if (childNode == null) {
+        if (childNode is SsaStopNode ||
+            childrenResults.filterNotNull().any { it is StopSymbolic }
+        ) {
+            if (print) println("stop")
+            return Triple(pathCond, null, -1)
+        } else if (childNode == null) {
             // end of started node
             var startedNode = startedNodes.removeLast()
             statisticsEndVisit(startedNode, state)
@@ -128,11 +113,20 @@ class StaticSsaInterpreter(
                     childrenResults
                 )
             }
-            println("finishing \t${startedNode.printItself()}")
+            if (print && startedNode !is LinkToSsaNode)
+                println("finishing \t${startedNode.printItself()}")
 
-            val result = translator(startedNode).second(mem, childrenResults)
+            val result = translator(startedNode, state.executionStatistics).second(mem, childrenResults)
+                ?.getDereferenced(mem)
 
-            print("\t\t${result} \t\t\t:${result?.type}")
+            if (print && startedNode !is LinkToSsaNode)
+                println("\t\t\t\t${result?.type}")
+
+            if (result == StopSymbolic) {
+                if (print)
+                    println("stop")
+                return Triple(pathCond, null, -1)
+            }
 
             if (result != null && startedNode.id != 0) {
                 if (mem.readValue(startedNode) != result) {
@@ -140,25 +134,23 @@ class StaticSsaInterpreter(
                 }
             }
 
-            println()
-
             if (waitingNodes.isEmpty()) {
                 return Triple(pathCond, result, startedNodes.size)
             }
 
             val (nextWaiting, nextResults) = waitingNodes.first()
             nextResults.add(result)
-        } else if (childNode is SsaStopNode) {
-            println("stop")
-            return Triple(pathCond, null, -1)
         } else {
-            println("starting \t${childNode.printItself()}")
-
             statisticsStartVisit(childNode, state)
 
             val wasDoneDynamically = startDynamicNodeInterpretation(state, childNode, childrenResults)
             if (!wasDoneDynamically) {
-                startNodeInterpretation(state, childNode, translator(childNode).first, childrenResults)
+                startNodeInterpretation(
+                    state,
+                    childNode,
+                    translator(childNode, state.executionStatistics).first,
+                    childrenResults
+                )
             }
         }
         return Triple(pathCond, null, waitingNodes.size + startedNodes.size)
@@ -171,13 +163,16 @@ class StaticSsaInterpreter(
      *
      * second gets the result of those nodes and does something with it
      */
-    protected fun translator(node: SsaNode): Pair<(Memory, List<Symbolic?>) -> List<SsaNode>, (Memory, List<Symbolic?>) -> Symbolic?> =
+    protected fun translator(
+        node: SsaNode,
+        executionStatistics: SsaExecutionStatistics
+    ): Pair<(Memory, List<Symbolic?>) -> List<SsaNode>, (Memory, List<Symbolic?>) -> Symbolic?> =
         when (node) {
             is UnOpSsaNode -> Pair(
                 { _, _ ->
                     listOf(node.x)
                 }, { mem, args ->
-                    visitOp(node.op, args, mem)
+                    visitOp(node.op, args.requireNoNulls(), mem)
                 }
             )
 
@@ -185,21 +180,17 @@ class StaticSsaInterpreter(
                 { _, _ ->
                     listOf(node.x, node.y)
                 }, { mem, args ->
-                    visitOp(node.op, args, mem)
+                    visitOp(node.op, args.requireNoNulls(), mem)
                 }
             )
 
             is BlockSsaNode -> Pair(
                 { _, _ ->
-//                    todo we can use Phi nodes lazily?
-                    node.instr?.filter {
-                        true
-//                        when (it) {
-//                            is PhiSsaNode -> false
-//                            is LinkSsaNode -> it.deLink() !is PhiSsaNode
-//                            else -> true
-//                        }
-                    } ?: listOf()
+                    if (isNodeUseful(node)) {
+                        node.instr ?: listOf()
+                    } else {
+                        listOf(SsaStopNode())
+                    }
                 }, { _, _ ->
                     null
                 }
@@ -221,7 +212,7 @@ class StaticSsaInterpreter(
                         is ListSymbolic -> when (result.list.size) {
                             0 -> null
                             1 -> result.list[0]
-                            else -> TODO()
+                            else -> result
                         }
 
                         else -> result
@@ -250,13 +241,10 @@ class StaticSsaInterpreter(
                             }
                         }
 
+                        executionStatistics.pushToStack()
                         mem.enterFunction()
-//                    mem.addArgsSymbolic(
-//                        deLinkedParams.map { it.name }.associateWith { null }.toMap(),
-//                        args
-//                    )
+
                         deLinkedParams.zip(args.requireNoNulls()).forEach { (param, paramValue) ->
-                            println("_id:${param.id} $paramValue")
                             mem.writeValue(param, paramValue)
                         }
 
@@ -266,36 +254,27 @@ class StaticSsaInterpreter(
                     if (node.functionNode.body == null)
                     // external function
                         args[0]
-                    else
+                    else {
+                        executionStatistics.popFromStack()
                         mem.exitFunction().combineToSymbolic(mem)
+                    }
                 }
             )
 
             is FuncSsaNode -> TODO()
-//            is FuncSsaNode -> Pair(
-//                { _, _ ->
-//                    println("FUNC__")
-//                    listOf()
-//                }, { _, _ ->
-//                    Symbolic(FunctionType())
-//                }
-//            )
 
             is IfSsaNode -> Pair(
-                { _, _ ->
+                { mem, _ ->
                     listOf(
                         node.cond,
                         SsaBranchControlNode(node.body, node.elseBody)
                     )
-                }, { _, _ ->
-//                    todo return something?
-                    null
-                }
+                }, { _, _ -> null }
             )
 
             is SsaBranchControlNode -> Pair(
-                { _, args ->
-                    val cond = args[0]!!.bool()
+                { mem, args ->
+                    val cond = args[0]!!.bool(mem)
                     listOf(
                         SsaStartBranchNode(true, node.body, cond, null),
                         SsaEndBranchNode(true),
@@ -347,7 +326,6 @@ class StaticSsaInterpreter(
 
             is JumpSsaNode -> Pair(
                 { _, _ ->
-                    println("jump")
                     listOf(node.successor)
                 }, { _, _ ->
 //                    todo args.last()?
@@ -358,11 +336,12 @@ class StaticSsaInterpreter(
             is PanicSsaNode -> Pair(
                 { mem, _ ->
                     mem.addError(
-                        (BoolType.TRUE(mem)),
+                        (BoolType.`true`(mem)),
                         node.x
                     )
                     listOf()
                 }, { _, _ ->
+                    updateDistancesToTerminal(node)
                     null
                 }
             )
@@ -379,21 +358,29 @@ class StaticSsaInterpreter(
             is StoreSsaNode -> Pair(
                 { _, _ -> listOf(node.addr, node.value) },
                 { mem, args ->
-                    println("args[0] ${args[0]}")
-                    println("args[1] ${args[1]}")
-                    val address = args[0]!! as StarSymbolic
-                    val value = args[1]!!
+                    when (val address = args[0]!!) {
+                        is StarSymbolic -> {
+                            val value = args[1]!!
+                            node.value.parentF
+                            if (address.put(value, mem)) {
+                                null
+                            } else {
+                                StopSymbolic
+                            }
+                        }
 
-                    address.put(value, mem)
-                    null
+                        else -> error("store allows only to use *")
+                    }
+
                 }
             )
 
             is AllocSsaNode -> Pair(
                 { _, _ -> listOf() },
                 { mem, _ ->
-                    println("alloc ${Type.fromSsa(node.valueType!!, mem, true)}")
-                    Type.fromSsa(node.valueType!!, mem, true).createSymbolic(node.name, mem, true)
+                    // todo true!
+                    val type = Type.fromSsa(node.valueType!!, mem, false) as StarType
+                    visitAlloc(type.elementType, mem)
                 }
             )
 
@@ -421,51 +408,30 @@ class StaticSsaInterpreter(
                 { mem, _ ->
                     val nameParts = node.name.split(":")
                     val value = nameParts[0]
+
                     when (val type = Type.fromSsa(node.valueType!!, mem, false)) {
-                        is FunctionType -> Symbolic(FunctionType)
+//                        is FunctionType -> Symbolic(FunctionType)
 
                         is BoolType -> BoolType.fromBool(value.toBoolean(), mem)
-                        is IntType -> IntType.fromInt(value.toInt(), mem)
-                        is FloatType -> FloatType.fromDouble(value.toDouble(), mem)
 
-                        is ArrayType -> if (value == "nil") {
-                            type.defaultSymbolic(mem, true)
-                        } else {
-                            TODO()
-                        }
-//                        is ArraySimpleType -> if (value == "nil") {
-//                            type.defaultSymbolic(mem, true)
-//                        } else {
-//                            TODO()
-//                        }
+                        is Int8Type -> Int8Type().fromInt(value.toLong(), mem)
+                        is Int16Type -> Int16Type().fromInt(value.toLong(), mem)
+                        is Int32Type -> Int32Type().fromInt(value.toLong(), mem)
+                        is Int64Type -> Int64Type().fromInt(value.toLong(), mem)
 
-                        is StructType -> TODO()
+                        is Float32Type -> Float32Type().fromDouble(value.toDouble(), mem)
+                        is Float64Type -> Float64Type().fromDouble(value.toDouble(), mem)
 
-                        is ComplexType -> TODO()
-                        is NamedType -> TODO()
-                        is ListType -> TODO()
-                        is StarType -> {
-                            if (value != "nil")
-                                error("should be nil")
-                            NilLocalStarSymbolic(type)
-                        }
+                        is ArrayType if (value == "nil") ->
+                            NilLocalStarSymbolic(type, true)
+
+                        is StarType  if (value == "nil") ->
+                            NilLocalStarSymbolic(type, true)
 
                         is UninterpretedType -> UninterpretedType.fromString(value, mem)
-//                        is SignatureTypeNode ->
-//                            Symbolic(FunctionType(), node.name)
-//
-//                        else -> {
-//                            val nameParts = node.name.split(":")
-//                            when (nameParts.getOrNull(1)) {
-//                                "int" -> IntType.fromInt(nameParts[0].toInt(), mem)
-//                                "bool" -> BoolType.fromBool(nameParts[0].toBoolean(), mem)
-//                                "float64" -> FloatType.fromDouble(nameParts[0].toDouble(), mem)
-//                                "string" -> UninterpretedSymbolic.create(nameParts[0], mem)
-//                                null -> TODO()
-////                                    mem.readValue(nameParts[0])
-//                                else -> TODO(nameParts.getOrNull(1)!!)
-//                            }
-//                        }
+
+                        UnknownType -> UninterpretedType.fromString("error", mem)
+                        else -> TODO("$type")
                     }
                 }
             )
@@ -482,49 +448,85 @@ class StaticSsaInterpreter(
                     if (fromType == toType)
                         value
                     else when {
-                        fromType == IntType() && toType == FloatType() ->
-                            value.floatExpr(mem).toSymbolic()
+                        fromType is IntType && toType is Float64Type ->
+                            Float64Type().round(value.int(mem), mem)
 
+                        fromType is IntType && toType is Float32Type ->
+                            Float32Type().round(value.int(mem), mem)
+
+                        // bv2int works in ksmt, while int2bv is not supported
+                        // it is possible to do that with some bit magic
+//                        fromType is IntType && toType is Int64Type ->
                         else -> TODO("conversion $fromType -> $toType")
                     }
                 }
             )
 
-            is ExtractSsaNode -> TODO()
+            is ExtractSsaNode -> Pair(
+                { _, args ->
+                    listOf(SsaKeepResult(ListSymbolic(args.requireNoNulls())))
+                },
+                { mem, args ->
+                    (args[0]!!.list(mem)).list[node.index]
+                }
+            )
 
             is FieldAddrSsaNode -> Pair(
                 { _, _ ->
                     listOf(node.x)
                 },
                 { mem, args ->
-//                    node.index
-                    println("FIELD ${args[0]}")
-                    val x = args[0]!!.star()
-                    x.findField(node.field)
+                    val x = args[0]!!.star(mem)
+
+                    x.findField(node.field, mem)
                 }
             )
 
-            is GlobalSsaNode -> TODO()
             is IndexAddrSsaNode -> Pair(
                 { _, _ ->
                     listOf(node.x, node.index)
                 },
                 { mem, args ->
-                    val x = args[0]!!.arrayFinite()
-                    val index = args[1]!!.int()
-                    println("indexAddr ${x.type}")
-                    x.get(index, mem)
+                    val address = args[1]!!.int64(mem)
+                    when (val x = args[0]!!.getDereferenced(mem)) {
+                        is FiniteArraySymbolic -> ArrayStarSymbolic(address, x, false)
+                        is StarSymbolic -> ArrayStarSymbolic(address, x.dereference().get(mem).array(mem), false)
+                        else -> error("only [] or *[]")
+                    }
                 }
             )
 
-            is MakeInterfaceSsaNode -> TODO()
-            is MakeSliceSsaNode -> TODO()
+            /**
+             * that's just a stub for tests to work,
+             * interfaces are not supported
+             */
+            is MakeInterfaceSsaNode -> Pair(
+                { _, _ ->
+                    listOf(node.x)
+                },
+                { mem, args ->
+                    val i = args.last()
+                    LocalStarSymbolic(UninterpretedType.fromString("$i", mem), false)
+                }
+            )
+
+            is MakeSliceSsaNode -> Pair(
+                { _, _ -> listOf(node.len) },
+                { mem, args ->
+                    val len = args[0]!!
+
+                    val type = Type.fromSsa(node.valueType!!, mem, true) as ArrayType
+                    val array = visitAlloc(type, mem)
+
+                    visitSlice(len, array, mem)
+                }
+            )
+
             is ParamSsaNode -> Pair(
                 { _, _ -> listOf() },
                 { mem, _ -> mem.readValue(node) }
             )
 
-//            TODO can be done better for dynamic
             is PhiSsaNode -> Pair(
                 { mem, _ ->
                     var chosenBlock: SsaNode? = null
@@ -533,8 +535,6 @@ class StaticSsaInterpreter(
                         if (chosenBlock != null)
                             break
                     }
-                    println("ins${mem.instrOnPath().map { it.printItself() }}")
-//                    println("del${node.chosenBlock.map { it.printItself() }}")
                     if (chosenBlock == null) {
                         error("unreachable phi")
                     }
@@ -553,23 +553,7 @@ class StaticSsaInterpreter(
                     val x = args[0]!!
                     val high = args.getOrNull(1)
 
-                    when {
-                        high == null -> x
-                        x is StarSymbolic -> {
-                            when (val obj = x.get(mem)) {
-                                is FiniteArraySymbolic ->
-                                    FiniteArraySymbolic(
-                                        high as IntSymbolic,
-                                        mem,
-                                        obj
-                                    )
-
-                                else -> TODO(obj.type.toString())
-                            }
-                        }
-
-                        else -> TODO(x.type.toString())
-                    }
+                    visitSlice(high, x, mem)
                 }
             )
 
@@ -599,6 +583,11 @@ class StaticSsaInterpreter(
                 { _, _ -> null }
             )
 
-            is UnknownSsaNode -> error("unknown node in translator: ${node.printItself()}")
+            is UnknownSsaNode -> Pair(
+                { _, _ -> listOf() },
+                { _, _ -> null }
+            )
+
+            is GlobalSsaNode -> TODO()
         }
 }

@@ -1,38 +1,50 @@
 package memory
 
 import io.ksmt.expr.KArrayConst
+import io.ksmt.expr.KExpr
 import io.ksmt.sort.KArraySort
-import io.ksmt.sort.KBv32Sort
+import io.ksmt.sort.KBv64Sort
+import io.ksmt.sort.KFp64Sort
 import io.ksmt.sort.KSort
 
-interface AbstractArraySymbolic {
+interface AbstractArray {
     val elementType: Type
 
-    fun eq(array: AbstractArraySymbolic, mem: Memory): BoolSymbolic {
-        if (array.elementType != this.elementType)
-            return BoolType.FALSE(mem)
-        return eqSameType(array, mem)
-    }
+    fun get(address: Int64Symbolic, mem: Memory): Symbolic
 
-    fun eqSameType(array: AbstractArraySymbolic, mem: Memory): BoolSymbolic
+    fun put(address: Int64Symbolic, value: Symbolic, mem: Memory)
 
-    fun get(address: IntSymbolic, mem: Memory): Symbolic
-
-    fun put(address: IntSymbolic, value: Symbolic, mem: Memory)
-
-    fun put(address: Int, value: Symbolic, mem: Memory) {
-        put(IntType.fromInt(address, mem), value, mem)
+    fun put(address: Long, value: Symbolic, mem: Memory) {
+        put(AddressType().fromInt(address, mem).int64(mem), value, mem)
     }
 }
 
-class FiniteArraySymbolic(
-    private val length: IntSymbolic,
+class InfiniteArraySymbolic(
+    val elementType: SimpleType,
+    val arrayExpr: KArrayConst<KArraySort<KBv64Sort, KSort>, KSort>
+) : Symbolic(ArrayType(elementType, null)) {
+    fun toNormalArray(): InfiniteSimpleArray {
+        return if (elementType is StarType)
+            InfiniteStarArray(
+                elementType,
+                arrayExpr
+            )
+        else InfiniteSimpleArray(
+            elementType,
+            arrayExpr
+        )
+    }
+}
+
+open class FiniteArraySymbolic(
+    val length: Int64Symbolic,
     mem: Memory,
-    private val innerArray: InfiniteArraySymbolic
-) : Symbolic(ArrayType(innerArray.elementType, length)), AbstractArraySymbolic {
+    val innerArray: InfiniteSimpleArray
+) : Symbolic(ArrayType(innerArray.elementType, length)), AbstractArray {
     init {
         mem.addCond(
-            mem.ctx.mkBvSignedGreaterOrEqualExpr(length.intExpr(), IntType.ZERO(mem)).toSymbolic(),
+            mem.ctx.mkBvSignedGreaterOrEqualExpr(length.expr, AddressType().zeroExpr(mem) as KExpr<KBv64Sort>)
+                .toBoolSymbolic(),
             false
         )
     }
@@ -41,46 +53,57 @@ class FiniteArraySymbolic(
 
     constructor(
         elementType: Type,
-        length: IntSymbolic,
-        mem: Memory
-    ) : this(length, mem, InfiniteArraySymbolic.create(elementType, mem))
+        length: Int64Symbolic,
+        mem: Memory,
+        isDefault: Boolean
+    ) : this(
+        length,
+        mem,
+        InfiniteStarArray(
+            StarType(elementType, false),
+            mem,
+            isDefault
+        )
+    )
 
     constructor(
-        length: IntSymbolic,
+        length: Int64Symbolic,
+        mem: Memory,
+        infSymbolic: InfiniteArraySymbolic
+    ) : this(
+        length,
+        mem,
+        infSymbolic.toNormalArray()
+    )
+
+    constructor(
+        length: Int64Symbolic,
         mem: Memory,
         innerArray: FiniteArraySymbolic
     ) : this(length, mem, innerArray.innerArray) {
         mem.addCond(
-            mem.ctx.mkBvSignedLessOrEqualExpr(length.intExpr(), innerArray.length.intExpr()).toSymbolic(),
+            mem.ctx.mkBvSignedLessOrEqualExpr(length.expr, innerArray.length.expr).toBoolSymbolic(),
             false
         )
     }
 
-    override fun eqSameType(array: AbstractArraySymbolic, mem: Memory): BoolSymbolic {
-        array as FiniteArraySymbolic
-        return mem.ctx.mkAnd(
-            mem.ctx.mkEq(array.length.intExpr(), length.intExpr()),
-            array.innerArray.eq(innerArray, mem).boolExpr()
-        ).toSymbolic()
-    }
-
-    private fun checkBounds(index: IntSymbolic, mem: Memory) {
+    private fun checkBounds(index: Int64Symbolic, mem: Memory) {
         mem.addError(
-            mem.ctx.mkBvSignedLessExpr(index.expr, IntType.ZERO(mem)).toSymbolic(),
+            mem.ctx.mkBvSignedLessExpr(index.expr, AddressType().zeroExpr(mem) as KExpr<KBv64Sort>).toBoolSymbolic(),
             "out of bounds"
         )
         mem.addError(
-            mem.ctx.mkBvSignedGreaterOrEqualExpr(index.expr, length.expr).toSymbolic(),
+            mem.ctx.mkBvSignedGreaterOrEqualExpr(index.expr, length.expr).toBoolSymbolic(),
             "out of bounds"
         )
     }
 
-    override fun get(address: IntSymbolic, mem: Memory): Symbolic {
+    override fun get(address: Int64Symbolic, mem: Memory): StarSymbolic {
         checkBounds(address, mem)
-        return innerArray.get(address, mem)
+        return innerArray.get(address, mem) as StarSymbolic
     }
 
-    override fun put(address: IntSymbolic, value: Symbolic, mem: Memory) {
+    override fun put(address: Int64Symbolic, value: Symbolic, mem: Memory) {
         checkBounds(address, mem)
         return innerArray.put(address, value, mem)
     }
@@ -90,195 +113,198 @@ class FiniteArraySymbolic(
     override fun toString() = "FinArr($elementType)"
 }
 
-interface InfiniteArraySymbolic : AbstractArraySymbolic {
+abstract class InfiniteArray(type: ArrayType) : AbstractArray {
+    override val elementType: Type = type.elementType
+
     companion object {
-        fun create(elementType: Type, mem: Memory): InfiniteArraySymbolic = when (elementType) {
-//            is StarType -> InfiniteStarArraySymbolic(elementType, mem)
+        fun create(elementType: Type, mem: Memory, isDefault: Boolean): InfiniteArray {
+            return when (elementType) {
+                is StarType -> InfiniteStarArray(elementType, mem, isDefault)
 
-            is SimpleType -> InfiniteSimpleArraySymbolic(elementType, mem)
+                is SimpleType -> InfiniteSimpleArray(elementType, mem, isDefault)
+                is ArrayType -> InfiniteArraysArray(elementType, mem, isDefault)
 
-            is ComplexType -> InfiniteComplexArraySymbolic(
-                InfiniteSimpleArraySymbolic(FloatType(), mem),
-                InfiniteSimpleArraySymbolic(FloatType(), mem)
-            )
-
-            is StructType -> {
-                InfiniteStructArraySymbolic(
-                    elementType,
-                    (elementType.fields + (":id" to IntType())).toMap()
-                        .mapValues { (name, type) ->
-                            create(type, mem)
-                        }
+                is ComplexType -> InfiniteComplexArray(
+                    InfiniteSimpleArray(Float64Type(), mem, isDefault),
+                    InfiniteSimpleArray(Float64Type(), mem, isDefault)
                 )
-            }
 
-            is NamedType -> {
-                // todo something named????
-                InfiniteStructArraySymbolic(
-                    elementType.underlying,
-                    (elementType.underlying.fields + (":id" to IntType())).toMap()
-                        .mapValues { (name, type) ->
-                            create(type, mem)
-                        }
-                )
-            }
+                is StructType ->
+                    InfiniteStructArray(elementType, mem, isDefault)
 
-            else -> TODO("array creation for type $elementType")
+                is NamedType ->
+                    // todo something named????
+                    InfiniteStructArray(elementType.underlying, mem, isDefault)
+
+                else -> error("array creation for type $elementType")
+            }
         }
     }
 }
 
-//class InfiniteArraysArraySymbolic(elementType: ArrayType, mem: Memory) : InfiniteArraySymbolic(elementType) {
-//    private val arrayExprs: KArrayConst<KArraySort<KBv32Sort, KSort>, KSort> =
-//        mem.ctx.mkArrayConst(
-//            elementType.sort(mem),
-//            elementType.elementType.defaultSymbolic(mem, true).expr(mem)
-//        )
-//
-//    override fun eqSameType(array: AbstractArraySymbolic, mem: Memory): BoolSymbolic {
-//        array as InfiniteArraysArraySymbolic
-//        return mem.ctx.mkEq(arrayExprs, array.arrayExprs).toSymbolic()
-//    }
-//
-//    override fun get(address: IntSymbolic, mem: Memory): Symbolic {
-//        val value = arrayExprs.get(address, mem)
-//        return FiniteArraySymbolic(size, array, mem)
-//    }
-//
-//    override fun put(address: IntSymbolic, value: Symbolic, mem: Memory) {
+class InfiniteArraysArray(
+    arrayElementType: ArrayType,
+    mem: Memory,
+    isDefault: Boolean
+) : InfiniteArray(ArrayType(StarType(arrayElementType, true), null)) {
+    private val len = InfiniteSimpleArray(AddressType(), mem, isDefault)
+
+    private val array = InfiniteSimpleArray(arrayElementType.toSimple(), mem, isDefault)
+
+//    override fun eqSameType(array: AbstractArray, mem: Memory): BoolSymbolic {
 //        TODO("Not yet implemented")
 //    }
-//}
 
-class InfiniteStructArraySymbolic(
-    override val elementType: StructType,
-    val fields: Map<String, InfiniteArraySymbolic>
-) : Symbolic(ArrayType(elementType)), InfiniteArraySymbolic {
-    override fun eqSameType(array: AbstractArraySymbolic, mem: Memory): BoolSymbolic {
-        array as InfiniteStructArraySymbolic
-        return array.fields[":id"]!!.eq(fields[":id"]!!, mem)
+    override fun get(address: Int64Symbolic, mem: Memory): StarSymbolic {
+        val lenI = len.get(address, mem).int64(mem)
+
+        val arrI = array.get(address, mem).getDereferenced(mem) as InfiniteArraySymbolic
+
+        return LocalStarSymbolic(
+            FiniteArraySymbolic(
+                lenI,
+                mem,
+                arrI.toNormalArray()
+            ), true
+        )
     }
 
-    override fun get(address: IntSymbolic, mem: Memory): Symbolic {
+    override fun put(address: Int64Symbolic, value: Symbolic, mem: Memory) {
+        val finiteArray = value.array(mem)
+
+        len.put(address, finiteArray.length, mem)
+        array.put(address, finiteArray.innerArray.toSymbolic(), mem)
+    }
+}
+
+class InfiniteStructArray(
+    override val elementType: StructType,
+    val mem: Memory,
+    isDefault: Boolean
+) : InfiniteArray(ArrayType(elementType, null)) {
+    val fields: Map<String, InfiniteArray> =
+        (elementType.fields + (":id" to AddressType())).toMap()
+            .mapValues { (name, type) ->
+                create(type, mem, isDefault)
+            }
+
+//    override fun eqSameType(array: AbstractArray, mem: Memory): BoolSymbolic {
+//        array as InfiniteStructArray
+//        return array.fields[":id"]!!.eq(fields[":id"]!!, mem)
+//    }
+
+    override fun get(address: Int64Symbolic, mem: Memory): Symbolic {
         return StructSymbolic(
             elementType,
             fields.mapValues { (_, field) -> field.get(address, mem) }.toMutableMap()
         )
     }
 
-    override fun put(address: IntSymbolic, value: Symbolic, mem: Memory) {
-        val x = value as NamedType
-
-        TODO("Not yet implemented")
+    override fun put(address: Int64Symbolic, value: Symbolic, mem: Memory) {
+        (value.named(mem)).underlying.fields.map { (name, fieldValue) ->
+            fields[name]!!.put(address, fieldValue, mem)
+        }
     }
 
     override fun toString() = "InfArr($elementType)"
 }
 
 // todo just a structure
-class InfiniteComplexArraySymbolic(
-    private val real: InfiniteSimpleArraySymbolic,
-    private val img: InfiniteSimpleArraySymbolic
-) : Symbolic(ArrayType(ComplexType())), InfiniteArraySymbolic {
-    override val elementType = ComplexType()
+class InfiniteComplexArray(
+    private val real: InfiniteSimpleArray,
+    private val img: InfiniteSimpleArray
+) : InfiniteArray(ArrayType(ComplexType(), null)) {
+//
+//    override fun eqSameType(array: AbstractArray, mem: Memory): BoolSymbolic {
+//        array as InfiniteComplexArray
+//        return mem.ctx.mkAnd(
+//            array.real.eq(real, mem).boolExpr(mem),
+//            array.img.eq(img, mem).boolExpr(mem)
+//        ).toBoolSymbolic()
+//    }
 
-    override fun eqSameType(array: AbstractArraySymbolic, mem: Memory): BoolSymbolic {
-        array as InfiniteComplexArraySymbolic
-        return mem.ctx.mkAnd(
-            array.real.eq(real, mem).boolExpr(),
-            array.img.eq(img, mem).boolExpr()
-        ).toSymbolic()
-    }
-
-    override fun get(address: IntSymbolic, mem: Memory) =
+    override fun get(address: Int64Symbolic, mem: Memory) =
         ComplexSymbolic(
-            real.get(address, mem).floatExpr(mem),
-            img.get(address, mem).floatExpr(mem)
+            real.get(address, mem) as KExpr<KFp64Sort>,
+            img.get(address, mem) as KExpr<KFp64Sort>
         )
 
-    override fun put(address: IntSymbolic, value: Symbolic, mem: Memory) {
-        real.put(address, value.complex().real, mem)
-        img.put(address, value.complex().img, mem)
+    override fun put(address: Int64Symbolic, value: Symbolic, mem: Memory) {
+        real.put(address, value.complex(mem).real, mem)
+        img.put(address, value.complex(mem).img, mem)
     }
 
     override fun toString() = "InfArr($elementType)"
 }
 
-//class InfiniteStarArraySymbolic(
-//    override val elementType: SimpleType,
-//    val addressArray: InfiniteSimpleArraySymbolic
-//) : Symbolic(ArrayType(elementType)), InfiniteArraySymbolic {
-//
-//    override fun eqSameType(array: AbstractArraySymbolic, mem: Memory): BoolSymbolic {
-//        TODO("Not yet implemented")
-//    }
-//
-//    override fun get(address: IntSymbolic, mem: Memory): Symbolic {
-//        TODO("Not yet implemented")
-//    }
-//
-//    override fun put(address: IntSymbolic, value: Symbolic, mem: Memory) {
-//        TODO("Not yet implemented")
-//    }
-//
-//}
-
-class InfiniteSimpleArraySymbolic(
+open class InfiniteSimpleArray(
     override val elementType: SimpleType,
-    val arrayExpr: KArrayConst<KArraySort<KBv32Sort, KSort>, KSort>
-) : Symbolic(ArrayType(elementType)), InfiniteArraySymbolic {
+    val arrayExpr: KArrayConst<KArraySort<KBv64Sort, KSort>, KSort>
+) : InfiniteArray(ArrayType(elementType, null)) {
 
-    constructor(elementType: SimpleType, mem: Memory) : this(
+    constructor(elementType: SimpleType, mem: Memory, isDefault: Boolean) : this(
         elementType,
-        mem.ctx.mkArrayConst(
-            mem.ctx.mkArraySort(IntType.intSort(mem), elementType.sort(mem)),
-            elementType.defaultSymbolicExpr(mem, false) as KExpr<KSort>
-        )
+        newArrayExpr(elementType, mem, isDefault)
     )
 
-    override fun eqSameType(array: AbstractArraySymbolic, mem: Memory): BoolSymbolic {
-        array as InfiniteSimpleArraySymbolic
-        return mem.ctx.mkEq(
-            array.arrayExpr,
-            arrayExpr
-        ).toSymbolic()
+    companion object {
+        fun newArrayExpr(elementType: SimpleType, mem: Memory, isDefault: Boolean) =
+            mem.ctx.mkArrayConst(
+                mem.ctx.mkArraySort(AddressType().sort(mem), elementType.sort(mem)) as KArraySort<KBv64Sort, KSort>,
+                if (isDefault)
+                    elementType.defaultSymbolicExpr(mem) as KExpr<KSort>
+                else
+                    elementType.createSymbolicExpr("inArray", mem) as KExpr<KSort>
+            )
     }
 
-    override fun get(address: IntSymbolic, mem: Memory): Symbolic {
-        println("elementType $elementType")
-        println("elementType ${arrayExpr.sort}")
-        println("elementType ${mem.ctx.mkArraySelect(arrayExpr, address.expr).sort}")
+    override fun get(address: Int64Symbolic, mem: Memory): Symbolic {
         return elementType.asSymbolic(mem.ctx.mkArraySelect(arrayExpr, address.expr), mem)
     }
 
-    override fun put(address: IntSymbolic, value: Symbolic, mem: Memory) {
-        elementType.asSymbolic(mem.ctx.mkArrayStore(arrayExpr, address.expr, value.expr(mem)), mem)
+    override fun put(address: Int64Symbolic, value: Symbolic, mem: Memory) {
+        mem.ctx.mkArrayStore(arrayExpr, address.expr, value.toExpr(mem))
     }
 
     override fun toString() = "InfArr($elementType)"
+
+    open fun toSymbolic(): Symbolic {
+        return InfiniteArraySymbolic(elementType, arrayExpr)
+    }
 }
 
-//class InfiniteStarArraySymbolic(
-//    override val elementType: StarType,
-//    mem: Memory
-//) : InfiniteArraySymbolic(elementType) {
-//    private val addressArray: InfiniteSimpleArraySymbolic =
-//        InfiniteSimpleArraySymbolic(IntType(), mem)
-//
-//    override fun eqSameType(array: AbstractArraySymbolic, mem: Memory): BoolSymbolic {
-//        array as InfiniteStarArraySymbolic
-//        return array.addressArray.eq(addressArray, mem)
-//    }
-//
-//    override fun get(address: IntSymbolic, mem: Memory) =
-//        ArrayStarSymbolic(addressArray.get(address, mem).int(), this)
-//
-//    override fun put(address: IntSymbolic, value: Symbolic, mem: Memory) {
-////        val addressInGlobal = IntType.fromInt(mem.addNewStarObject("", value), mem)
-////        innerArray.put(address, addressInGlobal, mem)
-//        println("elementType $elementType")
-//        println(value)
-//        val addressInGlobal = addressArray.get(address, mem).int()
-//        mem.putStarObject("", value, addressInGlobal)
-//    }
-//}
+class InfiniteStarArray(
+    override val elementType: StarType,
+    arrayExpr: KArrayConst<KArraySort<KBv64Sort, KSort>, KSort>
+) : InfiniteSimpleArray(
+    elementType,
+    arrayExpr
+) {
+    constructor(
+        starType: StarType,
+        mem: Memory,
+        isDefault: Boolean
+    ) : this(
+        starType,
+        newArrayExpr(starType, mem, isDefault)
+    )
+
+    override fun get(address: Int64Symbolic, mem: Memory): StarSymbolic {
+        val expr = mem.ctx.mkArraySelect(arrayExpr, address.expr)
+        return GlobalStarSymbolic(
+            "",
+            elementType.elementType,
+            Int64Symbolic(expr as KExpr<KBv64Sort>),
+            false
+        )
+    }
+
+    override fun put(address: Int64Symbolic, value: Symbolic, mem: Memory) {
+        println("VVV ")
+        println("VVV ${value}")
+        println("VVV ${value.type}")
+        println("VVV ${elementType}")
+        val globalStar = LocalStarSymbolic(value, false).toGlobal(mem)
+        mem.ctx.mkArrayStore(arrayExpr, address.expr, globalStar.address.expr as KExpr<KSort>)
+    }
+}

@@ -1,9 +1,13 @@
-package interpreter
+package interpreter.ast
 
+import interpreter.ssa.SsaInterpreter.Companion.knownFunctions
+import interpreter.ssa.SsaInterpreter.Companion.visitOp
 import memory.Memory
 import io.ksmt.KContext
 import io.ksmt.sort.KSort
 import memory.*
+import memory.ast.AstState
+import kotlin.collections.plus
 
 open class StaticInterpreter(
     functionDeclarations: Map<String, AstFuncDecl>,
@@ -14,7 +18,7 @@ open class StaticInterpreter(
         func: AstFuncDecl,
         args: List<Symbolic?>?,
         ctx: KContext,
-        initialState: State
+        initialState: AstState
     ): Pair<Collection<SymbolicResult>, Map<String, KSort>> {
         typeDeclarations.forEach {
             initialState.waitingNodes.add(it to mutableListOf())
@@ -24,7 +28,7 @@ open class StaticInterpreter(
         return interpretLoop(initialState) to initialState.mem.createdConsts
     }
 
-    private fun interpretLoop(state: State): Collection<SymbolicResult> {
+    private fun interpretLoop(state: AstState): Collection<SymbolicResult> {
         while (state.waitingNodes.size > 0) {
             val (cond, result, size) = interpretState(state)
 //            execution ended
@@ -37,19 +41,19 @@ open class StaticInterpreter(
         error("should not happen")
     }
 
-    open fun statisticsStartVisit(node: AstNode, state: State) {
+    open fun statisticsStartVisit(node: AstNode, state: AstState) {
         val oldInfo = state.executionStatistics.startVisit(node)
         if (!oldInfo.visitStarted) {
             state.newCodeTime = state.time
         }
     }
 
-    open fun statisticsEndVisit(node: AstNode, state: State) {
+    open fun statisticsEndVisit(node: AstNode, state: AstState) {
         state.executionStatistics.endVisit(node)
     }
 
     open fun startDynamicNodeInterpretation(
-        state: State,
+        state: AstState,
         node: AstNode,
         args: MutableList<Symbolic?>
     ): Boolean {
@@ -58,7 +62,7 @@ open class StaticInterpreter(
     }
 
     protected fun startNodeInterpretation(
-        state: State,
+        state: AstState,
         node: AstNode,
         function: (Memory, List<Symbolic?>) -> List<AstNode>,
         args: MutableList<Symbolic?>
@@ -72,14 +76,14 @@ open class StaticInterpreter(
     }
 
     protected open fun finishDynamicReturnInterpretation(
-        state: State,
+        state: AstState,
         node: AstReturn,
         args: MutableList<Symbolic?>
     ): AstNode {
         return node
     }
 
-    fun interpretState(state: State): Triple<BoolSymbolic, Symbolic?, Int> {
+    fun interpretState(state: AstState): Triple<BoolSymbolic, Symbolic?, Int> {
         val waitingNodes = state.waitingNodes
         val startedNodes = state.startedNodes
         val mem = state.mem
@@ -154,7 +158,7 @@ open class StaticInterpreter(
                 { _, _ ->
                     listOf(node.x, node.y)
                 }, { mem, args ->
-                    visitOp(node.op, args, mem)
+                    visitOp(node.op, args.requireNoNulls(), mem)
                 }
             )
 
@@ -273,8 +277,8 @@ open class StaticInterpreter(
             )
 
             is BranchControlNode -> Pair(
-                { _, args ->
-                    val cond = args[0]!!.bool()
+                { mem, args ->
+                    val cond = args[0]!!.bool(mem)
                     val elseList = node.elseBody?.let {
                         listOf(
                             StartBranchNode(false, node.elseBody, cond, null),
@@ -339,8 +343,8 @@ open class StaticInterpreter(
             is AstIndexExpr -> Pair(
                 { _, _ -> listOf(node.x, node.index) },
                 { mem, args ->
-                    val x = args[0]!!.arrayFinite()
-                    val index = args[1]!!.int()
+                    val x = args[0]!!.array(mem)
+                    val index = args[1]!!.int64(mem)
                     x.get(index, mem)
                 }
             )
@@ -370,9 +374,9 @@ open class StaticInterpreter(
 
             is AstArrayType -> Pair(
                 { _, _ -> listOfNotNull(node.elementType, node.length) },
-                { _, args ->
+                { mem, args ->
                     val elementType = args[0]!!.type as StarType
-                    val length = args.getOrNull(1)?.int()
+                    val length = args.getOrNull(1) as? Int64Symbolic
                     Symbolic(ArrayType(elementType, length))
                 }
             )
@@ -382,7 +386,7 @@ open class StaticInterpreter(
                     listOf(node.x)
                 },
                 { mem, args ->
-                    visitOp(node.op, args, mem)
+                    visitOp(node.op, args.requireNoNulls(), mem)
                 }
             )
 

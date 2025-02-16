@@ -19,6 +19,7 @@ import (
 )
 
 type NodeData struct {
+    ParentF     string          `json:"parentF"`
     Type        string          `json:"type"`
     ID          int             `json:"id"`
 }
@@ -151,6 +152,7 @@ type PhiNode struct {
 
 type MakeSliceNode struct {
     ValueNodeData
+    Len         interface{}     `json:"len"`
 }
 
 type IndexAddrNode struct {
@@ -180,10 +182,12 @@ type GlobalNode struct {
 
 type ExtractNode struct {
     ValueNodeData
+    Index       int             `json:"index"`
 }
 
 type MakeInterfaceNode struct {
     ValueNodeData
+    X           interface{}     `json:"x"`
 }
 
 type UnknownNode struct {
@@ -239,6 +243,7 @@ type FuncTypeNode struct {
 
 type AliasTypeNode struct {
     NodeData
+    Rhs         interface{}     `json:"rhs"`
 }
 
 type ArrayTypeNode struct {
@@ -260,7 +265,7 @@ func encodeFunction(node *ssa.Function, nodeIDCounter *int, nodeRefs *map[interf
 
     if linkId, found := (*nodeRefs)[node]; found {
         return LinkNode{
-            NodeData: NodeData{Type: "LinkToNode", ID: id},
+            NodeData: NodeData{ParentF: "", Type: "LinkToNode", ID: id},
             LinkId: linkId,
         }
     }
@@ -270,7 +275,7 @@ func encodeFunction(node *ssa.Function, nodeIDCounter *int, nodeRefs *map[interf
     if node.Blocks == nil || len(node.Blocks) == 0 {
         return FuncNode{
             ValueNodeData:  ValueNodeData{
-                NodeData:   NodeData{Type: "*ssa.Function", ID: id},
+                NodeData:   NodeData{ParentF: "", Type: "*ssa.Function", ID: id},
                 Name:       node.Name(),
                 ValueType:  encodeNode(node.Type(), nodeIDCounter, nodeRefs),
             },
@@ -280,7 +285,7 @@ func encodeFunction(node *ssa.Function, nodeIDCounter *int, nodeRefs *map[interf
     } else {
         return FuncNode{
             ValueNodeData:  ValueNodeData{
-                NodeData:   NodeData{Type: "*ssa.Function", ID: id},
+                NodeData:   NodeData{ParentF: "", Type: "*ssa.Function", ID: id},
                 Name:       node.Name(),
                 ValueType:  encodeNode(node.Type(), nodeIDCounter, nodeRefs),
             },
@@ -306,7 +311,7 @@ func encodeParameter(node *ssa.Parameter, nodeIDCounter *int, nodeRefs *map[inte
 
     if linkId, found := (*nodeRefs)[node]; found {
         return LinkNode{
-            NodeData: NodeData{Type: "LinkToParam", ID: id},
+            NodeData: NodeData{ParentF: node.Parent().String(), Type: "LinkToParam", ID: id},
             LinkId: linkId,
         }
     }
@@ -315,7 +320,7 @@ func encodeParameter(node *ssa.Parameter, nodeIDCounter *int, nodeRefs *map[inte
 
     return ParameterNode{
         ValueNodeData:  ValueNodeData{
-            NodeData:   NodeData{Type: "*ssa.Parameter", ID: id},
+            NodeData:   NodeData{ParentF: node.Parent().String(), Type: "*ssa.Parameter", ID: id},
             Name:       node.Name(),
             ValueType:  encodeNode(node.Type(), nodeIDCounter, nodeRefs),
         },
@@ -328,7 +333,7 @@ func encodeParameter(node *ssa.Parameter, nodeIDCounter *int, nodeRefs *map[inte
 //
 //     if linkId, found := (*nodeRefs)[node]; found {
 //         return LinkNode{
-//             NodeData: NodeData{Type: "LinkToEncoded", ID: id},
+//             NodeData: NodeData{ParentF: node.Parent().String(), Type: "LinkToEncoded", ID: id},
 //             LinkId: linkId,
 //         }
 //     }
@@ -336,7 +341,7 @@ func encodeParameter(node *ssa.Parameter, nodeIDCounter *int, nodeRefs *map[inte
 //     (*nodeRefs)[node] = id
 //
 //     return TypeNode{
-//         NodeData:   NodeData{Type: "*types.Type", ID: id},
+//         NodeData:   NodeData{ParentF: node.Parent().String(), Type: "*types.Type", ID: id},
 //         Name:       node.String(),
 //     }
 // }
@@ -357,7 +362,7 @@ func encodeBlock(node *ssa.BasicBlock, nodeIDCounter *int, nodeRefs *map[interfa
 
     if linkId, found := (*nodeRefs)[node]; found {
         return LinkNode{
-            NodeData: NodeData{Type: "LinkToBlock", ID: id},
+            NodeData: NodeData{ParentF: node.Parent().String(), Type: "LinkToBlock", ID: id},
             LinkId: linkId,
         }
     }
@@ -370,7 +375,7 @@ func encodeBlock(node *ssa.BasicBlock, nodeIDCounter *int, nodeRefs *map[interfa
     }
 
     return BlockNode{
-        NodeData:   NodeData{Type: "*ssa.BasicBlock", ID: id},
+        NodeData:   NodeData{ParentF: node.Parent().String(), Type: "*ssa.BasicBlock", ID: id},
         Instr:      instrNodes,
     }
 }
@@ -381,7 +386,7 @@ func encodeBlock(node *ssa.BasicBlock, nodeIDCounter *int, nodeRefs *map[interfa
 //
 //     if linkId, found := (*nodeRefs)[node]; found {
 //         return LinkNode{
-//             NodeData: NodeData{Type: "LinkToNode", ID: id},
+//             NodeData: NodeData{ParentF: node.Parent().String(), Type: "LinkToNode", ID: id},
 //             LinkId: linkId,
 //         }
 //     }
@@ -446,7 +451,7 @@ func encodeFuncType(node *types.Func, nodeIDCounter *int, nodeRefs *map[interfac
 
     if linkId, found := (*nodeRefs)[node]; found {
         return LinkNode{
-            NodeData: NodeData{Type: "LinkToFunc", ID: id},
+            NodeData: NodeData{ParentF: "", Type: "LinkToFunc", ID: id},
             LinkId: linkId,
         }
     }
@@ -454,7 +459,7 @@ func encodeFuncType(node *types.Func, nodeIDCounter *int, nodeRefs *map[interfac
     (*nodeRefs)[node] = id
 
     return FuncTypeNode{
-        NodeData:   NodeData{Type: "*types.Func", ID: id},
+        NodeData:   NodeData{ParentF: "", Type: "*types.Func", ID: id},
     }
 }
 
@@ -464,7 +469,7 @@ func encodeType(node types.Type, nodeIDCounter *int, nodeRefs *map[interface{}]i
 
     if linkId, found := (*nodeRefs)[node]; found {
         return LinkNode{
-            NodeData: NodeData{Type: "LinkToType", ID: id},
+            NodeData: NodeData{ParentF: "", Type: "LinkToType", ID: id},
             LinkId: linkId,
         }
     }
@@ -474,12 +479,13 @@ func encodeType(node types.Type, nodeIDCounter *int, nodeRefs *map[interface{}]i
     switch node := node.(type) {
         case *types.Alias:
             return AliasTypeNode{
-                NodeData:   NodeData{Type: "*types.Alias", ID: id},
+                NodeData:   NodeData{ParentF: "", Type: "*types.Alias", ID: id},
+                Rhs:    encodeType(node.Rhs(), nodeIDCounter, nodeRefs),
             }
 
         case *types.Basic:
             return BasicTypeNode{
-                NodeData:   NodeData{Type: "*types.Basic", ID: id},
+                NodeData:   NodeData{ParentF: "", Type: "*types.Basic", ID: id},
                 Name:       basicKindToString(node.Kind()),
             }
 
@@ -489,7 +495,7 @@ func encodeType(node types.Type, nodeIDCounter *int, nodeRefs *map[interface{}]i
                 field := node.Field(i)
                 *nodeIDCounter++
                 fields[i] = StructFieldTypeNode{
-                NodeData:       NodeData{Type: "Field", ID: *nodeIDCounter},
+                NodeData:       NodeData{ParentF: "", Type: "Field", ID: *nodeIDCounter},
                     Name:       field.Name(),
                     ElemType:   encodeNode(field.Type(), nodeIDCounter, nodeRefs),
                     // Tag:         node.Tag(i),
@@ -497,25 +503,25 @@ func encodeType(node types.Type, nodeIDCounter *int, nodeRefs *map[interface{}]i
                 (*nodeRefs)[field] = *nodeIDCounter
             }
             return StructTypeNode{
-                NodeData:       NodeData{Type: "*types.Struct", ID: id},
+                NodeData:       NodeData{ParentF: "", Type: "*types.Struct", ID: id},
                 Fields:         fields,
             }
 
         case *types.Pointer:
             return PointerTypeNode{
-                NodeData:       NodeData{Type: "*types.Pointer", ID: id},
+                NodeData:       NodeData{ParentF: "", Type: "*types.Pointer", ID: id},
                 ElemType:       encodeNode(node.Elem(), nodeIDCounter, nodeRefs),
             }
 
         case *types.Slice:
             return SliceTypeNode{
-                NodeData:   NodeData{Type: "*types.Slice", ID: id},
+                NodeData:   NodeData{ParentF: "", Type: "*types.Slice", ID: id},
                 ElemType:       encodeNode(node.Elem(), nodeIDCounter, nodeRefs),
             }
 
         case *types.Array:
             return ArrayTypeNode{
-                NodeData:       NodeData{Type: "*types.Array", ID: id},
+                NodeData:       NodeData{ParentF: "", Type: "*types.Array", ID: id},
                 ElemType:       encodeNode(node.Elem(), nodeIDCounter, nodeRefs),
                 Len:            node.Len(),
             }
@@ -529,7 +535,7 @@ func encodeType(node types.Type, nodeIDCounter *int, nodeRefs *map[interface{}]i
             //                 results = encodeTuple(tResults, nodeIDCounter, nodeRefs)
             //             }
             return SignatureTypeNode{
-                NodeData:  NodeData{Type: "*types.Signature", ID: id},
+                NodeData:  NodeData{ParentF: "", Type: "*types.Signature", ID: id},
                 //                 Params:    params,
                 //                 Results:   results,
                 //                 Variadic:  node.Variadic(),
@@ -548,14 +554,14 @@ func encodeType(node types.Type, nodeIDCounter *int, nodeRefs *map[interface{}]i
             }
 
             return InterfaceTypeNode{
-                NodeData:       NodeData{Type: "*types.Interface", ID: id},
+                NodeData:       NodeData{ParentF: "", Type: "*types.Interface", ID: id},
                 Methods:        methods,
                 Embedded:       embedded,
             }
 
         case *types.Tuple:
             return TupleTypeNode{
-                NodeData:   NodeData{Type: "*types.Tuple", ID: id},
+                NodeData:   NodeData{ParentF: "", Type: "*types.Tuple", ID: id},
             }
 
         case *types.Named:
@@ -567,7 +573,7 @@ func encodeType(node types.Type, nodeIDCounter *int, nodeRefs *map[interface{}]i
             }
 
             return NamedTypeNode{
-                NodeData:   NodeData{Type: "*types.Named", ID: id},
+                NodeData:   NodeData{ParentF: "", Type: "*types.Named", ID: id},
                 Name:       node.Obj().Name(),
                 Underlying: underlying,
                 Methods:    methods,
@@ -581,7 +587,7 @@ func encodeType(node types.Type, nodeIDCounter *int, nodeRefs *map[interface{}]i
             }
 
             return UnknownNode{
-                NodeData:   NodeData{Type: "UnknownType", ID: id},
+                NodeData:   NodeData{ParentF: "", Type: "UnknownType", ID: id},
             }
     }
 }
@@ -602,7 +608,7 @@ func encodeNode(node interface{}, nodeIDCounter *int, nodeRefs *map[interface{}]
 
     if linkId, found := (*nodeRefs)[node]; found {
         return LinkNode{
-            NodeData: NodeData{Type: "LinkToNode", ID: id},
+            NodeData: NodeData{ParentF: "", Type: "LinkToNode", ID: id},
             LinkId: linkId,
         }
     }
@@ -612,7 +618,7 @@ func encodeNode(node interface{}, nodeIDCounter *int, nodeRefs *map[interface{}]
     switch node := node.(type) {
         case *ssa.If:
             return IfNode{
-                NodeData:   NodeData{Type: "*ssa.If", ID: id},
+                NodeData:   NodeData{ParentF: node.Parent().String(), Type: "*ssa.If", ID: id},
                 Cond:       encodeNode(node.Cond, nodeIDCounter, nodeRefs),
                 Body:       encodeBlock(node.Block().Succs[0], nodeIDCounter, nodeRefs),
                 ElseBody:   encodeBlock(node.Block().Succs[1], nodeIDCounter, nodeRefs),
@@ -621,7 +627,7 @@ func encodeNode(node interface{}, nodeIDCounter *int, nodeRefs *map[interface{}]
         case *ssa.BinOp:
             return BinOpNode{
                 ValueNodeData:  ValueNodeData{
-                    NodeData:   NodeData{Type: "*ssa.BinOp", ID: id},
+                    NodeData:   NodeData{ParentF: node.Parent().String(), Type: "*ssa.BinOp", ID: id},
                     Name:       node.Name(),
                     ValueType:  encodeNode(node.Type(), nodeIDCounter, nodeRefs),
                 },
@@ -632,7 +638,7 @@ func encodeNode(node interface{}, nodeIDCounter *int, nodeRefs *map[interface{}]
 
         case *ssa.Return:
             return ReturnNode{
-                NodeData:   NodeData{Type: "*ssa.Return", ID: id},
+                NodeData:   NodeData{ParentF: node.Parent().String(), Type: "*ssa.Return", ID: id},
                 Results:    encodeArray(node.Results, nodeIDCounter, nodeRefs),
             }
 
@@ -640,7 +646,7 @@ func encodeNode(node interface{}, nodeIDCounter *int, nodeRefs *map[interface{}]
             if node.Call.Method == nil {
                 return CallNode{
                     ValueNodeData:  ValueNodeData{
-                        NodeData:   NodeData{Type: "*ssa.Call", ID: id},
+                        NodeData:   NodeData{ParentF: node.Parent().String(), Type: "*ssa.Call", ID: id},
                         Name:       node.Name(),
                         ValueType:  encodeNode(node.Type(), nodeIDCounter, nodeRefs),
                     },
@@ -649,7 +655,7 @@ func encodeNode(node interface{}, nodeIDCounter *int, nodeRefs *map[interface{}]
                 }
             } else {
                 return InvokeNode{
-                    NodeData:   NodeData{Type: "*ssa.Call invoke", ID: id},
+                    NodeData:   NodeData{ParentF: node.Parent().String(), Type: "*ssa.Call invoke", ID: id},
                     Value:      encodeNode(node.Call.Value, nodeIDCounter, nodeRefs),
                     Method:     node.Call.Method.String(),
                     Args:       encodeArray(node.Call.Args, nodeIDCounter, nodeRefs),
@@ -658,21 +664,21 @@ func encodeNode(node interface{}, nodeIDCounter *int, nodeRefs *map[interface{}]
 
         case *ssa.Store:
             return StoreNode{
-                NodeData:   NodeData{Type: "*ssa.Store", ID: id},
+                NodeData:   NodeData{ParentF: node.Parent().String(), Type: "*ssa.Store", ID: id},
                 Addr:       encodeNode(node.Addr, nodeIDCounter, nodeRefs),
                 Value:      encodeNode(node.Val, nodeIDCounter, nodeRefs),
             }
 
         case *ssa.Jump:
             return JumpNode{
-                NodeData:       NodeData{Type: "*ssa.Jump", ID: id},
+                NodeData:       NodeData{ParentF: node.Parent().String(), Type: "*ssa.Jump", ID: id},
                 Successor:      encodeBlock(node.Block().Succs[0], nodeIDCounter, nodeRefs),
             }
 
         case *ssa.UnOp:
             return UnOpNode{
                 ValueNodeData:  ValueNodeData{
-                    NodeData:   NodeData{Type: "*ssa.UnOp", ID: id},
+                    NodeData:   NodeData{ParentF: node.Parent().String(), Type: "*ssa.UnOp", ID: id},
                     Name:       node.Name(),
                     ValueType:  encodeNode(node.Type(), nodeIDCounter, nodeRefs),
                 },
@@ -683,14 +689,14 @@ func encodeNode(node interface{}, nodeIDCounter *int, nodeRefs *map[interface{}]
 
         case *ssa.Panic:
             return PanicNode{
-                NodeData:   NodeData{Type: "*ssa.Panic", ID: id},
+                NodeData:   NodeData{ParentF: node.Parent().String(), Type: "*ssa.Panic", ID: id},
                 X:          node.X.String(),
             }
 
         case *ssa.Const:
             return ConstNode{
                 ValueNodeData:  ValueNodeData{
-                    NodeData:   NodeData{Type: "*ssa.Const", ID: id},
+                    NodeData:   NodeData{ParentF: "", Type: "*ssa.Const", ID: id},
                     Name:       node.Name(),
                     ValueType:  encodeNode(node.Type(), nodeIDCounter, nodeRefs),
                 },
@@ -698,7 +704,7 @@ func encodeNode(node interface{}, nodeIDCounter *int, nodeRefs *map[interface{}]
         case *ssa.Alloc:
             return AllocNode{
                 ValueNodeData:  ValueNodeData{
-                    NodeData:   NodeData{Type: "*ssa.Alloc", ID: id},
+                    NodeData:   NodeData{ParentF: node.Parent().String(), Type: "*ssa.Alloc", ID: id},
                     Name:       node.Name(),
                     ValueType:  encodeNode(node.Type(), nodeIDCounter, nodeRefs),
                 },
@@ -707,19 +713,31 @@ func encodeNode(node interface{}, nodeIDCounter *int, nodeRefs *map[interface{}]
             if node.Low != nil || node.Max != nil {
                 panic("TODO")
             }
-            return SliceNode{
-                ValueNodeData:  ValueNodeData{
-                    NodeData:   NodeData{Type: "*ssa.Slice", ID: id},
-                    Name:       node.Name(),
-                    ValueType:  encodeNode(node.Type(), nodeIDCounter, nodeRefs),
-                },
-                X:      encodeNode(node.X, nodeIDCounter, nodeRefs),
-                High:   encodeNode(node.High, nodeIDCounter, nodeRefs),
+            if node.High == nil {
+                return SliceNode{
+                    ValueNodeData:  ValueNodeData{
+                        NodeData:   NodeData{ParentF: node.Parent().String(), Type: "*ssa.Slice", ID: id},
+                        Name:       node.Name(),
+                        ValueType:  encodeNode(node.Type(), nodeIDCounter, nodeRefs),
+                    },
+                    X:      encodeNode(node.X, nodeIDCounter, nodeRefs),
+                    High:   nil,
+                }
+            } else {
+                return SliceNode{
+                    ValueNodeData:  ValueNodeData{
+                        NodeData:   NodeData{ParentF: node.Parent().String(), Type: "*ssa.Slice", ID: id},
+                        Name:       node.Name(),
+                        ValueType:  encodeNode(node.Type(), nodeIDCounter, nodeRefs),
+                    },
+                    X:      encodeNode(node.X, nodeIDCounter, nodeRefs),
+                    High:   encodeNode(node.High, nodeIDCounter, nodeRefs),
+                }
             }
         case *ssa.Phi:
             return PhiNode{
                 ValueNodeData:  ValueNodeData{
-                    NodeData:   NodeData{Type: "*ssa.Phi", ID: id},
+                    NodeData:   NodeData{ParentF: node.Parent().String(), Type: "*ssa.Phi", ID: id},
                     Name:       node.Name(),
                     ValueType:  encodeNode(node.Type(), nodeIDCounter, nodeRefs),
                 },
@@ -729,15 +747,17 @@ func encodeNode(node interface{}, nodeIDCounter *int, nodeRefs *map[interface{}]
         case *ssa.MakeSlice:
             return MakeSliceNode{
                 ValueNodeData:  ValueNodeData{
-                    NodeData:   NodeData{Type: "*ssa.MakeSlice", ID: id},
+                    NodeData:   NodeData{ParentF: node.Parent().String(), Type: "*ssa.MakeSlice", ID: id},
                     Name:       node.Name(),
                     ValueType:  encodeNode(node.Type(), nodeIDCounter, nodeRefs),
                 },
+                Len:        encodeNode(node.Len, nodeIDCounter, nodeRefs),
             }
+        
         case *ssa.IndexAddr:
             return IndexAddrNode{
                 ValueNodeData:  ValueNodeData{
-                    NodeData:   NodeData{Type: "*ssa.IndexAddr", ID: id},
+                    NodeData:   NodeData{ParentF: node.Parent().String(), Type: "*ssa.IndexAddr", ID: id},
                     Name:       node.Name(),
                     ValueType:  encodeNode(node.Type(), nodeIDCounter, nodeRefs),
                 },
@@ -747,7 +767,7 @@ func encodeNode(node interface{}, nodeIDCounter *int, nodeRefs *map[interface{}]
         case *ssa.Builtin:
             return BuiltInNode{
                 ValueNodeData:  ValueNodeData{
-                    NodeData:   NodeData{Type: "*ssa.Builtin", ID: id},
+                    NodeData:   NodeData{ParentF: "", Type: "*ssa.Builtin", ID: id},
                     Name:       node.Name(),
                     ValueType:  encodeNode(node.Type(), nodeIDCounter, nodeRefs),
                 },
@@ -755,7 +775,7 @@ func encodeNode(node interface{}, nodeIDCounter *int, nodeRefs *map[interface{}]
         case *ssa.FieldAddr:
             return FieldAddrNode{
                 ValueNodeData:  ValueNodeData{
-                    NodeData:   NodeData{Type: "*ssa.FieldAddr", ID: id},
+                    NodeData:   NodeData{ParentF: node.Parent().String(), Type: "*ssa.FieldAddr", ID: id},
                     Name:       node.Name(),
                     ValueType:  encodeNode(node.Type(), nodeIDCounter, nodeRefs),
                 },
@@ -765,7 +785,7 @@ func encodeNode(node interface{}, nodeIDCounter *int, nodeRefs *map[interface{}]
         case *ssa.Convert:
             return ConvertNode{
                 ValueNodeData:  ValueNodeData{
-                    NodeData:   NodeData{Type: "*ssa.Convert", ID: id},
+                    NodeData:   NodeData{ParentF: node.Parent().String(), Type: "*ssa.Convert", ID: id},
                     Name:       node.Name(),
                     ValueType:  encodeNode(node.Type(), nodeIDCounter, nodeRefs),
                 },
@@ -774,7 +794,7 @@ func encodeNode(node interface{}, nodeIDCounter *int, nodeRefs *map[interface{}]
         case *ssa.Global:
             return GlobalNode{
                 ValueNodeData:  ValueNodeData{
-                    NodeData:   NodeData{Type: "*ssa.Global", ID: id},
+                    NodeData:   NodeData{ParentF: "", Type: "*ssa.Global", ID: id},
                     Name:       node.Name(),
                     ValueType:  encodeNode(node.Type(), nodeIDCounter, nodeRefs),
                 },
@@ -782,18 +802,20 @@ func encodeNode(node interface{}, nodeIDCounter *int, nodeRefs *map[interface{}]
         case *ssa.Extract:
             return ExtractNode{
                 ValueNodeData:  ValueNodeData{
-                    NodeData:   NodeData{Type: "*ssa.Extract", ID: id},
+                    NodeData:   NodeData{ParentF: node.Parent().String(), Type: "*ssa.Extract", ID: id},
                     Name:       node.Name(),
                     ValueType:  encodeNode(node.Type(), nodeIDCounter, nodeRefs),
                 },
+                Index:      node.Index,
             }
         case *ssa.MakeInterface:
             return MakeInterfaceNode{
                 ValueNodeData:  ValueNodeData{
-                    NodeData:   NodeData{Type: "*ssa.MakeInterface", ID: id},
+                    NodeData:   NodeData{ParentF: node.Parent().String(), Type: "*ssa.MakeInterface", ID: id},
                     Name:       node.Name(),
                     ValueType:  encodeNode(node.Type(), nodeIDCounter, nodeRefs),
                 },
+                X:      encodeNode(node.X, nodeIDCounter, nodeRefs),
             }
 
         default:
@@ -804,7 +826,7 @@ func encodeNode(node interface{}, nodeIDCounter *int, nodeRefs *map[interface{}]
             }
 
             return UnknownNode{
-                NodeData:   NodeData{Type: "Unknown", ID: id},
+                NodeData:   NodeData{ParentF: "", Type: "Unknown", ID: id},
             }
     }
 }

@@ -3,6 +3,7 @@ package memory.ssa
 import interpreter.ssa.SsaNode
 import io.ksmt.KContext
 import memory.Memory
+import memory.State
 import memory.Symbolic
 
 class SsaState(
@@ -10,10 +11,10 @@ class SsaState(
     val waitingNodes: MutableList<Pair<SsaNode?, MutableList<Symbolic?>>>,
     val startedNodes: MutableList<SsaNode>,
     val mem: Memory,
-    var time: Long,
-    var newCodeTime: Long,
+    time: Long,
+    newCodeTime: Long,
     val executionStatistics: SsaExecutionStatistics
-) {
+) : State(time, newCodeTime) {
     constructor(ctx: KContext) : this(
         0,
         mutableListOf(),
