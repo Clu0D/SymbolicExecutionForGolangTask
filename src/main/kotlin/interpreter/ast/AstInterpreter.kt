@@ -1,6 +1,7 @@
 package interpreter.ast
 
 import interpreter.ssa.SsaInterpreter.Companion.visitOp
+import interpreter.ssa.SsaNode
 import memory.Memory
 import io.ksmt.KContext
 import io.ksmt.expr.KExpr
@@ -8,8 +9,9 @@ import io.ksmt.sort.KBvSort
 import io.ksmt.sort.KSort
 import memory.*
 import memory.ast.AstState
+import memory.ssa.SsaState
 
-abstract class Interpreter(
+abstract class AstInterpreter(
     val functionDeclarations: Map<String, AstFuncDecl>,
     val typeDeclarations: List<AstType>
 ) {
@@ -18,7 +20,7 @@ abstract class Interpreter(
         args: List<Symbolic?>? = null,
         ctx: KContext,
         initialState: AstState
-    ): Pair<Collection<SymbolicResult>, Map<String, KSort>>
+    ): Pair<Collection<SymbolicResult<Any>>, Map<String, KSort>>
 
     companion object {
         const val STATIC_FOR_MAX_LENGTH = 10
@@ -37,9 +39,8 @@ abstract class Interpreter(
 
         fun visitSelector(selectorName: String, x: Symbolic?, mem: Memory) = when (x) {
             is StarSymbolic -> {
-                // todo wrong as mem has no size assertion for now
-                val obj = x.get(mem)
-                (obj .struct(mem)).fields[selectorName]
+                val obj = x.dereference(mem)
+                (obj.struct(mem)).fields[selectorName]
             }
 
             is StructSymbolic -> x.fields[selectorName]
@@ -54,7 +55,7 @@ abstract class Interpreter(
                         x.name
                     }
 
-                    else -> TODO()
+                    else -> error("only AstIdent")
                 }
                 val x = mem.readValue(name).int(mem)
                 val xType = x.type as IntType
@@ -98,11 +99,12 @@ abstract class Interpreter(
                 "INT" -> Int64Type().fromInt(node.value.toLong(), mem)
                 "FLOAT" -> Float64Type().fromDouble(node.value.toDouble(), mem)
                 "STRING" -> UninterpretedType.fromString(node.value, mem)
-                else -> TODO(node.kind)
+                else -> error(node.kind)
             }
         }
 
-        fun visitAssignStmt(lhs: List<AstNode>, token: String, rhsResults: List<Symbolic?>, mem: Memory) {
+        fun visitAssignStmt(lhs: List<AstNode>, token: String, rhsResults: List<Symbolic?>, state: SsaState) {
+            val mem = state.mem
             val memObjects = rhsResults.map { rhsResult ->
                 when (rhsResult) {
                     is ListSymbolic -> rhsResult.list

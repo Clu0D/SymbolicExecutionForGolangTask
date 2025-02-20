@@ -1,89 +1,113 @@
 import com.jetbrains.rd.util.printlnError
-import interpreter.InterpreterQueue.Companion.randomTimeToNewCodeQueue
-import interpreter.ssa.BlockSsaNode
-import interpreter.ssa.FuncSsaNode
-import interpreter.ssa.SsaDynamicInterpreter
-import interpreter.ssa.SsaNode
+import interpreter.InterpreterQueue.Companion.dfsQueue
+import interpreter.InterpreterQueue.Companion.randomTimeAfterNewCodeQueue
+import interpreter.ssa.*
 import io.ksmt.KContext
+import io.ksmt.sort.KSort
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import java.io.File
 import kotlinx.serialization.json.Json
+import memory.SymbolicResult
 import memory.ssa.SsaState
+import testCreation.TestGenerator
+import testCreation.TestGenerator.Companion.FunctionInfo
 import java.io.FileInputStream
 import java.io.InputStreamReader
 
 fun main() = runBlocking {
 //    TODO  go run src/main/go/ssa.go -input src/main/resources/code/ -output src/main/resources/ssa/
-    val directoryPath = "build/resources/main/ssa/"
-    val files = File(directoryPath).listFiles { file -> file.isFile && file.extension == "json" }
-
-    var interpretationTime = 0L
-    var testGenerationTime = 0L
+    val realCodePath = "src/main/resources/samples"
+    val directoryPath = "build/resources/main"
+    val files = File("${directoryPath}/ssa").listFiles { file -> file.isFile && file.extension == "json" }
 
     var globalDone = 0
+    var globalErrors = 0
     var globalTimeout = 0
     var globalTests = 0
+    var globalGraphAnalyzingTime = 0L
     var globalInterpretationTime = 0L
+    var globalTestGenerationTime = 0L
+
     files!!.forEach { file ->
-        println("FILE ${file.name}")
+        val fileName = file.name.removeSuffix(".json")
+        println("FILE $fileName")
 
         SsaNode.allNodes = mutableMapOf()
-        val nodesList = Json.decodeFromString<List<SsaNode>>(
-            FileInputStream(file).use { fis ->
-                InputStreamReader(fis).use { reader ->
-                    reader.readText()
-                }
-            })
-
-//        val astFile = Json.decodeFromString<AstNode>(
-//            FileInputStream(file).use { fis ->
-//                InputStreamReader(fis).use { reader ->
-//                    reader.readText()
-//                }
-//            }) as AstFile
-
+        val reader = FileInputStream(file).use { fis ->
+            InputStreamReader(fis).use { reader ->
+                reader.readText()
+            }
+        }
+        val nodesList = Json.decodeFromString<List<SsaNode>>(reader)
 
         val ctx = KContext(
-//            for debug purposes
-//            simplificationMode = KContext.SimplificationMode.NO_SIMPLIFY
+            simplificationMode = KContext.SimplificationMode.NO_SIMPLIFY
         )
 
-
-        val funcDeclaration = nodesList
+        val funcDeclarations = nodesList
             .filter { it is FuncSsaNode && it.body != null && it.paramsNull != null }
             .map { it as FuncSsaNode }
             .associateBy { it.name }
 
         var fileInterpretationTime = 0L
+        var fileGraphAnalyzingTime = 0L
+        var fileTestGenerationTime = 0L
+
         var done = 0
         var timeout = 0
-        funcDeclaration
-//            .filter { it.key == "ByteArray" } // for testing 1 function
-            .forEach { (funcName, node) ->
-//                generateDotFile(file.name, node) // generates nice images of ssa graphs in /ssaGraphPictures/
+        var errors = 0
+
+        val interpretationResults = funcDeclarations
+            .filter {
+                listOf(
+                    "SizesWithoutTouchingTheElements"
+                ).contains(it.key)
+            } // for testing 1 function
+            .map { (funcName, node) ->
+//                generateDotFile(fileName, node) // generates nice images of ssa graphs in /ssaGraphPictures/..
+
+                var results = listOf<SymbolicResult<SsaNode>>()
+                var createdConsts = mapOf<String, KSort>()
+                val allNodes = mutableSetOf<SsaNode>()
+
                 val startTime = System.currentTimeMillis()
+                var graphAnalyzingTime = 0L
+
+                println(funcName)
                 try {
-                    withTimeout(20_000L) {
-                        val allNodes = mutableSetOf<SsaNode>()
+                    withTimeout(6000_000L) {
+
                         node.getAllReachable(allNodes)
                         val terminalNodes =
                             allNodes.filter { it.isTerminal && it.parentF.endsWith(".$funcName") }.toMutableSet()
-                        val keyNodes = allNodes.filter { it is BlockSsaNode } + node
+                        val keyNodes =
+                            allNodes.filter {
+                                it is BlockSsaNode || it is ReturnSsaNode || it is JumpSsaNode || it is PhiSsaNode
+                            } + node
                         val distToTerminal = keyNodes.associate { it to it.bfs(terminalNodes) }
 
-//                      val interpreter = SsaStaticInterpreter(funcDeclaration)
+                        val graphAnalyzingFinishedTime = System.currentTimeMillis()
+                        graphAnalyzingTime = graphAnalyzingFinishedTime - startTime + 1
+                        println("\tgraph analyzed \n\t\tin\t${timeToString(graphAnalyzingTime)}")
+
+//                        val interpreter = SsaStaticInterpreter()
                         val interpreter = SsaDynamicInterpreter(
-                            funcDeclaration,
-                            randomTimeToNewCodeQueue<SsaState>(),
+//                            dfsQueue(),
+//                            bfsQueue(),
+//                            timeAfterNewCodeQueue(),
+//                            randomQueue(),
+                            randomTimeAfterNewCodeQueue<SsaState>(),
                             terminalNodes,
                             distToTerminal
                         )
 
-                        interpreter.startFunction(node, null, ctx, SsaState(ctx))
-                        println("$funcName\n\tdone")
+                        val interpretationResults = interpreter.startFunction(node, null, ctx, SsaState(ctx))
+                        println("\tinterpretation finished")
                         done++
+                        results = interpretationResults.first
+                        createdConsts = interpretationResults.second
                     }
                 } catch (_: TimeoutCancellationException) {
                     printlnError("$funcName\n\ttimeout")
@@ -91,66 +115,67 @@ fun main() = runBlocking {
                 }
 //                catch (e: Exception) {
 //                    printlnError("$funcName\n\terror:\n\t\t\t ${e.localizedMessage}")
+//                    errors++
 //                } catch (e: Error) {
 //                    printlnError("$funcName\n\terror:\n\t\t\t ${e.localizedMessage}")
+//                    errors++
 //                }
+
                 val curTime = System.currentTimeMillis()
 
-                val interpretationTime = curTime - startTime
-                fileInterpretationTime += interpretationTime
-                println("\tin \t${timeToString(interpretationTime)}")
-            }
-        globalDone += done
-        globalTimeout += timeout
-        globalTests += funcDeclaration.size
-        globalInterpretationTime += fileInterpretationTime
-        println("\nSUCCESSFUL $done/${funcDeclaration.size} (TIMEOUT $timeout/${funcDeclaration.size}, ERROR ${funcDeclaration.size - done - timeout}/${funcDeclaration.size}))")
-        println("\tin \t${timeToString(fileInterpretationTime)}\n\n")
+                if (graphAnalyzingTime == 0L)
+                    graphAnalyzingTime = curTime - startTime
 
-//        val typeDeclarations = astFile.getTypes()
-//        val functionDeclarations = astFile.getFunctions().associateBy { it.name }
-////            val interpreter = StaticInterpreter(functionDeclarations, typeDeclarations)
-//        val interpreter = DynamicInterpreter(
-//            functionDeclarations, typeDeclarations,
-////            DynamicInterpreter.dfsQueue()
-//            DynamicInterpreter.randomTimeToNewCodeQueue()
-//        )
-//
-//        typeDeclarations.forEach { (name, it) ->
-//            println("TYPE $name")
-//        }
-//        functionDeclarations.forEach { (name, funcDeclaration) ->
-//            println("______________________")
-//            println("\nFUNCTION $name")
-//
-//            val startTime = System.currentTimeMillis()
-//            val (results, createdConsts) = interpreter.startFunction(funcDeclaration, null, ctx, State(ctx))
-//            val curTime = System.currentTimeMillis()
-//
-//            val timeForInterpretation = curTime - startTime
-//            interpretationTime += timeForInterpretation
-//            println("time for interpretation:  \t${timeForInterpretation / 1000}'${timeForInterpretation % 1000}\tms")
-//            println()
-//            results.forEach { result ->
-//                val startTestTime = System.currentTimeMillis()
-////                TestCreator().createTest(result, createdConsts, ctx, 60 * 1000)
-//                val curTestTime = System.currentTimeMillis()
-//
-//                val timeForTest = curTestTime - startTestTime
-//                testGenerationTime += timeForTest
-//                println("time for test generation: \t${timeForTest / 1000}'${timeForTest % 1000}\tms")
-//                println()
-//            }
-//        }
-//    }
-//    println("\n______________________")
-//    println("full time for interpretation: \t${interpretationTime / 1000}'${interpretationTime % 1000}\tms")
-//    println("full time for test generation: \t${testGenerationTime / 1000}'${testGenerationTime % 1000}\tms")
+                val interpretationTime = curTime - startTime - graphAnalyzingTime
+                fileInterpretationTime += interpretationTime
+                fileGraphAnalyzingTime += graphAnalyzingTime
+
+                println("\t\tin\t${timeToString(interpretationTime)}")
+
+                Triple(results, createdConsts, FunctionInfo(funcName, allNodes))
+            }
+
+        println("\nGENERATING TESTS")
+
+        val testGenerator = TestGenerator(30_000L)
+
+        val tests = interpretationResults.associate { (resultsList, createdConsts, functionInfo) ->
+            val testGenerationStart = System.currentTimeMillis()
+            val (tests, terminalCoverage, coverage) = testGenerator
+                .generateTests(resultsList, createdConsts, functionInfo, ctx)
+            val testGenerationTime = System.currentTimeMillis() - testGenerationStart
+
+            println("TESTS GENERATED FOR ${functionInfo.functionName}")
+            println("\tin\t${timeToString(testGenerationTime)}")
+            fileTestGenerationTime += testGenerationTime
+            functionInfo to tests
+        }
+
+        val code = TestGenerator.generateGolangCode("$realCodePath/$fileName", tests)
+        TestGenerator.writeGolangCode(
+            code,
+            "generatedTests/test_$fileName.go"
+        )
+
+
+        globalDone += done
+        globalErrors += errors
+        globalTimeout += timeout
+        globalTests += funcDeclarations.size
+        globalGraphAnalyzingTime += fileGraphAnalyzingTime
+        globalTestGenerationTime += fileTestGenerationTime
+
+        println("\nSUCCESSFUL $done/${funcDeclarations.size} (TIMEOUT $timeout/${funcDeclarations.size}, ERROR $errors/${funcDeclarations.size}))")
+        println("\tgraph analysis duration: \n\t\t${timeToString(fileGraphAnalyzingTime)}")
+        println("\tinterpretation duration: \n\t\t${timeToString(fileInterpretationTime)}\n")
+        println("\ttest generating duration: \n\t\t${timeToString(globalTestGenerationTime)}\n")
     }
     println()
     println("OVERALL:")
-    println("SUCCESSFUL $globalDone/$globalTests (TIMEOUT $globalTimeout/$globalTests, ERROR ${globalTests - globalDone - globalTimeout}/$globalTests)")
-    println("in \t${timeToString(globalInterpretationTime)}")
+    println("SUCCESSFUL $globalDone/$globalTests (TIMEOUT $globalTimeout/$globalTests, ERROR $globalErrors/$globalTests)")
+    println("\toverall graph analysis duration: \n\t\t${timeToString(globalGraphAnalyzingTime)}")
+    println("\toverall interpretation duration: \n\t\t${timeToString(globalInterpretationTime)}")
+    println("\toverall test generating duration: \n\t\t${timeToString(globalTestGenerationTime)}\n")
 }
 
 fun timeToString(time: Long) =

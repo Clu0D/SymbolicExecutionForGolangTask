@@ -711,7 +711,7 @@ func encodeNode(node interface{}, nodeIDCounter *int, nodeRefs *map[interface{}]
             }
         case *ssa.Slice:
             if node.Low != nil || node.Max != nil {
-                panic("TODO")
+                panic("is possible but does not happen in tests")
             }
             if node.High == nil {
                 return SliceNode{

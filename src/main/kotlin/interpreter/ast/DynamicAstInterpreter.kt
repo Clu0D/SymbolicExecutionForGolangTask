@@ -1,19 +1,20 @@
 package interpreter.ast
 
 import interpreter.InterpreterQueue
+import interpreter.ssa.SsaNode
 import io.ksmt.KContext
 import io.ksmt.sort.KSort
 import memory.*
 import memory.ast.AstState
 import kotlin.collections.forEach
 
-class DynamicInterpreter(
+class DynamicAstInterpreter(
     functionDeclarations: Map<String, AstFuncDecl>,
     typeDeclarations: List<AstType>,
     val interpreterQueue: InterpreterQueue<AstState>
-) : StaticInterpreter(functionDeclarations, typeDeclarations) {
+) : StaticAstInterpreter(functionDeclarations, typeDeclarations) {
 
-    var results = mutableSetOf<SymbolicResult>()
+    var results = mutableSetOf<SymbolicResult<Any>>()
     val globalStatistics = ExecutionStatistics()
 
     override fun startFunction(
@@ -21,7 +22,7 @@ class DynamicInterpreter(
         args: List<Symbolic?>?,
         ctx: KContext,
         initialState: AstState
-    ): Pair<Collection<SymbolicResult>, Map<String, KSort>> {
+    ): Pair<Collection<SymbolicResult<Any>>, Map<String, KSort>> {
         typeDeclarations.forEach {
             initialState.waitingNodes.add(it to mutableListOf())
         }
@@ -48,12 +49,12 @@ class DynamicInterpreter(
             when (size) {
 //                execution ended
                 0 -> {
-                    results.add(SymbolicReturn(cond, result))
-                    results.addAll(bestState.mem.errors)
+                    results.add(SymbolicReturn(cond, result, bestState.getVisitedNodes()))
+                    results.addAll(bestState.mem.errors as List<SymbolicResult<Any>>)
                 }
 
 //                force stop
-                -1 -> results.addAll(bestState.mem.errors)
+                -1 -> results.addAll(bestState.mem.errors as List<SymbolicResult<Any>>)
                 else -> interpreterQueue.add(bestState)
             }
         }
@@ -78,6 +79,8 @@ class DynamicInterpreter(
                 is AstFor -> translator(startedNode).second(state.mem, listOf())
 //                this removes visibility layer and potentially pops solver (so push and pops are consistent)
                 is EndBranchNode -> translator(startedNode).second(state.mem, listOf())
+                    ?.let { StarSymbolic.removeFake(it, state.mem) }
+
                 else -> continue
             }
         }

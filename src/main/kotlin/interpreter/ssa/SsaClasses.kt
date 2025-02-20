@@ -2,14 +2,13 @@ package interpreter.ssa
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import java.util.PriorityQueue
 
 @Serializable
 sealed class SsaNode {
     val parentF: String = ""
-    val id: Int = 0
+    open val id: Int = 0
 
-    override fun toString() = "${id}Node}"
+    override fun toString() = printItself()
 
     abstract fun printItself(): String
 
@@ -24,51 +23,33 @@ sealed class SsaNode {
         }
     }
 
-    fun bfs(terminalNodes: Set<SsaNode>): MutableMap<SsaNode, Int> {
-        val distToTerminal = mutableMapOf<SsaNode, Int>()
-        val visited = mutableMapOf<String, Int>()
-        val deque = PriorityQueue<Pair<List<Pair<SsaNode, Int>>, Int>>(compareBy { -it.second })
-        deque.add(listOf(this to 0) to 1)
+    fun bfs(terminalNodes: Set<SsaNode>): MutableSet<SsaNode> {
+        val reachableTerminals = mutableSetOf<SsaNode>()
+        val visited = mutableSetOf<Pair<SsaNode, Int>>()
+        val deque = mutableListOf<Pair<SsaNode, Int>>()
+        deque.add(this to 0)
 
         while (deque.isNotEmpty()) {
-            val (list, d) = deque.poll()
-            val (v, step) = list[0]
-            if (visited.keys.contains("${v.id}:$step")) {
-                if (v.children().size == step) {
-                    if (list.size == 1) {
-                        continue
-                    } else {
-                        if (terminalNodes.contains(v)) {
-                            if (!distToTerminal.contains(v))
-                                distToTerminal[v] = d + 1
-                        }
-                        val (v1, step1) = list[1]
-                        deque.add((listOf(v1 to step1 + 1) + list.drop(2)) to (d + 1))
-                        continue
-                    }
-                }
-                deque.add((listOf(v to step + 1) + list.drop(1)) to (d + 1))
+            val (v, step) = deque.removeAt(0)
+            if (visited.contains(v to step))
                 continue
-            }
 
-            visited["${v.id}:$step"] = d
+            visited.add(v to step)
             if (v.children().size == step) {
-                if (list.size == 1) {
-                    continue
-                } else {
-                    if (terminalNodes.contains(v)) {
-                        if (!distToTerminal.contains(v))
-                            distToTerminal[v] = d + 1
-                    }
-                    val (v1, step1) = list[1]
-                    deque.add((listOf(v1 to step1 + 1) + list.drop(2)) to (d + 1))
-                }
+                if (terminalNodes.contains(v))
+                    reachableTerminals.add(v)
+
+                val returnToParents =
+                    v.parents()
+//                        .filter { visited.contains(it) }
+                        .map { (node, i) -> node to (i + 1) }
+
+                deque.addAll(returnToParents)
             } else {
-                val childrenI = v.children()[step]
-                deque.addAll(childrenI.map { (listOf(it to 0) + list) to (d + 1) })
+                deque.addAll(v.children()[step].map { node -> node to 0 })
             }
         }
-        return distToTerminal
+        return reachableTerminals
     }
 
     var toBestEnd: Long = MAX_DISTANCE
@@ -95,6 +76,19 @@ sealed class SsaNode {
      */
     abstract fun children(): List<Set<SsaNode>>
 
+    fun parents(): List<Pair<SsaNode, Int>> {
+        return allNodes.values
+            .filter { it.id > 0 }
+            .map { parent ->
+                parent.children().mapIndexed { i, it ->
+                    if (it.contains(this))
+                        parent to i
+                    else
+                        null
+                }.filterNotNull()
+            }.flatten()
+    }
+
     init {
         allNodes[id] = this
     }
@@ -107,10 +101,9 @@ sealed class SsaNode {
 
 @Serializable
 sealed class ValueSsaNode : SsaNode() {
-    val name: String = "Unknown"
-    val valueType: SsaType? = null
+    open val name: String = "Unknown"
+    open val valueType: SsaType? = null
 
-    override fun toString() = "${this.javaClass.simpleName.replace("SsaNode", "")}(name=$name, paramType=$valueType)"
     override fun printItself() = "$id${this.javaClass.simpleName.replace("SsaNode", "")}"
 }
 
@@ -119,7 +112,6 @@ sealed class ValueSsaNode : SsaNode() {
 data class BlockSsaNode(
     val instr: List<SsaNode>?
 ) : SsaNode() {
-    override fun toString() = "Block(instr=$instr)"
     override fun printItself() = "${id}Block"
 
     override fun children(): List<Set<SsaNode>> = (instr ?: listOf()).map { setOf(it) }
@@ -132,7 +124,6 @@ data class IfSsaNode(
     val body: SsaNode,
     val elseBody: SsaNode
 ) : SsaNode() {
-    override fun toString() = "If(cond=$cond, body=$body, elseBody=$elseBody)"
     override fun printItself() = "${id}If"
 
     override fun children(): List<Set<SsaNode>> = listOf(setOf(cond), setOf(body, elseBody))
@@ -145,7 +136,6 @@ data class BinOpSsaNode(
     val y: SsaNode,
     val op: String
 ) : ValueSsaNode() {
-    override fun toString() = "BinOp(x=$x, y=$y, op=$op)"
     override fun printItself() = "${id}BinOp $op"
 
     override fun children(): List<Set<SsaNode>> = listOf(setOf(x), setOf(y))
@@ -160,7 +150,6 @@ data class ReturnSsaNode(
         isTerminal = true
     }
 
-    override fun toString() = "Return(results=$results)"
     override fun printItself() = "${id}Return"
 
     override fun children(): List<Set<SsaNode>> = results.map { setOf(it) }
@@ -173,7 +162,6 @@ data class FuncSsaNode(
     val body: SsaNode?
 ) : ValueSsaNode() {
     val params = paramsNull ?: listOf()
-    override fun toString() = "Func(name=$name, params=$params, body=$body)"
     override fun printItself() = "${id}Func $name"
 
     override fun children(): List<Set<SsaNode>> = (params + listOfNotNull(body)).map { setOf(it) }
@@ -182,7 +170,6 @@ data class FuncSsaNode(
 @Serializable
 @SerialName("*ssa.Parameter")
 class ParamSsaNode : ValueSsaNode() {
-    override fun toString() = "Param $name"
     override fun printItself() = "${id}Param $name"
 
     override fun children(): List<Set<SsaNode>> = listOf()
@@ -191,7 +178,6 @@ class ParamSsaNode : ValueSsaNode() {
 @Serializable
 @SerialName("*ssa.Const")
 class ConstSsaNode : ValueSsaNode() {
-    override fun toString() = "Const $name"
     override fun printItself() = "${id}Const $name"
 
     override fun children(): List<Set<SsaNode>> = listOf()
@@ -209,8 +195,7 @@ data class SliceSsaNode(
     val x: SsaNode,
     val high: SsaNode?
 ) : ValueSsaNode() {
-    override fun toString() = "Slice($x)"
-    override fun printItself() = "${id}Slice $name"
+    override fun printItself() = "${id}Slice"
 
     override fun children(): List<Set<SsaNode>> = listOfNotNull(x, high).map { setOf(it) }
 }
@@ -229,7 +214,6 @@ data class PhiSsaNode(
             } to e
         }
 
-    override fun toString() = "Phi(edges=$edges)"
     override fun printItself() = "${id}Phi"
 
     override fun children(): List<Set<SsaNode>> = listOf(edges.toSet())
@@ -241,7 +225,6 @@ class MakeSliceSsaNode(
     val len: SsaNode
 ) : ValueSsaNode() {
 
-    override fun toString() = "MakeSlice(len=$len)"
     override fun printItself() = "${id}MakeSlice"
 
     override fun children(): List<Set<SsaNode>> = listOf(len).map { setOf(it) }
@@ -253,7 +236,6 @@ class IndexAddrSsaNode(
     val x: SsaNode,
     val index: SsaNode
 ) : ValueSsaNode() {
-    override fun toString() = "IndexAddr(name=$name x=$x, index=$index)"
     override fun printItself() = "${id}IndexAddr"
 
     override fun children(): List<Set<SsaNode>> = listOf(x, index).map { setOf(it) }
@@ -272,6 +254,8 @@ data class FieldAddrSsaNode(
 @SerialName("*ssa.Builtin")
 class BuiltInSsaNode : ValueSsaNode() {
     override fun children(): List<Set<SsaNode>> = listOf()
+
+    override fun printItself() = "${id}Builtin($name)"
 }
 
 @Serializable
@@ -293,7 +277,6 @@ class GlobalSsaNode : ValueSsaNode() {
 class ExtractSsaNode(
     val index: Int
 ) : ValueSsaNode() {
-    override fun toString() = "Extract(index=$index)"
     override fun printItself() = "${id}Extract"
 
     override fun children(): List<Set<SsaNode>> = listOf()
@@ -304,7 +287,6 @@ class ExtractSsaNode(
 class MakeInterfaceSsaNode(
     val x: SsaNode
 ) : ValueSsaNode() {
-    override fun toString() = "MakeInterface(name=$name x=$x)"
     override fun printItself() = "${id}MakeInterface"
 
     override fun children(): List<Set<SsaNode>> = listOf(x).map { setOf(it) }
@@ -316,13 +298,12 @@ class CallSsaNode(
     val value: SsaNode,
     val args: List<SsaNode>
 ) : ValueSsaNode() {
-    //  todo remove  val call = value.deLink()
-    //   todo val params = args.map { it.deLink() as ValueSsaNode }
-
-    override fun toString() = "Call(call=$value, args=$args)"
     override fun printItself() = "${id}Call"
-
-    override fun children(): List<Set<SsaNode>> = listOf(*args.toTypedArray(), value).map { setOf(it) }
+    override fun children(): List<Set<SsaNode>> =
+        listOfNotNull(
+            *args.toTypedArray(),
+            value
+        ).map { setOf(it) }
 }
 
 @Serializable
@@ -336,7 +317,6 @@ data class InvokeSsaNode(
         error("invoke mode for method '$method'")
     }
 
-    override fun toString() = "Call invoke(call=$value, method=$method, args=$args)"
     override fun printItself() = "${id}Call invoke"
 
     override fun children(): List<Set<SsaNode>> = listOf(*args.toTypedArray(), value).map { setOf(it) }
@@ -348,7 +328,6 @@ data class StoreSsaNode(
     val addr: SsaNode,
     val value: SsaNode
 ) : SsaNode() {
-    override fun toString() = "Store(addr=$addr, value=$value)"
     override fun printItself() = "${id}Store"
 
     override fun children(): List<Set<SsaNode>> = listOf(value, addr).map { setOf(it) }
@@ -359,7 +338,6 @@ data class StoreSsaNode(
 data class JumpSsaNode(
     val successor: SsaNode
 ) : SsaNode() {
-    override fun toString() = "Jump(successor=$successor)"
     override fun printItself() = "${id}Jump"
 
     override fun children(): List<Set<SsaNode>> = listOf(successor).map { setOf(it) }
@@ -372,7 +350,6 @@ data class UnOpSsaNode(
     val x: SsaNode,
     val commaOk: Boolean
 ) : ValueSsaNode() {
-    override fun toString() = "UnOp(op=$op, x=$x, commaOk=$commaOk)"
     override fun printItself() = "${id}UnOp $op"
 
     override fun children(): List<Set<SsaNode>> = listOf(x).map { setOf(it) }
@@ -387,7 +364,6 @@ data class PanicSsaNode(
         isTerminal = true
     }
 
-    override fun toString() = "Panic(x=$x)"
     override fun printItself() = "${id}Panic"
 
     override fun children(): List<Set<SsaNode>> = listOf()
@@ -411,7 +387,6 @@ interface LinkToSsaType {
 class LinkSsaNode(
     val linkId: Int
 ) : SsaNode(), LinkToSsaNode {
-    override fun toString() = "Link(${linkId})"
     override fun printItself() = "${id}Link"
 
     override fun deLink(): SsaNode = when (val linked = allNodes[linkId]!!) {
@@ -427,7 +402,6 @@ class LinkSsaNode(
 class LinkBlockSsaNode(
     val linkId: Int
 ) : SsaNode(), LinkToSsaNode {
-    override fun toString() = "LinkBlock(${linkId}})"
     override fun printItself() = "${id}LinkBlock"
 
     override fun deLink(): BlockSsaNode =
@@ -443,7 +417,6 @@ class LinkBlockSsaNode(
 class LinkParamSsaNode(
     val linkId: Int
 ) : SsaNode(), LinkToSsaNode {
-    override fun toString() = "LinkParam(${linkId})"
     override fun printItself() = "${id}LinkParam"
 
     override fun deLink(): ParamSsaNode =
@@ -457,7 +430,6 @@ class LinkParamSsaNode(
 class LinkSsaType(
     val linkId: Int
 ) : SsaType(), LinkToSsaType {
-    override fun toString() = "LinkType(${linkId})"
     override fun printItself() = "${id}LinkType"
 
     override fun deLink(): SsaType =
@@ -469,7 +441,6 @@ class LinkSsaType(
 class LinkFuncSsa(
     val linkId: Int
 ) : SsaType(), LinkToSsaType {
-    override fun toString() = "LinkFunc(${linkId})"
     override fun printItself() = "${id}LinkFunc"
 
     override fun deLink(): FuncTypeNode =
@@ -479,7 +450,6 @@ class LinkFuncSsa(
 @Serializable
 @SerialName("Unknown")
 class UnknownSsaNode : SsaNode() {
-    override fun toString() = "Unknown"
     override fun printItself() = "${id}Unknown"
 
     override fun children(): List<Set<SsaNode>> = listOf()
@@ -491,7 +461,6 @@ sealed class SsaType {
     val parentF: String = "" // should not work in types
     val id: Int = 0
 
-    override fun toString() = "${id}Type}"
 
     abstract fun printItself(): String
 
@@ -509,7 +478,6 @@ sealed class SsaType {
 data class BasicTypeNode(
     val name: String
 ) : SsaType() {
-    override fun toString() = "BasicType(name=$name)"
     override fun printItself() = "${id}BasicType"
 }
 
@@ -518,7 +486,6 @@ data class BasicTypeNode(
 data class StructTypeNode(
     val fields: List<SsaType>
 ) : SsaType() {
-    override fun toString() = "StructType(fields=$fields)"
     override fun printItself() = "${id}StructType"
 }
 
@@ -529,7 +496,6 @@ data class StructFieldNode(
     val elemType: SsaType,
 //    val tag: String? = null
 ) : SsaType() {
-    override fun toString() = "StructField(name=$name, elemType=$elemType)"
     override fun printItself() = "${id}StructField"
 }
 
@@ -538,7 +504,6 @@ data class StructFieldNode(
 data class PointerTypeNode(
     val elemType: SsaType
 ) : SsaType() {
-    override fun toString() = "PointerType(elemType=$elemType)"
     override fun printItself() = "${id}PointerType"
 }
 
@@ -547,7 +512,6 @@ data class PointerTypeNode(
 data class SliceTypeNode(
     val elemType: SsaType
 ) : SsaType() {
-    override fun toString() = "SliceType(elemType=$elemType)"
     override fun printItself() = "${id}SliceType"
 }
 
@@ -557,7 +521,6 @@ data class ArrayTypeNode(
     val elemType: SsaType,
     val len: Long
 ) : SsaType() {
-    override fun toString() = "ArrayType(elemType=$elemType, len=$len)"
     override fun printItself() = "${id}ArrayType"
 }
 

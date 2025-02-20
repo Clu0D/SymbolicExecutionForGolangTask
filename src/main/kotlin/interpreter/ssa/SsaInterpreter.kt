@@ -10,17 +10,17 @@ import memory.ssa.SsaState
 
 abstract class SsaInterpreter {
     var print = true
+    val maxExecutionDepth = 150
 
     private fun createSymbolicParam(value: SsaNode, mem: Memory): Symbolic {
         return when (value) {
             is LinkSsaNode -> createSymbolicParam(value.deLink(), mem)
-            is ParamSsaNode -> {
-                val name = value.name
-                val type = Type.fromSsa(value.valueType!!, mem, true)
-                if (print)
-                    println("createSymbolic $name $type")
 
-                return type.createSymbolic(value.name, mem)
+            is ParamSsaNode -> {
+                val type = Type.fromSsa(value.valueType!!, mem)
+                val symbolic = type.createSymbolic(value.name, mem)
+
+                return symbolic
             }
 
             else -> error("should be link or param")
@@ -32,23 +32,19 @@ abstract class SsaInterpreter {
         args: List<Symbolic?>? = null,
         ctx: KContext,
         initialState: SsaState
-    ): Pair<Collection<SymbolicResult>, Map<String, KSort>>
+    ): Pair<Collection<SymbolicResult<SsaNode>>, Map<String, KSort>>
 
-    abstract fun statisticsStartVisit(node: SsaNode, state: SsaState)
+    abstract fun statisticsStartVisit(node: SsaNode, state: SsaState): Boolean
 
-    abstract fun statisticsEndVisit(node: SsaNode, state: SsaState)
+    abstract fun statisticsEndVisit(node: SsaNode, state: SsaState): Boolean
 
     fun prepareState(
         func: FuncSsaNode,
         args: List<Symbolic?>?,
         state: SsaState
     ) {
-        if (print) {
-            println()
-            println()
-            println("FUNCTION!@#@!\t\t${func.name}")
-            println()
-        }
+        if (print)
+            println("\nFUNCTION ${func.name}\n")
 
         val initializedArgs = func.params.mapIndexed { i, node ->
             statisticsStartVisit(node, state)
@@ -65,15 +61,14 @@ abstract class SsaInterpreter {
     companion object {
         fun visitOp(
             op: String,
-            argsReferenced: List<Symbolic>,
+            args: List<Symbolic>,
             mem: Memory
         ): Symbolic {
-            val args = argsReferenced.map { it.getDereferenced(mem) }
             return with(mem.ctx) {
                 if (args.size == 1 && op == "*") {
                     when (val star = args[0]) {
-                        is StarSymbolic -> star.dereference()
-                        else -> error("only star type allowed, not $star")
+                        is StarSymbolic -> star.dereference(mem)
+                        else -> star
                     }
                 } else when (val arg0 = args[0]) {
                     is IntSymbolic if(arg0.hasSign()) -> {
@@ -95,6 +90,7 @@ abstract class SsaInterpreter {
                                     (b eq zero).toBoolSymbolic(),
                                     "divisionByZero"
                                 )
+
                                 mkBvSignedDivExpr(a, b)
                             }
 
@@ -103,6 +99,7 @@ abstract class SsaInterpreter {
                                     (b eq zero).toBoolSymbolic(),
                                     "divisionByZero"
                                 )
+
                                 mkBvSignedModExpr(a, b)
                             }
 
@@ -189,56 +186,60 @@ abstract class SsaInterpreter {
                         ComplexSymbolic(real.expr, img.expr)
                     }
 
-                    is StarSymbolic -> {
-                        val a = args[0].star(mem)
-
-                        when (val b = args[1]) {
-                            is StarSymbolic -> when (op) {
-                                "==" -> a.eq(b, mem)
-                                "!=" -> mkNot(a.eq(b, mem).boolExpr(mem)).toBoolSymbolic()
-
-                                else -> error("op: '${op}' $args")
-                            }
-
-                            else -> {
-                                visitOp(op, listOf(a.get(mem), b), mem)
-                            }
+                    else -> {
+                        val a = args[0]
+                        val b = args[1]
+                        when {
+                            a is StarSymbolic && b is StarSymbolic && op == "==" -> a.eq(b, mem)
+                            a is StarSymbolic && b is StarSymbolic && op == "!=" -> a.eq(b, mem).not(mem)
+                            a is StarSymbolic -> visitOp(op, listOf(a, LocalStarSymbolic(b, a.isStarFake)), mem)
+                            b is StarSymbolic -> visitOp(op, listOf(LocalStarSymbolic(a, b.isStarFake), b), mem)
+                            else -> error("op: '${op}' $a $b")
                         }
                     }
-
-                    else -> error("op:'$op' '$args'")
                 }
             }
         }
 
-        fun visitAlloc(type: Type, mem: Memory): GlobalStarSymbolic {
-            val address = mem.addNewStarObject("", type.defaultSymbolic(mem))
-            return GlobalStarSymbolic("", type, address, false)
+        fun visitAlloc(type: Type, mem: Memory): Symbolic {
+            val (realType, isFake) = (type as ArrayType).toSimple(type.length!!)
+            val address = mem.addNewDefaultStar(realType, isFake)
+            return GlobalStarSymbolic(StarType(realType, isFake), address, BoolType.`false`(mem), isFake)
         }
 
         fun visitSlice(high: Symbolic?, x: Symbolic, mem: Memory): Symbolic = when {
             high == null -> x
-            x is StarSymbolic -> {
-                when (val obj = x.dereference().get(mem)) {
-                    is FiniteArraySymbolic ->
-                            FiniteArraySymbolic(
-                                high.int64(mem),
-                                mem,
-                                obj
-                            )
-
-                    is InfiniteArraySymbolic ->
-                            FiniteArraySymbolic(
-                                high.int64(mem),
-                                mem,
-                                obj
-                            )
-
-                    else -> error("should be an array, not ${obj.type}")
-                }
+            x is FiniteArraySymbolic -> {
+                FiniteArraySymbolic(
+                    IntType.cast(high, Int64Type(), mem).int64(mem),
+                    x,
+                    mem
+                )
             }
 
-            else -> error("should be a *, not ${x.type}")
+            x is CombinedArray -> {
+                FiniteArraySymbolic(
+                    IntType.cast(high, Int64Type(), mem).int64(mem),
+                    x,
+                    mem
+                )
+            }
+
+
+//            x is InfiniteArray -> {
+//        todo remove        val size = IntType.cast(high, Int64Type(), mem).int64(mem)
+//                FiniteArraySymbolic(
+//                    size,
+//                    mem, x,
+//                    DefaultArrayBehaviour(false, size)
+//                )
+//            }
+
+            x is StarSymbolic ->
+                visitSlice(high, x.dereference(mem), mem)
+
+            x is StopSymbolic -> x
+            else -> error("should be an array, not ${x.javaClass.name}")
         }
 
         val knownFunctions: Map<String, (List<Symbolic>, Memory) -> Symbolic> = mapOf(
@@ -256,10 +257,12 @@ abstract class SsaInterpreter {
             },
             "len" to { args, mem ->
                 assert(args.size == 1)
-                when (val a = args[0]) {
-                    is StarSymbolic -> a.get(mem).array(mem).length()
-                    else -> a.array(mem).length()
-                }
+
+                when (val arr = args[0]) {
+                    is FiniteArraySymbolic -> arr
+                    is StarSymbolic -> arr.dereference(mem).array(mem)
+                    else -> error("should be [] or *[], not ${arr.javaClass.name}")
+                }.length()
             },
             "make" to { args, mem ->
                 assert(args.size == 2)
@@ -296,5 +299,6 @@ abstract class SsaInterpreter {
                 UninterpretedType.fromString("Sprintf", mem)
             }
         )
+
     }
 }

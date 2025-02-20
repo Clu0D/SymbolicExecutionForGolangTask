@@ -1,7 +1,5 @@
 package memory.ssa
 
-import interpreter.ssa.IfSsaNode
-import interpreter.ssa.LinkToSsaNode
 import interpreter.ssa.SsaNode
 
 class SsaExecutionStatistics(
@@ -27,7 +25,6 @@ class SsaExecutionStatistics(
             globalVisitCounter = oldInfo.globalVisitCounter + 1
         )
         localVisitCounter.first()[node] = (localVisitCounter.first()[node] ?: 0) + 1
-//        println("! ${localVisitCounter.first()[node]} ${node}")
         return oldInfo
     }
 
@@ -48,17 +45,17 @@ class SsaExecutionStatistics(
         localVisitCounter.removeFirst()
     }
 
-    // todo
-    fun isLoopRepeatExceeded(node: IfSsaNode, cond: Boolean, maxRepeat: Int): Boolean {
-        var nextNode = if (cond)
-            node.body
-        else
-            node.elseBody
-
-        if (nextNode is LinkToSsaNode)
-            nextNode = nextNode.deLink()
-
-        val localCount = localVisitCounter.first()[nextNode] ?: 0
-        return localCount > maxRepeat
-    }
+//    // todo
+//    fun isLoopRepeatExceeded(node: IfSsaNode, cond: Boolean, maxRepeat: Int): Boolean {
+//        var nextNode = if (cond)
+//            node.body
+//        else
+//            node.elseBody
+//
+//        if (nextNode is LinkToSsaNode)
+//            nextNode = nextNode.deLink()
+//
+//        val localCount = localVisitCounter.first()[nextNode] ?: 0
+//        return localCount > maxRepeat
+//    }
 }

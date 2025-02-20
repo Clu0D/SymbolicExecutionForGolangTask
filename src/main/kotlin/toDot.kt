@@ -17,8 +17,13 @@ fun generateDotFile(file: String, initNode: FuncSsaNode) {
         val queue = mutableListOf<SsaNode>(initNode)
 
         fun draw(node: SsaNode, other: SsaNode, name: String = "") {
-            (node.printItself() - other.printItself())[Color.BLACK, Label.of(name)]
-            queue.add(other)
+            if (other is LinkToSsaNode) {
+                (node.printItself() - other.deLink().printItself())[Color.BLACK, Label.of(name)]
+                queue.add(other.deLink())
+            } else {
+                (node.printItself() - other.printItself())[Color.BLACK, Label.of(name)]
+                queue.add(other)
+            }
         }
 
         fun draw(node: SsaNode, list: List<SsaNode>?, name: String = "") {
@@ -105,6 +110,8 @@ fun generateDotFile(file: String, initNode: FuncSsaNode) {
                     if (node.high != null)
                         draw(node, node.high, "params")
                 }
+
+                is SsaForcePhiNode -> TODO()
             }
         }
     }.toGraphviz()
@@ -113,35 +120,3 @@ fun generateDotFile(file: String, initNode: FuncSsaNode) {
         .render(Format.PNG)
         .toFile(File("ssaGraphPictures/$file/${initNode.name}.png"))
 }
-
-//fun generateDotFileReachability(file: String, vararg initNodes: SsaNode) {
-//    guru.nidi.graphviz.graph(directed = true, name = "reach") {
-//        val set = mutableSetOf<SsaNode>()
-//        val queue = mutableListOf<SsaNode>(*initNodes)
-//
-//        fun draw(node: SsaNode, other: SsaNode, name: String = "") {
-//            ("${node.printItself()} ${node.toBestEnd}" - "${other.printItself()} ${node.toBestEnd}")[Color.BLACK, Label.of(
-//                name
-//            )]
-//            queue.add(other)
-//        }
-//
-//        fun draw(node: SsaNode, list: List<SsaNode>?, name: String = "") {
-//            list?.forEachIndexed { i, it ->
-//                draw(node, it, name + "$i")
-//            }
-//        }
-//
-//        while (queue.isNotEmpty()) {
-//            val node = queue.removeFirst()
-//            if (set.contains(node)) continue
-//            set.add(node)
-//            println("!${node.backlinks}")
-//            draw(node, node.backlinks.toList())
-//        }
-//    }.toGraphviz()
-//        // Engine.FDP and Engine.DOT look good
-//        .engine(Engine.DOT)
-//        .render(Format.PNG)
-//        .toFile(File("ssaGraphPictures/testing/reach.png"))
-//}

@@ -9,17 +9,17 @@ import memory.*
 import memory.ast.AstState
 import kotlin.collections.plus
 
-open class StaticInterpreter(
+open class StaticAstInterpreter(
     functionDeclarations: Map<String, AstFuncDecl>,
     typeDeclarations: List<AstType>
-) : Interpreter(functionDeclarations, typeDeclarations) {
+) : AstInterpreter(functionDeclarations, typeDeclarations) {
 
     override fun startFunction(
         func: AstFuncDecl,
         args: List<Symbolic?>?,
         ctx: KContext,
         initialState: AstState
-    ): Pair<Collection<SymbolicResult>, Map<String, KSort>> {
+    ): Pair<Collection<SymbolicResult<Any>>, Map<String, KSort>> {
         typeDeclarations.forEach {
             initialState.waitingNodes.add(it to mutableListOf())
         }
@@ -28,17 +28,17 @@ open class StaticInterpreter(
         return interpretLoop(initialState) to initialState.mem.createdConsts
     }
 
-    private fun interpretLoop(state: AstState): Collection<SymbolicResult> {
-        while (state.waitingNodes.size > 0) {
+    private fun interpretLoop(state: AstState): Collection<SymbolicResult<Any>> {
+        while (state.waitingNodes.isNotEmpty()) {
             val (cond, result, size) = interpretState(state)
 //            execution ended
             if (size == 0) return listOf(
-                SymbolicReturn(cond, result)
-            ) + state.mem.errors
+                SymbolicReturn<Any>(cond, result, state.getVisitedNodes())
+            ) + state.mem.errors as List<SymbolicResult<Any>>
 //            force stop
-            if (size == -1) return state.mem.errors
+            if (size == -1) return state.mem.errors as List<SymbolicResult<Any>>
         }
-        error("should not happen")
+        error("should not happen (interpret loop ended in unusual way)")
     }
 
     open fun statisticsStartVisit(node: AstNode, state: AstState) {
@@ -93,8 +93,6 @@ open class StaticInterpreter(
 
         val (childNode, childrenResults) = waitingNodes.removeFirst()
 
-        println("! ${childNode?.printItself()}")
-
         if (childNode == null) {
             // end of started node
             var startedNode = startedNodes.removeLast()
@@ -108,6 +106,7 @@ open class StaticInterpreter(
                 )
             }
             val result = translator(startedNode).second(mem, childrenResults)
+                ?.let { StarSymbolic.removeFake(it, mem) }
 
             if (waitingNodes.isEmpty()) {
                 return Triple(pathCond, result, startedNodes.size)
@@ -141,7 +140,7 @@ open class StaticInterpreter(
                 { _, _ ->
                     node.rhs
                 }, { mem, rhsResults ->
-                    visitAssignStmt(node.lhs, node.token, rhsResults, mem)
+                    visitAssignStmt(node.lhs, node.token, rhsResults, TODO())
                     null
                 }
             )
@@ -158,7 +157,7 @@ open class StaticInterpreter(
                 { _, _ ->
                     listOf(node.x, node.y)
                 }, { mem, args ->
-                    visitOp(node.op, args.requireNoNulls(), mem)
+                    visitOp(node.op, args.requireNoNulls(), TODO())
                 }
             )
 
@@ -192,7 +191,6 @@ open class StaticInterpreter(
 
             is StartFunctionNode -> Pair(
                 { mem, args ->
-                    println("!! ${node.functionName}")
                     val func = functionDeclarations[node.functionName]!!
 
                     mem.enterFunction()
@@ -376,7 +374,7 @@ open class StaticInterpreter(
                 { _, _ -> listOfNotNull(node.elementType, node.length) },
                 { mem, args ->
                     val elementType = args[0]!!.type as StarType
-                    val length = args.getOrNull(1) as? Int64Symbolic
+                    val length = args[1] as Int64Symbolic
                     Symbolic(ArrayType(elementType, length))
                 }
             )
@@ -386,11 +384,11 @@ open class StaticInterpreter(
                     listOf(node.x)
                 },
                 { mem, args ->
-                    visitOp(node.op, args.requireNoNulls(), mem)
+                    visitOp(node.op, args.requireNoNulls(), TODO())
                 }
             )
 
-//     todo       is AstRange -> Pair(
+//            is AstRange -> Pair(
 //                { _, _ ->
 //                    listOf(node.x)
 //                },

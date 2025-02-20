@@ -1,50 +1,50 @@
 package interpreter.ast
 
-import interpreter.ast.Interpreter.Companion.STATIC_FOR_MAX_LENGTH
-import interpreter.ast.Interpreter.Companion.visitAssignStmt
-import interpreter.ast.Interpreter.Companion.visitBasicLit
-import interpreter.ast.Interpreter.Companion.visitGenDeclaration
-import interpreter.ast.Interpreter.Companion.visitIncDec
-import interpreter.ast.Interpreter.Companion.visitSelector
-import interpreter.ast.Interpreter.Companion.visitType
+import interpreter.ast.AstInterpreter.Companion.STATIC_FOR_MAX_LENGTH
+import interpreter.ast.AstInterpreter.Companion.visitAssignStmt
+import interpreter.ast.AstInterpreter.Companion.visitBasicLit
+import interpreter.ast.AstInterpreter.Companion.visitGenDeclaration
+import interpreter.ast.AstInterpreter.Companion.visitIncDec
+import interpreter.ast.AstInterpreter.Companion.visitSelector
+import interpreter.ast.AstInterpreter.Companion.visitType
 import interpreter.ssa.SsaInterpreter.Companion.knownFunctions
 import interpreter.ssa.SsaInterpreter.Companion.visitOp
 import memory.Memory
 import io.ksmt.KContext
 import memory.*
 
-class StaticInterpreterRecursive(
+class StaticAstInterpreterRecursive(
     val functionDeclarations: Map<String, AstFuncDecl>,
     typeDeclarations: List<AstType>,
     ctx: KContext,
 ) {
-    val mem = Memory(ctx)
+    val mem = Memory(ctx, TODO())
 
     init {
-        typeDeclarations.forEach { visit(it) }
+        typeDeclarations.forEach { visit(it, TODO()) }
     }
 
     fun startFunction(
         func: AstFuncDecl,
         args: List<Symbolic?>?,
         ctx: KContext
-    ): List<SymbolicResult> {
-        return visitFunction(func, args) + mem.errors
+    ): List<SymbolicResult<Any>> {
+        return visitFunction(func, args) + mem.errors  as List<SymbolicReturn<Any>>
     }
 
     fun visitFunction(
         func: AstFuncDecl,
         args: List<Symbolic?>? = null
-    ): List<SymbolicReturn> {
+    ): List<SymbolicReturn<Any>> {
         mem.enterFunction()
         mem.addArgsSymbolic(
             (func.params ?: listOf()).map(AstField::toPairs).flatten().toMap(),
             args ?: listOf()
         )
 
-        visit(func.body)
+        visit(func.body, TODO())
 
-        return mem.exitFunction()
+        return mem.exitFunction() as List<SymbolicReturn<Any>>
     }
 
     private fun visitCall(
@@ -60,7 +60,7 @@ class StaticInterpreterRecursive(
                     visitFunction(it, args)
                 } ?: error("no function ${call.name}")
 
-                result.combineToSymbolic(mem)
+                result.combineToSymbolic<Any>(mem)
             }
         }
     }
@@ -73,14 +73,14 @@ class StaticInterpreterRecursive(
 
         mem.addVisibilityLevel()
         mem.addCond(condExpr, true)
-        val body = visit(bodyNode)
+        val body = visit(bodyNode, TODO())
         mem.removeCond()
         mem.removeVisibilityLevel()
 
         if (elseNode != null) {
             mem.addVisibilityLevel()
             mem.addCond(condExpr.not(mem), true)
-            val elseBody = visit(elseNode)
+            val elseBody = visit(elseNode, TODO())
             mem.removeCond()
             mem.addVisibilityLevel()
         }
@@ -88,10 +88,10 @@ class StaticInterpreterRecursive(
         return null
     }
 
-    private fun visit(node: AstNode): Symbolic? {
+    private fun visit(node: AstNode, state: State): Symbolic? {
         return when (node) {
             is AstAssignStmt -> {
-                visitAssignStmt(node.lhs, node.token, node.rhs.map { visit(it) }, mem)
+                visitAssignStmt(node.lhs, node.token, node.rhs.map { visit(it, TODO()) }, TODO())
                 null
             }
 
@@ -100,14 +100,14 @@ class StaticInterpreterRecursive(
             }
 
             is AstBinaryExpr -> {
-                val x = visit(node.x)!!
-                val y = visit(node.y)!!
-                visitOp(node.op, listOf(x, y), mem)
+                val x = visit(node.x, TODO())!!
+                val y = visit(node.y, TODO())!!
+                visitOp(node.op, listOf(x, y), TODO())
             }
 
             is AstBlockStmt -> {
                 node.statements?.map { statement ->
-                    visit(statement)
+                    visit(statement, TODO())
                 }
 //                todo does it return something?
 //                    .last()
@@ -116,7 +116,7 @@ class StaticInterpreterRecursive(
 
             is AstCallExpr -> {
                 val argumentResults = node.args.map { argument ->
-                    visit(argument)!!
+                    visit(argument, TODO())!!
                 }
                 when (node.call) {
                     is AstIdent -> {
@@ -137,21 +137,21 @@ class StaticInterpreterRecursive(
             }
 
             is AstIf -> {
-                val cond = visit(node.cond)!!
+                val cond = visit(node.cond, TODO())!!
                 visitIf(cond.bool(mem), node.body, node.elseBody)
             }
 
             is AstReturn -> {
                 val results = node.result.map { statement ->
-                    visit(statement)!!
+                    visit(statement, TODO())!!
                 }
                 mem.addResults(results)
                 null
             }
 
             is AstUnaryExpr -> {
-                val x = visit(node.x)!!
-                visitOp(node.op, listOf(x), mem)
+                val x = visit(node.x, TODO())!!
+                visitOp(node.op, listOf(x), TODO())
             }
 
             is AstGenDecl -> {
@@ -161,13 +161,13 @@ class StaticInterpreterRecursive(
 
             is AstFor -> {
                 // todo is init ignored?
-                var init = visit(node.init)
+                var init = visit(node.init, TODO())
                 var i = 0
                 while (true) {
                     val cond = if (i > STATIC_FOR_MAX_LENGTH) {
                         BoolType.`false`(mem)
                     } else {
-                        visit(node.cond)!!.bool(mem)
+                        visit(node.cond, TODO())!!.bool(mem)
                     }
 
                     val body = visitIf(cond, node.body, null)
@@ -176,7 +176,7 @@ class StaticInterpreterRecursive(
                     }
                     i++
                 }
-                visit(node.post)
+                visit(node.post, TODO())
             }
 
             is AstIncDec -> {
@@ -185,15 +185,15 @@ class StaticInterpreterRecursive(
             }
 
             is AstIndexExpr -> {
-                val x = visit(node.x)
-                val index = visit(node.index)
+                val x = visit(node.x, TODO())
+                val index = visit(node.index, TODO())
                 val xArr = x!!.array(mem)
 
                 xArr.get(index!!.int64(mem), mem)
             }
 
             is AstSelector ->
-                visitSelector(node.selectorName, visit(node.x), mem)
+                visitSelector(node.selectorName, visit(node.x, TODO()), mem)
 
             is AstUnsupported -> error(node.unsupported)
 

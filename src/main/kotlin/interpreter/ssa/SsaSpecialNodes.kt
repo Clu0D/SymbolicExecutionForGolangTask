@@ -37,7 +37,8 @@ class SsaStartBranchNode(
     val branch: Boolean,
     val body: SsaNode?,
     val cond: BoolSymbolic,
-    val stopOrContinue: SsaNode?
+    val stopOrContinue: SsaNode?,
+    val needToPush: Boolean
 ) :
     SsaNode() {
     override fun printItself() = "start branch $branch"
@@ -49,6 +50,16 @@ class SsaStartBranchNode(
 class SsaEndBranchNode(val removesCond: Boolean) : SsaNode() {
     override fun printItself() = "end branch"
     override fun toString() = printItself()
+
+    override fun children() = error("Should not be used")
+}
+
+class SsaForcePhiNode(val phi: PhiSsaNode): ValueSsaNode() {
+    override val id = -1
+    override val name = phi.name
+    override val valueType = phi.valueType
+
+    override fun printItself() = "force phi ${phi.printItself()}"
 
     override fun children() = error("Should not be used")
 }

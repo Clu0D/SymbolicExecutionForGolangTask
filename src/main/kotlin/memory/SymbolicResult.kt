@@ -1,23 +1,29 @@
 package memory
 
-sealed class SymbolicResult(val cond: BoolSymbolic)
+sealed class SymbolicResult<T>(val cond: BoolSymbolic, val visitedNodes: Set<T>)
 
-class SymbolicError(cond: BoolSymbolic, val error: String) : SymbolicResult(cond) {
+class SymbolicError<T>(cond: BoolSymbolic, val error: String, visitedNodes: Set<T>) :
+    SymbolicResult<T>(cond, visitedNodes) {
     override fun toString() =
         "symbolic error: $error"
 }
 
-class SymbolicReturn(cond: BoolSymbolic, val returns: List<Symbolic>) : SymbolicResult(cond) {
-    constructor(cond: BoolSymbolic, result: Symbolic?) : this(
-        cond, if (result is ListSymbolic) result.list
-        else listOfNotNull(result)
+class SymbolicReturn<T>(cond: BoolSymbolic, val returns: List<Symbolic>, visitedNodes: Set<T>) :
+    SymbolicResult<T>(cond, visitedNodes) {
+    constructor(cond: BoolSymbolic, result: Symbolic?, visitedNodes: Set<T>) : this(
+        cond,
+        if (result is ListSymbolic)
+            result.list
+        else
+            listOfNotNull(result),
+        visitedNodes
     )
 
     override fun toString() =
         "symbolic return: $returns"
 }
 
-fun List<SymbolicReturn>.combineToSymbolic(mem: Memory) = ListSymbolic(
+fun <T> List<SymbolicReturn<T>>.combineToSymbolic(mem: Memory) = ListSymbolic(
     if (isEmpty()) {
         listOf()
     } else (0 until first().returns.size).map { i ->

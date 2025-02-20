@@ -1,21 +1,23 @@
 package interpreter.ssa
 
+import interpreter.UnSatPathException
 import io.ksmt.KContext
+import io.ksmt.expr.KExpr
+import io.ksmt.sort.KBv64Sort
 import io.ksmt.sort.KSort
 import kotlinx.coroutines.yield
 import memory.*
 import memory.ssa.SsaExecutionStatistics
 import memory.ssa.SsaState
 
-open class SsaStaticInterpreter(
-    functionDeclarations: Map<String, FuncSsaNode>
-) : SsaInterpreter() {
+open class SsaStaticInterpreter() : SsaInterpreter() {
+    open val isDynamic = false
 
     open fun updateDistancesToTerminal(vararg removedNodes: SsaNode) {
         // static does nothing
     }
 
-    open fun isNodeUseful(node: BlockSsaNode): Boolean {
+    open fun isNodeUseful(node: SsaNode, mem: Memory): Boolean {
         // static does nothing
         return true
     }
@@ -25,37 +27,46 @@ open class SsaStaticInterpreter(
         args: List<Symbolic?>?,
         ctx: KContext,
         initialState: SsaState
-    ): Pair<Collection<SymbolicResult>, Map<String, KSort>> {
+    ): Pair<List<SymbolicResult<SsaNode>>, Map<String, KSort>> {
         prepareState(func, args, initialState)
 
-        return interpretLoop(initialState) to initialState.mem.createdConsts
+        return interpretLoop(initialState).toList() to initialState.mem.createdConsts
     }
 
-    private suspend fun interpretLoop(state: SsaState): Collection<SymbolicResult> {
+    private suspend fun interpretLoop(state: SsaState): Collection<SymbolicResult<SsaNode>> {
         while (state.waitingNodes.isNotEmpty()) {
             yield()
             val (cond, result, size) = interpretStep(state)
 //            execution ended
             if (size == 0) return listOf(
-                SymbolicReturn(cond, result)
+                SymbolicReturn(cond, result, state.getVisitedNodes())
             ) + state.mem.errors
 //            force stop
             if (size == -1) return state.mem.errors
         }
-        error("should not happen")
+        error("should not happen (interpret loop ended in unusual way)")
     }
 
-    override fun statisticsStartVisit(node: SsaNode, state: SsaState) {
+    override fun statisticsStartVisit(node: SsaNode, state: SsaState): Boolean {
         state.time++
-        state.mem.addInstrToPath(node)
-        val oldInfo = state.executionStatistics.startVisit(node)
-        if (!oldInfo.visitStarted) {
-            state.newCodeTime = state.time
-        }
+        return if (node.id > 0) {
+            state.mem.addInstrToPath(node)
+            val oldInfo = state.executionStatistics.startVisit(node)
+            if (!oldInfo.visitStarted) {
+                state.newCodeTime = state.time
+            }
+            state.visitedNodes += node
+            true
+        } else
+            false
     }
 
-    override fun statisticsEndVisit(node: SsaNode, state: SsaState) {
-        state.executionStatistics.endVisit(node)
+    override fun statisticsEndVisit(node: SsaNode, state: SsaState): Boolean {
+        return if (node.id > 0) {
+            state.executionStatistics.endVisit(node)
+            true
+        } else
+            false
     }
 
     protected open fun startDynamicNodeInterpretation(
@@ -72,6 +83,14 @@ open class SsaStaticInterpreter(
         node: ReturnSsaNode,
         args: MutableList<Symbolic?>
     ): SsaNode {
+        return node
+    }
+
+    protected open fun finishDynamicPanicInterpretation(
+        state: SsaState,
+        node: PanicSsaNode
+    ): SsaNode {
+        // does nothing in static
         return node
     }
 
@@ -99,7 +118,8 @@ open class SsaStaticInterpreter(
         if (childNode is SsaStopNode ||
             childrenResults.filterNotNull().any { it is StopSymbolic }
         ) {
-            if (print) println("stop")
+            if (print)
+                println("${state.stateId}\t stop_")
             return Triple(pathCond, null, -1)
         } else if (childNode == null) {
             // end of started node
@@ -112,19 +132,27 @@ open class SsaStaticInterpreter(
                     startedNode,
                     childrenResults
                 )
+            } else if (startedNode is PanicSsaNode) {
+                startedNode = finishDynamicPanicInterpretation(
+                    state,
+                    startedNode
+                )
             }
             if (print && startedNode !is LinkToSsaNode)
-                println("finishing \t${startedNode.printItself()}")
+                println("${state.stateId}\t\t${startedNode.printItself()}")
 
-            val result = translator(startedNode, state.executionStatistics).second(mem, childrenResults)
-                ?.getDereferenced(mem)
-
+            val result = try {
+                translator(startedNode, state.executionStatistics).second(mem, childrenResults)
+                    ?.let { StarSymbolic.removeFake(it, mem) }
+            } catch (_: UnSatPathException) {
+                StopSymbolic
+            }
             if (print && startedNode !is LinkToSsaNode)
-                println("\t\t\t\t${result?.type}")
+                println("${state.stateId}\t \t\t\t\t${result?.type}")
 
             if (result == StopSymbolic) {
                 if (print)
-                    println("stop")
+                    println("${state.stateId}\t stop^")
                 return Triple(pathCond, null, -1)
             }
 
@@ -141,16 +169,25 @@ open class SsaStaticInterpreter(
             val (nextWaiting, nextResults) = waitingNodes.first()
             nextResults.add(result)
         } else {
+            if (print && childNode !is LinkToSsaNode)
+                println("${state.stateId}\t\t____${childNode.printItself()}")
+
             statisticsStartVisit(childNode, state)
 
-            val wasDoneDynamically = startDynamicNodeInterpretation(state, childNode, childrenResults)
-            if (!wasDoneDynamically) {
-                startNodeInterpretation(
-                    state,
-                    childNode,
-                    translator(childNode, state.executionStatistics).first,
-                    childrenResults
-                )
+            try {
+                val wasDoneDynamically = startDynamicNodeInterpretation(state, childNode, childrenResults)
+                if (!wasDoneDynamically) {
+                    startNodeInterpretation(
+                        state,
+                        childNode,
+                        translator(childNode, state.executionStatistics).first,
+                        childrenResults
+                    )
+                }
+            } catch (_: UnSatPathException) {
+                if (print)
+                    println("${state.stateId}\t stop*")
+                return Triple(pathCond, null, -1)
             }
         }
         return Triple(pathCond, null, waitingNodes.size + startedNodes.size)
@@ -185,11 +222,21 @@ open class SsaStaticInterpreter(
             )
 
             is BlockSsaNode -> Pair(
-                { _, _ ->
-                    if (isNodeUseful(node)) {
-                        node.instr ?: listOf()
+                { mem, _ ->
+                    if (isNodeUseful(node, mem)) {
+                        node.instr?.map {
+                            when (it) {
+                                is PhiSsaNode -> listOf(SsaForcePhiNode(it))
+                                is LinkToSsaNode -> when (val phi = it.deLink()) {
+                                    is PhiSsaNode -> listOf(SsaForcePhiNode(phi), it)
+                                    else -> listOf(it)
+                                }
+
+                                else -> listOf(it)
+                            }
+                        }?.flatten() ?: listOf()
                     } else {
-                        listOf(SsaStopNode())
+                        listOf(PanicSsaNode("path stopped by interpreter"))
                     }
                 }, { _, _ ->
                     null
@@ -220,7 +267,7 @@ open class SsaStaticInterpreter(
                 }
             )
 
-            is InvokeSsaNode -> TODO()
+            is InvokeSsaNode -> TODO("is not used in tests")
 
             is SsaStartFunctionNode -> Pair(
                 { mem, args ->
@@ -261,10 +308,13 @@ open class SsaStaticInterpreter(
                 }
             )
 
-            is FuncSsaNode -> TODO()
+            is FuncSsaNode -> TODO("function inside function declaration")
 
             is IfSsaNode -> Pair(
                 { mem, _ ->
+                    if (!isNodeUseful(node, mem))
+                        return@Pair listOf(PanicSsaNode("path stopped by interpreter"))
+
                     listOf(
                         node.cond,
                         SsaBranchControlNode(node.body, node.elseBody)
@@ -276,9 +326,9 @@ open class SsaStaticInterpreter(
                 { mem, args ->
                     val cond = args[0]!!.bool(mem)
                     listOf(
-                        SsaStartBranchNode(true, node.body, cond, null),
+                        SsaStartBranchNode(true, node.body, cond, null, true),
                         SsaEndBranchNode(true),
-                        SsaStartBranchNode(false, node.elseBody, cond, null),
+                        SsaStartBranchNode(false, node.elseBody, cond, null, true),
                         SsaEndBranchNode(true)
                     )
                 },
@@ -290,13 +340,13 @@ open class SsaStaticInterpreter(
                     mem.addVisibilityLevel()
                     listOfNotNull(
                         if (node.branch) {
-                            if (mem.addCond(node.cond, true)) {
+                            if (mem.addCond(node.cond, node.needToPush)) {
                                 node.body
                             } else {
                                 node.stopOrContinue
                             }
                         } else {
-                            if (mem.addCond(node.cond.not(mem), true)) {
+                            if (mem.addCond(node.cond.not(mem), node.needToPush)) {
                                 node.body
                             } else {
                                 node.stopOrContinue
@@ -304,7 +354,11 @@ open class SsaStaticInterpreter(
                         }
                     )
                 },
-                { _, _ -> null }
+                { _, _ ->
+                    if (isDynamic)
+                        error("should not happen (going back in control graph)")
+                    null
+                }
             )
 
             is SsaEndBranchNode -> Pair(
@@ -319,16 +373,20 @@ open class SsaStaticInterpreter(
 
             is SsaStopNode -> Pair(
                 { _, _ ->
-                    error("stop")
+                    error("should not happen (stop node started)")
                 },
-                { _, _ -> null }
+                { _, _ ->
+                    StopSymbolic
+                }
             )
 
             is JumpSsaNode -> Pair(
-                { _, _ ->
+                { mem, _ ->
+                    if (!isNodeUseful(node, mem))
+                        return@Pair listOf(PanicSsaNode("path stopped by interpreter"))
+
                     listOf(node.successor)
                 }, { _, _ ->
-//                    todo args.last()?
                     null
                 }
             )
@@ -339,6 +397,7 @@ open class SsaStaticInterpreter(
                         (BoolType.`true`(mem)),
                         node.x
                     )
+
                     listOf()
                 }, { _, _ ->
                     updateDistancesToTerminal(node)
@@ -347,9 +406,14 @@ open class SsaStaticInterpreter(
             )
 
             is ReturnSsaNode -> Pair(
-                { _, _ -> node.results },
+                { mem, _ ->
+                    if (!isNodeUseful(node, mem))
+                        return@Pair listOf(PanicSsaNode("path stopped by interpreter"))
+                    node.results
+                },
                 { mem, args ->
                     mem.addResults(args.requireNoNulls())
+
                     mem.addCond(mem.fullPathCond().not(mem), false)
                     null
                 }
@@ -358,28 +422,19 @@ open class SsaStaticInterpreter(
             is StoreSsaNode -> Pair(
                 { _, _ -> listOf(node.addr, node.value) },
                 { mem, args ->
-                    when (val address = args[0]!!) {
-                        is StarSymbolic -> {
-                            val value = args[1]!!
-                            node.value.parentF
-                            if (address.put(value, mem)) {
-                                null
-                            } else {
-                                StopSymbolic
-                            }
-                        }
+                    val address = args[0]!! as StarSymbolic
+                    val value = args[1]!!
 
-                        else -> error("store allows only to use *")
-                    }
-
+                    address.put(value, mem)
+                    null
                 }
             )
 
             is AllocSsaNode -> Pair(
                 { _, _ -> listOf() },
                 { mem, _ ->
-                    // todo true!
-                    val type = Type.fromSsa(node.valueType!!, mem, false) as StarType
+                    val type = Type.fromSsa(node.valueType!!, mem) as StarType
+
                     visitAlloc(type.elementType, mem)
                 }
             )
@@ -409,7 +464,7 @@ open class SsaStaticInterpreter(
                     val nameParts = node.name.split(":")
                     val value = nameParts[0]
 
-                    when (val type = Type.fromSsa(node.valueType!!, mem, false)) {
+                    when (val type = Type.fromSsa(node.valueType!!, mem)) {
 //                        is FunctionType -> Symbolic(FunctionType)
 
                         is BoolType -> BoolType.fromBool(value.toBoolean(), mem)
@@ -423,15 +478,15 @@ open class SsaStaticInterpreter(
                         is Float64Type -> Float64Type().fromDouble(value.toDouble(), mem)
 
                         is ArrayType if (value == "nil") ->
-                            NilLocalStarSymbolic(type, true)
+                            NilLocalStarSymbolic(StarType(type, false))
 
                         is StarType  if (value == "nil") ->
-                            NilLocalStarSymbolic(type, true)
+                            NilLocalStarSymbolic(StarType(type, false))
 
                         is UninterpretedType -> UninterpretedType.fromString(value, mem)
 
                         UnknownType -> UninterpretedType.fromString("error", mem)
-                        else -> TODO("$type")
+                        else -> error("const of $type")
                     }
                 }
             )
@@ -443,7 +498,7 @@ open class SsaStaticInterpreter(
                 { mem, args ->
                     val value = args[0]!!
                     val fromType = value.type
-                    val toType = Type.fromSsa(node.valueType!!, mem, false)
+                    val toType = Type.fromSsa(node.valueType!!, mem)
 
                     if (fromType == toType)
                         value
@@ -454,9 +509,27 @@ open class SsaStaticInterpreter(
                         fromType is IntType && toType is Float32Type ->
                             Float32Type().round(value.int(mem), mem)
 
-                        // bv2int works in ksmt, while int2bv is not supported
-                        // it is possible to do that with some bit magic
-//                        fromType is IntType && toType is Int64Type ->
+                        /**
+                         * bv2int works in ksmt, while int2bv is not supported
+                         *
+                         * but it is possible to do that with some bit magic
+                         */
+                        fromType is IntType && toType is IntType ->
+                            IntType.cast(value, toType, mem)
+
+                        fromType is FloatType && toType is IntType ->
+                            with(mem.ctx) {
+                                IntType.cast(
+                                    Int64Symbolic(
+                                        mkFpToBvExpr(
+                                            Float64Type().roundingMode(mem),
+                                            value.floatExpr(mem),
+                                            64, true
+                                        ) as KExpr<KBv64Sort>
+                                    ), toType, mem
+                                )
+                            }
+
                         else -> TODO("conversion $fromType -> $toType")
                     }
                 }
@@ -487,12 +560,16 @@ open class SsaStaticInterpreter(
                     listOf(node.x, node.index)
                 },
                 { mem, args ->
-                    val address = args[1]!!.int64(mem)
-                    when (val x = args[0]!!.getDereferenced(mem)) {
-                        is FiniteArraySymbolic -> ArrayStarSymbolic(address, x, false)
-                        is StarSymbolic -> ArrayStarSymbolic(address, x.dereference().get(mem).array(mem), false)
-                        else -> error("only [] or *[]")
-                    }
+                    val address = IntType.cast(args[1]!!, Int64Type(), mem).int64(mem)
+
+                    ArrayStarSymbolic(
+                        address, when (val x = StarSymbolic.removeFake(args[0]!!, mem)) {
+                            is FiniteArraySymbolic -> x
+                            is StarSymbolic -> (x.dereference(mem) as FiniteArraySymbolic)
+                            else -> error("only [] or *[], not ${x.javaClass.name}")
+                        },
+                        false
+                    )
                 }
             )
 
@@ -506,7 +583,7 @@ open class SsaStaticInterpreter(
                 },
                 { mem, args ->
                     val i = args.last()
-                    LocalStarSymbolic(UninterpretedType.fromString("$i", mem), false)
+                    NilLocalStarSymbolic(StarType(UninterpretedType("$i"), false))
                 }
             )
 
@@ -514,11 +591,17 @@ open class SsaStaticInterpreter(
                 { _, _ -> listOf(node.len) },
                 { mem, args ->
                     val len = args[0]!!
+                    val type = Type.fromSsa(node.valueType!!, mem) as ArrayType
+                    val array = StarSymbolic.removeFake(visitAlloc(type, mem), mem)
 
-                    val type = Type.fromSsa(node.valueType!!, mem, true) as ArrayType
-                    val array = visitAlloc(type, mem)
-
-                    visitSlice(len, array, mem)
+                    visitSlice(
+                        len,
+                        if (array is StarSymbolic)
+                            array.dereference(mem)
+                        else
+                            array,
+                        mem
+                    )
                 }
             )
 
@@ -527,20 +610,38 @@ open class SsaStaticInterpreter(
                 { mem, _ -> mem.readValue(node) }
             )
 
-            is PhiSsaNode -> Pair(
+            is SsaForcePhiNode -> Pair(
                 { mem, _ ->
                     var chosenBlock: SsaNode? = null
                     for (block in mem.instrOnPath()) {
-                        chosenBlock = node.edgesMap()[block]
+                        chosenBlock = node.phi.edgesMap()[block]
                         if (chosenBlock != null)
                             break
                     }
                     if (chosenBlock == null) {
                         error("unreachable phi")
                     }
+
                     listOf(chosenBlock)
                 },
-                { _, args ->
+                { mem, args ->
+                    args.last()
+                }
+            )
+
+            is PhiSsaNode -> Pair(
+                { mem, _ ->
+                    if (!isNodeUseful(node, mem))
+                        return@Pair listOf(PanicSsaNode("path stopped by interpreter"))
+
+                    listOf(
+                        SsaKeepResult(
+                            mem.readValue(node)
+                                ?: error("phi wasn't done before read")
+                        )
+                    )
+                },
+                { mem, args ->
                     args.last()
                 }
             )
@@ -553,7 +654,14 @@ open class SsaStaticInterpreter(
                     val x = args[0]!!
                     val high = args.getOrNull(1)
 
-                    visitSlice(high, x, mem)
+                    visitSlice(
+                        high,
+                        if (x is StarSymbolic)
+                            x.star(mem).dereference(mem)
+                        else
+                            x,
+                        mem
+                    )
                 }
             )
 

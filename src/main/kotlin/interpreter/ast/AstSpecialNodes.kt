@@ -22,7 +22,8 @@ class BranchControlNode(val body: AstNode, val elseBody: AstNode?) : AstNode() {
     override fun toString() = printItself()
 }
 
-class StartBranchNode(val branch: Boolean, val body: AstNode?, val cond: BoolSymbolic, val stopOrContinue: AstNode?) : AstNode() {
+class StartBranchNode(val branch: Boolean, val body: AstNode?, val cond: BoolSymbolic, val stopOrContinue: AstNode?) :
+    AstNode() {
     override fun printItself() = "start branch $branch"
     override fun toString() = printItself()
 }
