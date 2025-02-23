@@ -67,13 +67,6 @@ type IfNode struct {
     ElseBody    interface{}     `json:"elseBody"`
 }
 
-// type FieldNode struct {
-//     NodeData
-//     X       string `json:"struct"`
-//     Field   int    `json:"field"`
-//     Operands []interface{} `json:"operands"`
-// }
-
 type BinOpNode struct {
     ValueNodeData
     X           interface{}     `json:"x"`
@@ -104,12 +97,6 @@ type StoreNode struct {
     Addr        interface{}     `json:"addr"`
     Value       interface{}     `json:"value"`
 }
-
-// type ValueNode struct {
-//     NodeData
-//     Name        string          `json:"name"`
-//     ValueType   interface{}     `json:"valueType"`
-// }
 
 type JumpNode struct {
     NodeData
@@ -213,7 +200,6 @@ type StructFieldTypeNode struct {
 	NodeData
 	Name        string          `json:"name"`
 	ElemType    interface{}     `json:"elemType"`
-// 	Tag         string          `json:"tag"`
 }
 
 type PointerTypeNode struct {
@@ -327,25 +313,6 @@ func encodeParameter(node *ssa.Parameter, nodeIDCounter *int, nodeRefs *map[inte
     }
 }
 
-// func encodeType(node types.Type, nodeIDCounter *int, nodeRefs *map[interface{}]int) interface{} {
-//     id := *nodeIDCounter
-//     *nodeIDCounter++
-//
-//     if linkId, found := (*nodeRefs)[node]; found {
-//         return LinkNode{
-//             NodeData: NodeData{ParentF: node.Parent().String(), Type: "LinkToEncoded", ID: id},
-//             LinkId: linkId,
-//         }
-//     }
-//
-//     (*nodeRefs)[node] = id
-//
-//     return TypeNode{
-//         NodeData:   NodeData{ParentF: node.Parent().String(), Type: "*types.Type", ID: id},
-//         Name:       node.String(),
-//     }
-// }
-
 func encodeBlocks(blocks []*ssa.BasicBlock, nodeIDCounter *int, nodeRefs *map[interface{}]int) []interface{} {
     var blockNodes []interface{}
 
@@ -379,20 +346,6 @@ func encodeBlock(node *ssa.BasicBlock, nodeIDCounter *int, nodeRefs *map[interfa
         Instr:      instrNodes,
     }
 }
-
-// func encodeValue(node ssa.Value, nodeIDCounter *int, nodeRefs *map[interface{}]int) interface{} {
-//     id := *nodeIDCounter
-//     *nodeIDCounter++
-//
-//     if linkId, found := (*nodeRefs)[node]; found {
-//         return LinkNode{
-//             NodeData: NodeData{ParentF: node.Parent().String(), Type: "LinkToNode", ID: id},
-//             LinkId: linkId,
-//         }
-//     }
-//
-//     return encodeNode(node, nodeIDCounter, nodeRefs)
-// }
 
 func encodeArray(values []ssa.Value, nodeIDCounter *int, nodeRefs *map[interface{}]int) []interface{} {
     result := make([]interface{}, len(values))
@@ -498,7 +451,6 @@ func encodeType(node types.Type, nodeIDCounter *int, nodeRefs *map[interface{}]i
                 NodeData:       NodeData{ParentF: "", Type: "Field", ID: *nodeIDCounter},
                     Name:       field.Name(),
                     ElemType:   encodeNode(field.Type(), nodeIDCounter, nodeRefs),
-                    // Tag:         node.Tag(i),
                 }
                 (*nodeRefs)[field] = *nodeIDCounter
             }
@@ -527,18 +479,8 @@ func encodeType(node types.Type, nodeIDCounter *int, nodeRefs *map[interface{}]i
             }
 
         case *types.Signature:
-            //             var params, results []VarNode
-            //             if tParams := node.Params(); tParams != nil {
-            //                 params = encodeTuple(tParams, nodeIDCounter, nodeRefs)
-            //             }
-            //             if tResults := node.Results(); tResults != nil {
-            //                 results = encodeTuple(tResults, nodeIDCounter, nodeRefs)
-            //             }
             return SignatureTypeNode{
                 NodeData:  NodeData{ParentF: "", Type: "*types.Signature", ID: id},
-                //                 Params:    params,
-                //                 Results:   results,
-                //                 Variadic:  node.Variadic(),
             }
 
         case *types.Interface:
@@ -836,7 +778,7 @@ func EncodeSSA(program *ssa.Program) ([]byte, error) {
     nodeRefs := make(map[interface{}]int)
 
     var functionNodes []interface{}
-    for f, _ := range ssautil.AllFunctions(program) { // **Ensure this retrieves proper functions**
+    for f, _ := range ssautil.AllFunctions(program) {
         functionNodes = append(functionNodes, encodeFunction(f, &nodeIDCounter, &nodeRefs))
     }
 
