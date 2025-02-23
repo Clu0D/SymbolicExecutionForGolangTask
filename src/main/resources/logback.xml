@@ -1,0 +1,18 @@
+<configuration>
+    <!-- Set the default logging level to ERROR -->
+    <root level="ERROR">
+        <appender-ref ref="STDOUT" />
+    </root>
+
+    <!-- Add specific loggers for the libraries you want to control -->
+    <logger name="guru.nidi" level="WARN" />
+    <logger name="org.graalvm" level="WARN" />
+    <logger name="org.slf4j" level="WARN" />
+
+    <!-- Console appender -->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+</configuration>

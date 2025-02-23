@@ -1,0 +1,2916 @@
+[
+    {
+        "parentF": "",
+        "type": "*ssa.Function",
+        "id": 1,
+        "name": "And",
+        "valueType": {
+            "parentF": "",
+            "type": "*types.Signature",
+            "id": 2
+        },
+        "paramsNull": [
+            {
+                "parentF": "(*operators.BitOperators).And",
+                "type": "*ssa.Parameter",
+                "id": 3,
+                "name": "b",
+                "valueType": {
+                    "parentF": "",
+                    "type": "*types.Pointer",
+                    "id": 4,
+                    "elemType": {
+                        "parentF": "",
+                        "type": "*types.Named",
+                        "id": 5,
+                        "name": "BitOperators",
+                        "underlying": {
+                            "parentF": "",
+                            "type": "*types.Struct",
+                            "id": 6,
+                            "fields": []
+                        },
+                        "methods": [
+                            {
+                                "parentF": "",
+                                "type": "*types.Func",
+                                "id": 7
+                            },
+                            {
+                                "parentF": "",
+                                "type": "*types.Func",
+                                "id": 8
+                            },
+                            {
+                                "parentF": "",
+                                "type": "*types.Func",
+                                "id": 9
+                            },
+                            {
+                                "parentF": "",
+                                "type": "*types.Func",
+                                "id": 10
+                            },
+                            {
+                                "parentF": "",
+                                "type": "*types.Func",
+                                "id": 11
+                            },
+                            {
+                                "parentF": "",
+                                "type": "*types.Func",
+                                "id": 12
+                            },
+                            {
+                                "parentF": "",
+                                "type": "*types.Func",
+                                "id": 13
+                            },
+                            {
+                                "parentF": "",
+                                "type": "*types.Func",
+                                "id": 14
+                            },
+                            {
+                                "parentF": "",
+                                "type": "*types.Func",
+                                "id": 15
+                            },
+                            {
+                                "parentF": "",
+                                "type": "*types.Func",
+                                "id": 16
+                            },
+                            {
+                                "parentF": "",
+                                "type": "*types.Func",
+                                "id": 17
+                            },
+                            {
+                                "parentF": "",
+                                "type": "*types.Func",
+                                "id": 18
+                            },
+                            {
+                                "parentF": "",
+                                "type": "*types.Func",
+                                "id": 19
+                            },
+                            {
+                                "parentF": "",
+                                "type": "*types.Func",
+                                "id": 20
+                            },
+                            {
+                                "parentF": "",
+                                "type": "*types.Func",
+                                "id": 21
+                            },
+                            {
+                                "parentF": "",
+                                "type": "*types.Func",
+                                "id": 22
+                            },
+                            {
+                                "parentF": "",
+                                "type": "*types.Func",
+                                "id": 23
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                "parentF": "(*operators.BitOperators).And",
+                "type": "*ssa.Parameter",
+                "id": 24,
+                "name": "value",
+                "valueType": {
+                    "parentF": "",
+                    "type": "*types.Basic",
+                    "id": 25,
+                    "name": "int"
+                }
+            }
+        ],
+        "body": {
+            "parentF": "(*operators.BitOperators).And",
+            "type": "*ssa.BasicBlock",
+            "id": 26,
+            "instr": [
+                {
+                    "parentF": "(*operators.BitOperators).And",
+                    "type": "*ssa.BinOp",
+                    "id": 27,
+                    "name": "t0",
+                    "valueType": {
+                        "parentF": "",
+                        "type": "LinkToType",
+                        "id": 28,
+                        "linkId": 25
+                    },
+                    "x": {
+                        "parentF": "",
+                        "type": "LinkToNode",
+                        "id": 29,
+                        "linkId": 24
+                    },
+                    "y": {
+                        "parentF": "",
+                        "type": "*ssa.Const",
+                        "id": 30,
+                        "name": "1:int",
+                        "valueType": {
+                            "parentF": "",
+                            "type": "LinkToType",
+                            "id": 31,
+                            "linkId": 25
+                        }
+                    },
+                    "op": "-"
+                },
+                {
+                    "parentF": "(*operators.BitOperators).And",
+                    "type": "*ssa.BinOp",
+                    "id": 32,
+                    "name": "t1",
+                    "valueType": {
+                        "parentF": "",
+                        "type": "LinkToType",
+                        "id": 33,
+                        "linkId": 25
+                    },
+                    "x": {
+                        "parentF": "",
+                        "type": "LinkToNode",
+                        "id": 34,
+                        "linkId": 24
+                    },
+                    "y": {
+                        "parentF": "",
+                        "type": "LinkToNode",
+                        "id": 35,
+                        "linkId": 27
+                    },
+                    "op": "\u0026"
+                },
+                {
+                    "parentF": "(*operators.BitOperators).And",
+                    "type": "*ssa.BinOp",
+                    "id": 36,
+                    "name": "t2",
+                    "valueType": {
+                        "parentF": "",
+                        "type": "*types.Basic",
+                        "id": 37,
+                        "name": "bool"
+                    },
+                    "x": {
+                        "parentF": "",
+                        "type": "LinkToNode",
+                        "id": 38,
+                        "linkId": 32
+                    },
+                    "y": {
+                        "parentF": "",
+                        "type": "*ssa.Const",
+                        "id": 39,
+                        "name": "0:int",
+                        "valueType": {
+                            "parentF": "",
+                            "type": "LinkToType",
+                            "id": 40,
+                            "linkId": 25
+                        }
+                    },
+                    "op": "=="
+                },
+                {
+                    "parentF": "(*operators.BitOperators).And",
+                    "type": "*ssa.Return",
+                    "id": 41,
+                    "results": [
+                        {
+                            "parentF": "",
+                            "type": "LinkToNode",
+                            "id": 42,
+                            "linkId": 36
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "parentF": "",
+        "type": "*ssa.Function",
+        "id": 43,
+        "name": "BooleanNot",
+        "valueType": {
+            "parentF": "",
+            "type": "*types.Signature",
+            "id": 44
+        },
+        "paramsNull": [
+            {
+                "parentF": "(*operators.BitOperators).BooleanNot",
+                "type": "*ssa.Parameter",
+                "id": 45,
+                "name": "b",
+                "valueType": {
+                    "parentF": "",
+                    "type": "*types.Pointer",
+                    "id": 46,
+                    "elemType": {
+                        "parentF": "",
+                        "type": "LinkToType",
+                        "id": 47,
+                        "linkId": 5
+                    }
+                }
+            },
+            {
+                "parentF": "(*operators.BitOperators).BooleanNot",
+                "type": "*ssa.Parameter",
+                "id": 48,
+                "name": "boolA",
+                "valueType": {
+                    "parentF": "",
+                    "type": "LinkToType",
+                    "id": 49,
+                    "linkId": 37
+                }
+            },
+            {
+                "parentF": "(*operators.BitOperators).BooleanNot",
+                "type": "*ssa.Parameter",
+                "id": 50,
+                "name": "boolB",
+                "valueType": {
+                    "parentF": "",
+                    "type": "LinkToType",
+                    "id": 51,
+                    "linkId": 37
+                }
+            }
+        ],
+        "body": {
+            "parentF": "(*operators.BitOperators).BooleanNot",
+            "type": "*ssa.BasicBlock",
+            "id": 52,
+            "instr": [
+                {
+                    "parentF": "(*operators.BitOperators).BooleanNot",
+                    "type": "*ssa.If",
+                    "id": 53,
+                    "cond": {
+                        "parentF": "",
+                        "type": "LinkToNode",
+                        "id": 54,
+                        "linkId": 48
+                    },
+                    "body": {
+                        "parentF": "(*operators.BitOperators).BooleanNot",
+                        "type": "*ssa.BasicBlock",
+                        "id": 55,
+                        "instr": [
+                            {
+                                "parentF": "(*operators.BitOperators).BooleanNot",
+                                "type": "*ssa.Jump",
+                                "id": 56,
+                                "successor": {
+                                    "parentF": "(*operators.BitOperators).BooleanNot",
+                                    "type": "*ssa.BasicBlock",
+                                    "id": 57,
+                                    "instr": [
+                                        {
+                                            "parentF": "(*operators.BitOperators).BooleanNot",
+                                            "type": "*ssa.Phi",
+                                            "id": 58,
+                                            "name": "t0",
+                                            "valueType": {
+                                                "parentF": "",
+                                                "type": "LinkToType",
+                                                "id": 59,
+                                                "linkId": 37
+                                            },
+                                            "edges": [
+                                                {
+                                                    "parentF": "",
+                                                    "type": "*ssa.Const",
+                                                    "id": 60,
+                                                    "name": "false:bool",
+                                                    "valueType": {
+                                                        "parentF": "",
+                                                        "type": "LinkToType",
+                                                        "id": 61,
+                                                        "linkId": 37
+                                                    }
+                                                },
+                                                {
+                                                    "parentF": "",
+                                                    "type": "LinkToNode",
+                                                    "id": 62,
+                                                    "linkId": 50
+                                                }
+                                            ],
+                                            "preds": [
+                                                {
+                                                    "parentF": "(*operators.BitOperators).BooleanNot",
+                                                    "type": "LinkToBlock",
+                                                    "id": 63,
+                                                    "linkId": 52
+                                                },
+                                                {
+                                                    "parentF": "(*operators.BitOperators).BooleanNot",
+                                                    "type": "LinkToBlock",
+                                                    "id": 64,
+                                                    "linkId": 55
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "parentF": "(*operators.BitOperators).BooleanNot",
+                                            "type": "*ssa.If",
+                                            "id": 65,
+                                            "cond": {
+                                                "parentF": "",
+                                                "type": "LinkToNode",
+                                                "id": 66,
+                                                "linkId": 48
+                                            },
+                                            "body": {
+                                                "parentF": "(*operators.BitOperators).BooleanNot",
+                                                "type": "*ssa.BasicBlock",
+                                                "id": 67,
+                                                "instr": [
+                                                    {
+                                                        "parentF": "(*operators.BitOperators).BooleanNot",
+                                                        "type": "*ssa.Jump",
+                                                        "id": 68,
+                                                        "successor": {
+                                                            "parentF": "(*operators.BitOperators).BooleanNot",
+                                                            "type": "*ssa.BasicBlock",
+                                                            "id": 69,
+                                                            "instr": [
+                                                                {
+                                                                    "parentF": "(*operators.BitOperators).BooleanNot",
+                                                                    "type": "*ssa.Phi",
+                                                                    "id": 70,
+                                                                    "name": "t1",
+                                                                    "valueType": {
+                                                                        "parentF": "",
+                                                                        "type": "LinkToType",
+                                                                        "id": 71,
+                                                                        "linkId": 37
+                                                                    },
+                                                                    "edges": [
+                                                                        {
+                                                                            "parentF": "",
+                                                                            "type": "*ssa.Const",
+                                                                            "id": 72,
+                                                                            "name": "true:bool",
+                                                                            "valueType": {
+                                                                                "parentF": "",
+                                                                                "type": "LinkToType",
+                                                                                "id": 73,
+                                                                                "linkId": 37
+                                                                            }
+                                                                        },
+                                                                        {
+                                                                            "parentF": "",
+                                                                            "type": "LinkToNode",
+                                                                            "id": 74,
+                                                                            "linkId": 50
+                                                                        }
+                                                                    ],
+                                                                    "preds": [
+                                                                        {
+                                                                            "parentF": "(*operators.BitOperators).BooleanNot",
+                                                                            "type": "LinkToBlock",
+                                                                            "id": 75,
+                                                                            "linkId": 57
+                                                                        },
+                                                                        {
+                                                                            "parentF": "(*operators.BitOperators).BooleanNot",
+                                                                            "type": "LinkToBlock",
+                                                                            "id": 76,
+                                                                            "linkId": 67
+                                                                        }
+                                                                    ]
+                                                                },
+                                                                {
+                                                                    "parentF": "(*operators.BitOperators).BooleanNot",
+                                                                    "type": "*ssa.If",
+                                                                    "id": 77,
+                                                                    "cond": {
+                                                                        "parentF": "",
+                                                                        "type": "LinkToNode",
+                                                                        "id": 78,
+                                                                        "linkId": 58
+                                                                    },
+                                                                    "body": {
+                                                                        "parentF": "(*operators.BitOperators).BooleanNot",
+                                                                        "type": "*ssa.BasicBlock",
+                                                                        "id": 79,
+                                                                        "instr": [
+                                                                            {
+                                                                                "parentF": "(*operators.BitOperators).BooleanNot",
+                                                                                "type": "*ssa.If",
+                                                                                "id": 80,
+                                                                                "cond": {
+                                                                                    "parentF": "",
+                                                                                    "type": "LinkToNode",
+                                                                                    "id": 81,
+                                                                                    "linkId": 70
+                                                                                },
+                                                                                "body": {
+                                                                                    "parentF": "(*operators.BitOperators).BooleanNot",
+                                                                                    "type": "*ssa.BasicBlock",
+                                                                                    "id": 82,
+                                                                                    "instr": [
+                                                                                        {
+                                                                                            "parentF": "(*operators.BitOperators).BooleanNot",
+                                                                                            "type": "*ssa.Return",
+                                                                                            "id": 83,
+                                                                                            "results": [
+                                                                                                {
+                                                                                                    "parentF": "",
+                                                                                                    "type": "*ssa.Const",
+                                                                                                    "id": 84,
+                                                                                                    "name": "100:int",
+                                                                                                    "valueType": {
+                                                                                                        "parentF": "",
+                                                                                                        "type": "LinkToType",
+                                                                                                        "id": 85,
+                                                                                                        "linkId": 25
+                                                                                                    }
+                                                                                                }
+                                                                                            ]
+                                                                                        }
+                                                                                    ]
+                                                                                },
+                                                                                "elseBody": {
+                                                                                    "parentF": "(*operators.BitOperators).BooleanNot",
+                                                                                    "type": "*ssa.BasicBlock",
+                                                                                    "id": 86,
+                                                                                    "instr": [
+                                                                                        {
+                                                                                            "parentF": "(*operators.BitOperators).BooleanNot",
+                                                                                            "type": "*ssa.Return",
+                                                                                            "id": 87,
+                                                                                            "results": [
+                                                                                                {
+                                                                                                    "parentF": "",
+                                                                                                    "type": "*ssa.Const",
+                                                                                                    "id": 88,
+                                                                                                    "name": "200:int",
+                                                                                                    "valueType": {
+                                                                                                        "parentF": "",
+                                                                                                        "type": "LinkToType",
+                                                                                                        "id": 89,
+                                                                                                        "linkId": 25
+                                                                                                    }
+                                                                                                }
+                                                                                            ]
+                                                                                        }
+                                                                                    ]
+                                                                                }
+                                                                            }
+                                                                        ]
+                                                                    },
+                                                                    "elseBody": {
+                                                                        "parentF": "(*operators.BitOperators).BooleanNot",
+                                                                        "type": "LinkToBlock",
+                                                                        "id": 90,
+                                                                        "linkId": 86
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    }
+                                                ]
+                                            },
+                                            "elseBody": {
+                                                "parentF": "(*operators.BitOperators).BooleanNot",
+                                                "type": "LinkToBlock",
+                                                "id": 91,
+                                                "linkId": 69
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    },
+                    "elseBody": {
+                        "parentF": "(*operators.BitOperators).BooleanNot",
+                        "type": "LinkToBlock",
+                        "id": 92,
+                        "linkId": 57
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "parentF": "",
+        "type": "*ssa.Function",
+        "id": 93,
+        "name": "BooleanXor",
+        "valueType": {
+            "parentF": "",
+            "type": "*types.Signature",
+            "id": 94
+        },
+        "paramsNull": [
+            {
+                "parentF": "(*operators.BitOperators).BooleanXor",
+                "type": "*ssa.Parameter",
+                "id": 95,
+                "name": "b",
+                "valueType": {
+                    "parentF": "",
+                    "type": "*types.Pointer",
+                    "id": 96,
+                    "elemType": {
+                        "parentF": "",
+                        "type": "LinkToType",
+                        "id": 97,
+                        "linkId": 5
+                    }
+                }
+            },
+            {
+                "parentF": "(*operators.BitOperators).BooleanXor",
+                "type": "*ssa.Parameter",
+                "id": 98,
+                "name": "valA",
+                "valueType": {
+                    "parentF": "",
+                    "type": "LinkToType",
+                    "id": 99,
+                    "linkId": 37
+                }
+            },
+            {
+                "parentF": "(*operators.BitOperators).BooleanXor",
+                "type": "*ssa.Parameter",
+                "id": 100,
+                "name": "valB",
+                "valueType": {
+                    "parentF": "",
+                    "type": "LinkToType",
+                    "id": 101,
+                    "linkId": 37
+                }
+            }
+        ],
+        "body": {
+            "parentF": "(*operators.BitOperators).BooleanXor",
+            "type": "*ssa.BasicBlock",
+            "id": 102,
+            "instr": [
+                {
+                    "parentF": "(*operators.BitOperators).BooleanXor",
+                    "type": "*ssa.BinOp",
+                    "id": 103,
+                    "name": "t0",
+                    "valueType": {
+                        "parentF": "",
+                        "type": "LinkToType",
+                        "id": 104,
+                        "linkId": 37
+                    },
+                    "x": {
+                        "parentF": "",
+                        "type": "LinkToNode",
+                        "id": 105,
+                        "linkId": 98
+                    },
+                    "y": {
+                        "parentF": "",
+                        "type": "LinkToNode",
+                        "id": 106,
+                        "linkId": 100
+                    },
+                    "op": "!="
+                },
+                {
+                    "parentF": "(*operators.BitOperators).BooleanXor",
+                    "type": "*ssa.Return",
+                    "id": 107,
+                    "results": [
+                        {
+                            "parentF": "",
+                            "type": "LinkToNode",
+                            "id": 108,
+                            "linkId": 103
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "parentF": "",
+        "type": "*ssa.Function",
+        "id": 109,
+        "name": "BooleanXorCompare",
+        "valueType": {
+            "parentF": "",
+            "type": "*types.Signature",
+            "id": 110
+        },
+        "paramsNull": [
+            {
+                "parentF": "(*operators.BitOperators).BooleanXorCompare",
+                "type": "*ssa.Parameter",
+                "id": 111,
+                "name": "b",
+                "valueType": {
+                    "parentF": "",
+                    "type": "*types.Pointer",
+                    "id": 112,
+                    "elemType": {
+                        "parentF": "",
+                        "type": "LinkToType",
+                        "id": 113,
+                        "linkId": 5
+                    }
+                }
+            },
+            {
+                "parentF": "(*operators.BitOperators).BooleanXorCompare",
+                "type": "*ssa.Parameter",
+                "id": 114,
+                "name": "aBool",
+                "valueType": {
+                    "parentF": "",
+                    "type": "LinkToType",
+                    "id": 115,
+                    "linkId": 37
+                }
+            },
+            {
+                "parentF": "(*operators.BitOperators).BooleanXorCompare",
+                "type": "*ssa.Parameter",
+                "id": 116,
+                "name": "bBool",
+                "valueType": {
+                    "parentF": "",
+                    "type": "LinkToType",
+                    "id": 117,
+                    "linkId": 37
+                }
+            }
+        ],
+        "body": {
+            "parentF": "(*operators.BitOperators).BooleanXorCompare",
+            "type": "*ssa.BasicBlock",
+            "id": 118,
+            "instr": [
+                {
+                    "parentF": "(*operators.BitOperators).BooleanXorCompare",
+                    "type": "*ssa.BinOp",
+                    "id": 119,
+                    "name": "t0",
+                    "valueType": {
+                        "parentF": "",
+                        "type": "LinkToType",
+                        "id": 120,
+                        "linkId": 37
+                    },
+                    "x": {
+                        "parentF": "",
+                        "type": "LinkToNode",
+                        "id": 121,
+                        "linkId": 114
+                    },
+                    "y": {
+                        "parentF": "",
+                        "type": "LinkToNode",
+                        "id": 122,
+                        "linkId": 116
+                    },
+                    "op": "!="
+                },
+                {
+                    "parentF": "(*operators.BitOperators).BooleanXorCompare",
+                    "type": "*ssa.If",
+                    "id": 123,
+                    "cond": {
+                        "parentF": "",
+                        "type": "LinkToNode",
+                        "id": 124,
+                        "linkId": 119
+                    },
+                    "body": {
+                        "parentF": "(*operators.BitOperators).BooleanXorCompare",
+                        "type": "*ssa.BasicBlock",
+                        "id": 125,
+                        "instr": [
+                            {
+                                "parentF": "(*operators.BitOperators).BooleanXorCompare",
+                                "type": "*ssa.Return",
+                                "id": 126,
+                                "results": [
+                                    {
+                                        "parentF": "",
+                                        "type": "*ssa.Const",
+                                        "id": 127,
+                                        "name": "1:int",
+                                        "valueType": {
+                                            "parentF": "",
+                                            "type": "LinkToType",
+                                            "id": 128,
+                                            "linkId": 25
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "elseBody": {
+                        "parentF": "(*operators.BitOperators).BooleanXorCompare",
+                        "type": "*ssa.BasicBlock",
+                        "id": 129,
+                        "instr": [
+                            {
+                                "parentF": "(*operators.BitOperators).BooleanXorCompare",
+                                "type": "*ssa.Return",
+                                "id": 130,
+                                "results": [
+                                    {
+                                        "parentF": "",
+                                        "type": "*ssa.Const",
+                                        "id": 131,
+                                        "name": "0:int",
+                                        "valueType": {
+                                            "parentF": "",
+                                            "type": "LinkToType",
+                                            "id": 132,
+                                            "linkId": 25
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "parentF": "",
+        "type": "*ssa.Function",
+        "id": 133,
+        "name": "Shl",
+        "valueType": {
+            "parentF": "",
+            "type": "*types.Signature",
+            "id": 134
+        },
+        "paramsNull": [
+            {
+                "parentF": "(*operators.BitOperators).Shl",
+                "type": "*ssa.Parameter",
+                "id": 135,
+                "name": "b",
+                "valueType": {
+                    "parentF": "",
+                    "type": "*types.Pointer",
+                    "id": 136,
+                    "elemType": {
+                        "parentF": "",
+                        "type": "LinkToType",
+                        "id": 137,
+                        "linkId": 5
+                    }
+                }
+            },
+            {
+                "parentF": "(*operators.BitOperators).Shl",
+                "type": "*ssa.Parameter",
+                "id": 138,
+                "name": "num",
+                "valueType": {
+                    "parentF": "",
+                    "type": "LinkToType",
+                    "id": 139,
+                    "linkId": 25
+                }
+            }
+        ],
+        "body": {
+            "parentF": "(*operators.BitOperators).Shl",
+            "type": "*ssa.BasicBlock",
+            "id": 140,
+            "instr": [
+                {
+                    "parentF": "(*operators.BitOperators).Shl",
+                    "type": "*ssa.BinOp",
+                    "id": 141,
+                    "name": "t0",
+                    "valueType": {
+                        "parentF": "",
+                        "type": "LinkToType",
+                        "id": 142,
+                        "linkId": 25
+                    },
+                    "x": {
+                        "parentF": "",
+                        "type": "LinkToNode",
+                        "id": 143,
+                        "linkId": 138
+                    },
+                    "y": {
+                        "parentF": "",
+                        "type": "*ssa.Const",
+                        "id": 144,
+                        "name": "1:uint",
+                        "valueType": {
+                            "parentF": "",
+                            "type": "*types.Basic",
+                            "id": 145,
+                            "name": "uint"
+                        }
+                    },
+                    "op": "\u003c\u003c"
+                },
+                {
+                    "parentF": "(*operators.BitOperators).Shl",
+                    "type": "*ssa.BinOp",
+                    "id": 146,
+                    "name": "t1",
+                    "valueType": {
+                        "parentF": "",
+                        "type": "LinkToType",
+                        "id": 147,
+                        "linkId": 37
+                    },
+                    "x": {
+                        "parentF": "",
+                        "type": "LinkToNode",
+                        "id": 148,
+                        "linkId": 141
+                    },
+                    "y": {
+                        "parentF": "",
+                        "type": "*ssa.Const",
+                        "id": 149,
+                        "name": "2:int",
+                        "valueType": {
+                            "parentF": "",
+                            "type": "LinkToType",
+                            "id": 150,
+                            "linkId": 25
+                        }
+                    },
+                    "op": "=="
+                },
+                {
+                    "parentF": "(*operators.BitOperators).Shl",
+                    "type": "*ssa.Return",
+                    "id": 151,
+                    "results": [
+                        {
+                            "parentF": "",
+                            "type": "LinkToNode",
+                            "id": 152,
+                            "linkId": 146
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "parentF": "",
+        "type": "*ssa.Function",
+        "id": 153,
+        "name": "Shr",
+        "valueType": {
+            "parentF": "",
+            "type": "*types.Signature",
+            "id": 154
+        },
+        "paramsNull": [
+            {
+                "parentF": "(*operators.BitOperators).Shr",
+                "type": "*ssa.Parameter",
+                "id": 155,
+                "name": "b",
+                "valueType": {
+                    "parentF": "",
+                    "type": "*types.Pointer",
+                    "id": 156,
+                    "elemType": {
+                        "parentF": "",
+                        "type": "LinkToType",
+                        "id": 157,
+                        "linkId": 5
+                    }
+                }
+            },
+            {
+                "parentF": "(*operators.BitOperators).Shr",
+                "type": "*ssa.Parameter",
+                "id": 158,
+                "name": "num",
+                "valueType": {
+                    "parentF": "",
+                    "type": "LinkToType",
+                    "id": 159,
+                    "linkId": 25
+                }
+            }
+        ],
+        "body": {
+            "parentF": "(*operators.BitOperators).Shr",
+            "type": "*ssa.BasicBlock",
+            "id": 160,
+            "instr": [
+                {
+                    "parentF": "(*operators.BitOperators).Shr",
+                    "type": "*ssa.BinOp",
+                    "id": 161,
+                    "name": "t0",
+                    "valueType": {
+                        "parentF": "",
+                        "type": "LinkToType",
+                        "id": 162,
+                        "linkId": 25
+                    },
+                    "x": {
+                        "parentF": "",
+                        "type": "LinkToNode",
+                        "id": 163,
+                        "linkId": 158
+                    },
+                    "y": {
+                        "parentF": "",
+                        "type": "*ssa.Const",
+                        "id": 164,
+                        "name": "1:uint",
+                        "valueType": {
+                            "parentF": "",
+                            "type": "LinkToType",
+                            "id": 165,
+                            "linkId": 145
+                        }
+                    },
+                    "op": "\u003e\u003e"
+                },
+                {
+                    "parentF": "(*operators.BitOperators).Shr",
+                    "type": "*ssa.BinOp",
+                    "id": 166,
+                    "name": "t1",
+                    "valueType": {
+                        "parentF": "",
+                        "type": "LinkToType",
+                        "id": 167,
+                        "linkId": 37
+                    },
+                    "x": {
+                        "parentF": "",
+                        "type": "LinkToNode",
+                        "id": 168,
+                        "linkId": 161
+                    },
+                    "y": {
+                        "parentF": "",
+                        "type": "*ssa.Const",
+                        "id": 169,
+                        "name": "1:int",
+                        "valueType": {
+                            "parentF": "",
+                            "type": "LinkToType",
+                            "id": 170,
+                            "linkId": 25
+                        }
+                    },
+                    "op": "=="
+                },
+                {
+                    "parentF": "(*operators.BitOperators).Shr",
+                    "type": "*ssa.Return",
+                    "id": 171,
+                    "results": [
+                        {
+                            "parentF": "",
+                            "type": "LinkToNode",
+                            "id": 172,
+                            "linkId": 166
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "parentF": "",
+        "type": "*ssa.Function",
+        "id": 173,
+        "name": "Complement",
+        "valueType": {
+            "parentF": "",
+            "type": "*types.Signature",
+            "id": 174
+        },
+        "paramsNull": [
+            {
+                "parentF": "(*operators.BitOperators).Complement",
+                "type": "*ssa.Parameter",
+                "id": 175,
+                "name": "b",
+                "valueType": {
+                    "parentF": "",
+                    "type": "*types.Pointer",
+                    "id": 176,
+                    "elemType": {
+                        "parentF": "",
+                        "type": "LinkToType",
+                        "id": 177,
+                        "linkId": 5
+                    }
+                }
+            },
+            {
+                "parentF": "(*operators.BitOperators).Complement",
+                "type": "*ssa.Parameter",
+                "id": 178,
+                "name": "x",
+                "valueType": {
+                    "parentF": "",
+                    "type": "LinkToType",
+                    "id": 179,
+                    "linkId": 25
+                }
+            }
+        ],
+        "body": {
+            "parentF": "(*operators.BitOperators).Complement",
+            "type": "*ssa.BasicBlock",
+            "id": 180,
+            "instr": [
+                {
+                    "parentF": "(*operators.BitOperators).Complement",
+                    "type": "*ssa.UnOp",
+                    "id": 181,
+                    "name": "t0",
+                    "valueType": {
+                        "parentF": "",
+                        "type": "LinkToType",
+                        "id": 182,
+                        "linkId": 25
+                    },
+                    "op": "^",
+                    "x": {
+                        "parentF": "",
+                        "type": "LinkToNode",
+                        "id": 183,
+                        "linkId": 178
+                    },
+                    "commaOk": false
+                },
+                {
+                    "parentF": "(*operators.BitOperators).Complement",
+                    "type": "*ssa.BinOp",
+                    "id": 184,
+                    "name": "t1",
+                    "valueType": {
+                        "parentF": "",
+                        "type": "LinkToType",
+                        "id": 185,
+                        "linkId": 37
+                    },
+                    "x": {
+                        "parentF": "",
+                        "type": "LinkToNode",
+                        "id": 186,
+                        "linkId": 181
+                    },
+                    "y": {
+                        "parentF": "",
+                        "type": "*ssa.Const",
+                        "id": 187,
+                        "name": "1:int",
+                        "valueType": {
+                            "parentF": "",
+                            "type": "LinkToType",
+                            "id": 188,
+                            "linkId": 25
+                        }
+                    },
+                    "op": "=="
+                },
+                {
+                    "parentF": "(*operators.BitOperators).Complement",
+                    "type": "*ssa.Return",
+                    "id": 189,
+                    "results": [
+                        {
+                            "parentF": "",
+                            "type": "LinkToNode",
+                            "id": 190,
+                            "linkId": 184
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "parentF": "",
+        "type": "*ssa.Function",
+        "id": 191,
+        "name": "ShlWithBigLongShift",
+        "valueType": {
+            "parentF": "",
+            "type": "*types.Signature",
+            "id": 192
+        },
+        "paramsNull": [
+            {
+                "parentF": "(*operators.BitOperators).ShlWithBigLongShift",
+                "type": "*ssa.Parameter",
+                "id": 193,
+                "name": "b",
+                "valueType": {
+                    "parentF": "",
+                    "type": "*types.Pointer",
+                    "id": 194,
+                    "elemType": {
+                        "parentF": "",
+                        "type": "LinkToType",
+                        "id": 195,
+                        "linkId": 5
+                    }
+                }
+            },
+            {
+                "parentF": "(*operators.BitOperators).ShlWithBigLongShift",
+                "type": "*ssa.Parameter",
+                "id": 196,
+                "name": "shift",
+                "valueType": {
+                    "parentF": "",
+                    "type": "*types.Basic",
+                    "id": 197,
+                    "name": "int64"
+                }
+            }
+        ],
+        "body": {
+            "parentF": "(*operators.BitOperators).ShlWithBigLongShift",
+            "type": "*ssa.BasicBlock",
+            "id": 198,
+            "instr": [
+                {
+                    "parentF": "(*operators.BitOperators).ShlWithBigLongShift",
+                    "type": "*ssa.BinOp",
+                    "id": 199,
+                    "name": "t0",
+                    "valueType": {
+                        "parentF": "",
+                        "type": "LinkToType",
+                        "id": 200,
+                        "linkId": 37
+                    },
+                    "x": {
+                        "parentF": "",
+                        "type": "LinkToNode",
+                        "id": 201,
+                        "linkId": 196
+                    },
+                    "y": {
+                        "parentF": "",
+                        "type": "*ssa.Const",
+                        "id": 202,
+                        "name": "40:int64",
+                        "valueType": {
+                            "parentF": "",
+                            "type": "LinkToType",
+                            "id": 203,
+                            "linkId": 197
+                        }
+                    },
+                    "op": "\u003c"
+                },
+                {
+                    "parentF": "(*operators.BitOperators).ShlWithBigLongShift",
+                    "type": "*ssa.If",
+                    "id": 204,
+                    "cond": {
+                        "parentF": "",
+                        "type": "LinkToNode",
+                        "id": 205,
+                        "linkId": 199
+                    },
+                    "body": {
+                        "parentF": "(*operators.BitOperators).ShlWithBigLongShift",
+                        "type": "*ssa.BasicBlock",
+                        "id": 206,
+                        "instr": [
+                            {
+                                "parentF": "(*operators.BitOperators).ShlWithBigLongShift",
+                                "type": "*ssa.Return",
+                                "id": 207,
+                                "results": [
+                                    {
+                                        "parentF": "",
+                                        "type": "*ssa.Const",
+                                        "id": 208,
+                                        "name": "1:int",
+                                        "valueType": {
+                                            "parentF": "",
+                                            "type": "LinkToType",
+                                            "id": 209,
+                                            "linkId": 25
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "elseBody": {
+                        "parentF": "(*operators.BitOperators).ShlWithBigLongShift",
+                        "type": "*ssa.BasicBlock",
+                        "id": 210,
+                        "instr": [
+                            {
+                                "parentF": "(*operators.BitOperators).ShlWithBigLongShift",
+                                "type": "*ssa.BinOp",
+                                "id": 211,
+                                "name": "t1",
+                                "valueType": {
+                                    "parentF": "",
+                                    "type": "LinkToType",
+                                    "id": 212,
+                                    "linkId": 25
+                                },
+                                "x": {
+                                    "parentF": "",
+                                    "type": "*ssa.Const",
+                                    "id": 213,
+                                    "name": "2004318071:int",
+                                    "valueType": {
+                                        "parentF": "",
+                                        "type": "LinkToType",
+                                        "id": 214,
+                                        "linkId": 25
+                                    }
+                                },
+                                "y": {
+                                    "parentF": "",
+                                    "type": "LinkToNode",
+                                    "id": 215,
+                                    "linkId": 196
+                                },
+                                "op": "\u003c\u003c"
+                            },
+                            {
+                                "parentF": "(*operators.BitOperators).ShlWithBigLongShift",
+                                "type": "*ssa.BinOp",
+                                "id": 216,
+                                "name": "t2",
+                                "valueType": {
+                                    "parentF": "",
+                                    "type": "LinkToType",
+                                    "id": 217,
+                                    "linkId": 37
+                                },
+                                "x": {
+                                    "parentF": "",
+                                    "type": "LinkToNode",
+                                    "id": 218,
+                                    "linkId": 211
+                                },
+                                "y": {
+                                    "parentF": "",
+                                    "type": "*ssa.Const",
+                                    "id": 219,
+                                    "name": "2004318064:int",
+                                    "valueType": {
+                                        "parentF": "",
+                                        "type": "LinkToType",
+                                        "id": 220,
+                                        "linkId": 25
+                                    }
+                                },
+                                "op": "=="
+                            },
+                            {
+                                "parentF": "(*operators.BitOperators).ShlWithBigLongShift",
+                                "type": "*ssa.If",
+                                "id": 221,
+                                "cond": {
+                                    "parentF": "",
+                                    "type": "LinkToNode",
+                                    "id": 222,
+                                    "linkId": 216
+                                },
+                                "body": {
+                                    "parentF": "(*operators.BitOperators).ShlWithBigLongShift",
+                                    "type": "*ssa.BasicBlock",
+                                    "id": 223,
+                                    "instr": [
+                                        {
+                                            "parentF": "(*operators.BitOperators).ShlWithBigLongShift",
+                                            "type": "*ssa.Return",
+                                            "id": 224,
+                                            "results": [
+                                                {
+                                                    "parentF": "",
+                                                    "type": "*ssa.Const",
+                                                    "id": 225,
+                                                    "name": "2:int",
+                                                    "valueType": {
+                                                        "parentF": "",
+                                                        "type": "LinkToType",
+                                                        "id": 226,
+                                                        "linkId": 25
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                "elseBody": {
+                                    "parentF": "(*operators.BitOperators).ShlWithBigLongShift",
+                                    "type": "*ssa.BasicBlock",
+                                    "id": 227,
+                                    "instr": [
+                                        {
+                                            "parentF": "(*operators.BitOperators).ShlWithBigLongShift",
+                                            "type": "*ssa.Return",
+                                            "id": 228,
+                                            "results": [
+                                                {
+                                                    "parentF": "",
+                                                    "type": "*ssa.Const",
+                                                    "id": 229,
+                                                    "name": "3:int",
+                                                    "valueType": {
+                                                        "parentF": "",
+                                                        "type": "LinkToType",
+                                                        "id": 230,
+                                                        "linkId": 25
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "parentF": "",
+        "type": "*ssa.Function",
+        "id": 231,
+        "name": "BooleanAnd",
+        "valueType": {
+            "parentF": "",
+            "type": "*types.Signature",
+            "id": 232
+        },
+        "paramsNull": [
+            {
+                "parentF": "(*operators.BitOperators).BooleanAnd",
+                "type": "*ssa.Parameter",
+                "id": 233,
+                "name": "b",
+                "valueType": {
+                    "parentF": "",
+                    "type": "*types.Pointer",
+                    "id": 234,
+                    "elemType": {
+                        "parentF": "",
+                        "type": "LinkToType",
+                        "id": 235,
+                        "linkId": 5
+                    }
+                }
+            },
+            {
+                "parentF": "(*operators.BitOperators).BooleanAnd",
+                "type": "*ssa.Parameter",
+                "id": 236,
+                "name": "aVal",
+                "valueType": {
+                    "parentF": "",
+                    "type": "LinkToType",
+                    "id": 237,
+                    "linkId": 37
+                }
+            },
+            {
+                "parentF": "(*operators.BitOperators).BooleanAnd",
+                "type": "*ssa.Parameter",
+                "id": 238,
+                "name": "bVal",
+                "valueType": {
+                    "parentF": "",
+                    "type": "LinkToType",
+                    "id": 239,
+                    "linkId": 37
+                }
+            }
+        ],
+        "body": {
+            "parentF": "(*operators.BitOperators).BooleanAnd",
+            "type": "*ssa.BasicBlock",
+            "id": 240,
+            "instr": [
+                {
+                    "parentF": "(*operators.BitOperators).BooleanAnd",
+                    "type": "*ssa.If",
+                    "id": 241,
+                    "cond": {
+                        "parentF": "",
+                        "type": "LinkToNode",
+                        "id": 242,
+                        "linkId": 236
+                    },
+                    "body": {
+                        "parentF": "(*operators.BitOperators).BooleanAnd",
+                        "type": "*ssa.BasicBlock",
+                        "id": 243,
+                        "instr": [
+                            {
+                                "parentF": "(*operators.BitOperators).BooleanAnd",
+                                "type": "*ssa.Jump",
+                                "id": 244,
+                                "successor": {
+                                    "parentF": "(*operators.BitOperators).BooleanAnd",
+                                    "type": "*ssa.BasicBlock",
+                                    "id": 245,
+                                    "instr": [
+                                        {
+                                            "parentF": "(*operators.BitOperators).BooleanAnd",
+                                            "type": "*ssa.Phi",
+                                            "id": 246,
+                                            "name": "t0",
+                                            "valueType": {
+                                                "parentF": "",
+                                                "type": "LinkToType",
+                                                "id": 247,
+                                                "linkId": 37
+                                            },
+                                            "edges": [
+                                                {
+                                                    "parentF": "",
+                                                    "type": "*ssa.Const",
+                                                    "id": 248,
+                                                    "name": "false:bool",
+                                                    "valueType": {
+                                                        "parentF": "",
+                                                        "type": "LinkToType",
+                                                        "id": 249,
+                                                        "linkId": 37
+                                                    }
+                                                },
+                                                {
+                                                    "parentF": "",
+                                                    "type": "LinkToNode",
+                                                    "id": 250,
+                                                    "linkId": 238
+                                                }
+                                            ],
+                                            "preds": [
+                                                {
+                                                    "parentF": "(*operators.BitOperators).BooleanAnd",
+                                                    "type": "LinkToBlock",
+                                                    "id": 251,
+                                                    "linkId": 240
+                                                },
+                                                {
+                                                    "parentF": "(*operators.BitOperators).BooleanAnd",
+                                                    "type": "LinkToBlock",
+                                                    "id": 252,
+                                                    "linkId": 243
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "parentF": "(*operators.BitOperators).BooleanAnd",
+                                            "type": "*ssa.Return",
+                                            "id": 253,
+                                            "results": [
+                                                {
+                                                    "parentF": "",
+                                                    "type": "LinkToNode",
+                                                    "id": 254,
+                                                    "linkId": 246
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    },
+                    "elseBody": {
+                        "parentF": "(*operators.BitOperators).BooleanAnd",
+                        "type": "LinkToBlock",
+                        "id": 255,
+                        "linkId": 245
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "parentF": "",
+        "type": "*ssa.Function",
+        "id": 256,
+        "name": "BooleanOr",
+        "valueType": {
+            "parentF": "",
+            "type": "*types.Signature",
+            "id": 257
+        },
+        "paramsNull": [
+            {
+                "parentF": "(*operators.BitOperators).BooleanOr",
+                "type": "*ssa.Parameter",
+                "id": 258,
+                "name": "b",
+                "valueType": {
+                    "parentF": "",
+                    "type": "*types.Pointer",
+                    "id": 259,
+                    "elemType": {
+                        "parentF": "",
+                        "type": "LinkToType",
+                        "id": 260,
+                        "linkId": 5
+                    }
+                }
+            },
+            {
+                "parentF": "(*operators.BitOperators).BooleanOr",
+                "type": "*ssa.Parameter",
+                "id": 261,
+                "name": "aVal",
+                "valueType": {
+                    "parentF": "",
+                    "type": "LinkToType",
+                    "id": 262,
+                    "linkId": 37
+                }
+            },
+            {
+                "parentF": "(*operators.BitOperators).BooleanOr",
+                "type": "*ssa.Parameter",
+                "id": 263,
+                "name": "bVal",
+                "valueType": {
+                    "parentF": "",
+                    "type": "LinkToType",
+                    "id": 264,
+                    "linkId": 37
+                }
+            }
+        ],
+        "body": {
+            "parentF": "(*operators.BitOperators).BooleanOr",
+            "type": "*ssa.BasicBlock",
+            "id": 265,
+            "instr": [
+                {
+                    "parentF": "(*operators.BitOperators).BooleanOr",
+                    "type": "*ssa.If",
+                    "id": 266,
+                    "cond": {
+                        "parentF": "",
+                        "type": "LinkToNode",
+                        "id": 267,
+                        "linkId": 261
+                    },
+                    "body": {
+                        "parentF": "(*operators.BitOperators).BooleanOr",
+                        "type": "*ssa.BasicBlock",
+                        "id": 268,
+                        "instr": [
+                            {
+                                "parentF": "(*operators.BitOperators).BooleanOr",
+                                "type": "*ssa.Phi",
+                                "id": 269,
+                                "name": "t0",
+                                "valueType": {
+                                    "parentF": "",
+                                    "type": "LinkToType",
+                                    "id": 270,
+                                    "linkId": 37
+                                },
+                                "edges": [
+                                    {
+                                        "parentF": "",
+                                        "type": "*ssa.Const",
+                                        "id": 271,
+                                        "name": "true:bool",
+                                        "valueType": {
+                                            "parentF": "",
+                                            "type": "LinkToType",
+                                            "id": 272,
+                                            "linkId": 37
+                                        }
+                                    },
+                                    {
+                                        "parentF": "",
+                                        "type": "LinkToNode",
+                                        "id": 273,
+                                        "linkId": 263
+                                    }
+                                ],
+                                "preds": [
+                                    {
+                                        "parentF": "(*operators.BitOperators).BooleanOr",
+                                        "type": "LinkToBlock",
+                                        "id": 274,
+                                        "linkId": 265
+                                    },
+                                    {
+                                        "parentF": "(*operators.BitOperators).BooleanOr",
+                                        "type": "*ssa.BasicBlock",
+                                        "id": 275,
+                                        "instr": [
+                                            {
+                                                "parentF": "(*operators.BitOperators).BooleanOr",
+                                                "type": "*ssa.Jump",
+                                                "id": 276,
+                                                "successor": {
+                                                    "parentF": "(*operators.BitOperators).BooleanOr",
+                                                    "type": "LinkToBlock",
+                                                    "id": 277,
+                                                    "linkId": 268
+                                                }
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "parentF": "(*operators.BitOperators).BooleanOr",
+                                "type": "*ssa.Return",
+                                "id": 278,
+                                "results": [
+                                    {
+                                        "parentF": "",
+                                        "type": "LinkToNode",
+                                        "id": 279,
+                                        "linkId": 269
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "elseBody": {
+                        "parentF": "(*operators.BitOperators).BooleanOr",
+                        "type": "LinkToBlock",
+                        "id": 280,
+                        "linkId": 275
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "parentF": "",
+        "type": "*ssa.Function",
+        "id": 281,
+        "name": "ShlLong",
+        "valueType": {
+            "parentF": "",
+            "type": "*types.Signature",
+            "id": 282
+        },
+        "paramsNull": [
+            {
+                "parentF": "(*operators.BitOperators).ShlLong",
+                "type": "*ssa.Parameter",
+                "id": 283,
+                "name": "b",
+                "valueType": {
+                    "parentF": "",
+                    "type": "*types.Pointer",
+                    "id": 284,
+                    "elemType": {
+                        "parentF": "",
+                        "type": "LinkToType",
+                        "id": 285,
+                        "linkId": 5
+                    }
+                }
+            },
+            {
+                "parentF": "(*operators.BitOperators).ShlLong",
+                "type": "*ssa.Parameter",
+                "id": 286,
+                "name": "longNum",
+                "valueType": {
+                    "parentF": "",
+                    "type": "LinkToType",
+                    "id": 287,
+                    "linkId": 197
+                }
+            }
+        ],
+        "body": {
+            "parentF": "(*operators.BitOperators).ShlLong",
+            "type": "*ssa.BasicBlock",
+            "id": 288,
+            "instr": [
+                {
+                    "parentF": "(*operators.BitOperators).ShlLong",
+                    "type": "*ssa.BinOp",
+                    "id": 289,
+                    "name": "t0",
+                    "valueType": {
+                        "parentF": "",
+                        "type": "LinkToType",
+                        "id": 290,
+                        "linkId": 197
+                    },
+                    "x": {
+                        "parentF": "",
+                        "type": "LinkToNode",
+                        "id": 291,
+                        "linkId": 286
+                    },
+                    "y": {
+                        "parentF": "",
+                        "type": "*ssa.Const",
+                        "id": 292,
+                        "name": "1:uint",
+                        "valueType": {
+                            "parentF": "",
+                            "type": "LinkToType",
+                            "id": 293,
+                            "linkId": 145
+                        }
+                    },
+                    "op": "\u003c\u003c"
+                },
+                {
+                    "parentF": "(*operators.BitOperators).ShlLong",
+                    "type": "*ssa.BinOp",
+                    "id": 294,
+                    "name": "t1",
+                    "valueType": {
+                        "parentF": "",
+                        "type": "LinkToType",
+                        "id": 295,
+                        "linkId": 37
+                    },
+                    "x": {
+                        "parentF": "",
+                        "type": "LinkToNode",
+                        "id": 296,
+                        "linkId": 289
+                    },
+                    "y": {
+                        "parentF": "",
+                        "type": "*ssa.Const",
+                        "id": 297,
+                        "name": "2:int64",
+                        "valueType": {
+                            "parentF": "",
+                            "type": "LinkToType",
+                            "id": 298,
+                            "linkId": 197
+                        }
+                    },
+                    "op": "=="
+                },
+                {
+                    "parentF": "(*operators.BitOperators).ShlLong",
+                    "type": "*ssa.Return",
+                    "id": 299,
+                    "results": [
+                        {
+                            "parentF": "",
+                            "type": "LinkToNode",
+                            "id": 300,
+                            "linkId": 294
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "parentF": "",
+        "type": "*ssa.Function",
+        "id": 301,
+        "name": "ShrLong",
+        "valueType": {
+            "parentF": "",
+            "type": "*types.Signature",
+            "id": 302
+        },
+        "paramsNull": [
+            {
+                "parentF": "(*operators.BitOperators).ShrLong",
+                "type": "*ssa.Parameter",
+                "id": 303,
+                "name": "b",
+                "valueType": {
+                    "parentF": "",
+                    "type": "*types.Pointer",
+                    "id": 304,
+                    "elemType": {
+                        "parentF": "",
+                        "type": "LinkToType",
+                        "id": 305,
+                        "linkId": 5
+                    }
+                }
+            },
+            {
+                "parentF": "(*operators.BitOperators).ShrLong",
+                "type": "*ssa.Parameter",
+                "id": 306,
+                "name": "longVal",
+                "valueType": {
+                    "parentF": "",
+                    "type": "LinkToType",
+                    "id": 307,
+                    "linkId": 197
+                }
+            }
+        ],
+        "body": {
+            "parentF": "(*operators.BitOperators).ShrLong",
+            "type": "*ssa.BasicBlock",
+            "id": 308,
+            "instr": [
+                {
+                    "parentF": "(*operators.BitOperators).ShrLong",
+                    "type": "*ssa.BinOp",
+                    "id": 309,
+                    "name": "t0",
+                    "valueType": {
+                        "parentF": "",
+                        "type": "LinkToType",
+                        "id": 310,
+                        "linkId": 197
+                    },
+                    "x": {
+                        "parentF": "",
+                        "type": "LinkToNode",
+                        "id": 311,
+                        "linkId": 306
+                    },
+                    "y": {
+                        "parentF": "",
+                        "type": "*ssa.Const",
+                        "id": 312,
+                        "name": "1:uint",
+                        "valueType": {
+                            "parentF": "",
+                            "type": "LinkToType",
+                            "id": 313,
+                            "linkId": 145
+                        }
+                    },
+                    "op": "\u003e\u003e"
+                },
+                {
+                    "parentF": "(*operators.BitOperators).ShrLong",
+                    "type": "*ssa.BinOp",
+                    "id": 314,
+                    "name": "t1",
+                    "valueType": {
+                        "parentF": "",
+                        "type": "LinkToType",
+                        "id": 315,
+                        "linkId": 37
+                    },
+                    "x": {
+                        "parentF": "",
+                        "type": "LinkToNode",
+                        "id": 316,
+                        "linkId": 309
+                    },
+                    "y": {
+                        "parentF": "",
+                        "type": "*ssa.Const",
+                        "id": 317,
+                        "name": "1:int64",
+                        "valueType": {
+                            "parentF": "",
+                            "type": "LinkToType",
+                            "id": 318,
+                            "linkId": 197
+                        }
+                    },
+                    "op": "=="
+                },
+                {
+                    "parentF": "(*operators.BitOperators).ShrLong",
+                    "type": "*ssa.Return",
+                    "id": 319,
+                    "results": [
+                        {
+                            "parentF": "",
+                            "type": "LinkToNode",
+                            "id": 320,
+                            "linkId": 314
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "parentF": "",
+        "type": "*ssa.Function",
+        "id": 321,
+        "name": "init",
+        "valueType": {
+            "parentF": "",
+            "type": "*types.Signature",
+            "id": 322
+        },
+        "paramsNull": null,
+        "body": {
+            "parentF": "operators.init",
+            "type": "*ssa.BasicBlock",
+            "id": 323,
+            "instr": [
+                {
+                    "parentF": "operators.init",
+                    "type": "*ssa.UnOp",
+                    "id": 324,
+                    "name": "t0",
+                    "valueType": {
+                        "parentF": "",
+                        "type": "LinkToType",
+                        "id": 325,
+                        "linkId": 37
+                    },
+                    "op": "*",
+                    "x": {
+                        "parentF": "",
+                        "type": "*ssa.Global",
+                        "id": 326,
+                        "name": "init$guard",
+                        "valueType": {
+                            "parentF": "",
+                            "type": "*types.Pointer",
+                            "id": 327,
+                            "elemType": {
+                                "parentF": "",
+                                "type": "LinkToType",
+                                "id": 328,
+                                "linkId": 37
+                            }
+                        }
+                    },
+                    "commaOk": false
+                },
+                {
+                    "parentF": "operators.init",
+                    "type": "*ssa.If",
+                    "id": 329,
+                    "cond": {
+                        "parentF": "",
+                        "type": "LinkToNode",
+                        "id": 330,
+                        "linkId": 324
+                    },
+                    "body": {
+                        "parentF": "operators.init",
+                        "type": "*ssa.BasicBlock",
+                        "id": 331,
+                        "instr": [
+                            {
+                                "parentF": "operators.init",
+                                "type": "*ssa.Return",
+                                "id": 332,
+                                "results": []
+                            }
+                        ]
+                    },
+                    "elseBody": {
+                        "parentF": "operators.init",
+                        "type": "*ssa.BasicBlock",
+                        "id": 333,
+                        "instr": [
+                            {
+                                "parentF": "operators.init",
+                                "type": "*ssa.Store",
+                                "id": 334,
+                                "addr": {
+                                    "parentF": "",
+                                    "type": "LinkToNode",
+                                    "id": 335,
+                                    "linkId": 326
+                                },
+                                "value": {
+                                    "parentF": "",
+                                    "type": "*ssa.Const",
+                                    "id": 336,
+                                    "name": "true:bool",
+                                    "valueType": {
+                                        "parentF": "",
+                                        "type": "LinkToType",
+                                        "id": 337,
+                                        "linkId": 37
+                                    }
+                                }
+                            },
+                            {
+                                "parentF": "operators.init",
+                                "type": "*ssa.Jump",
+                                "id": 338,
+                                "successor": {
+                                    "parentF": "operators.init",
+                                    "type": "LinkToBlock",
+                                    "id": 339,
+                                    "linkId": 331
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "parentF": "",
+        "type": "*ssa.Function",
+        "id": 340,
+        "name": "Or",
+        "valueType": {
+            "parentF": "",
+            "type": "*types.Signature",
+            "id": 341
+        },
+        "paramsNull": [
+            {
+                "parentF": "(*operators.BitOperators).Or",
+                "type": "*ssa.Parameter",
+                "id": 342,
+                "name": "b",
+                "valueType": {
+                    "parentF": "",
+                    "type": "*types.Pointer",
+                    "id": 343,
+                    "elemType": {
+                        "parentF": "",
+                        "type": "LinkToType",
+                        "id": 344,
+                        "linkId": 5
+                    }
+                }
+            },
+            {
+                "parentF": "(*operators.BitOperators).Or",
+                "type": "*ssa.Parameter",
+                "id": 345,
+                "name": "val",
+                "valueType": {
+                    "parentF": "",
+                    "type": "LinkToType",
+                    "id": 346,
+                    "linkId": 25
+                }
+            }
+        ],
+        "body": {
+            "parentF": "(*operators.BitOperators).Or",
+            "type": "*ssa.BasicBlock",
+            "id": 347,
+            "instr": [
+                {
+                    "parentF": "(*operators.BitOperators).Or",
+                    "type": "*ssa.BinOp",
+                    "id": 348,
+                    "name": "t0",
+                    "valueType": {
+                        "parentF": "",
+                        "type": "LinkToType",
+                        "id": 349,
+                        "linkId": 25
+                    },
+                    "x": {
+                        "parentF": "",
+                        "type": "LinkToNode",
+                        "id": 350,
+                        "linkId": 345
+                    },
+                    "y": {
+                        "parentF": "",
+                        "type": "*ssa.Const",
+                        "id": 351,
+                        "name": "7:int",
+                        "valueType": {
+                            "parentF": "",
+                            "type": "LinkToType",
+                            "id": 352,
+                            "linkId": 25
+                        }
+                    },
+                    "op": "|"
+                },
+                {
+                    "parentF": "(*operators.BitOperators).Or",
+                    "type": "*ssa.BinOp",
+                    "id": 353,
+                    "name": "t1",
+                    "valueType": {
+                        "parentF": "",
+                        "type": "LinkToType",
+                        "id": 354,
+                        "linkId": 37
+                    },
+                    "x": {
+                        "parentF": "",
+                        "type": "LinkToNode",
+                        "id": 355,
+                        "linkId": 348
+                    },
+                    "y": {
+                        "parentF": "",
+                        "type": "*ssa.Const",
+                        "id": 356,
+                        "name": "15:int",
+                        "valueType": {
+                            "parentF": "",
+                            "type": "LinkToType",
+                            "id": 357,
+                            "linkId": 25
+                        }
+                    },
+                    "op": "=="
+                },
+                {
+                    "parentF": "(*operators.BitOperators).Or",
+                    "type": "*ssa.Return",
+                    "id": 358,
+                    "results": [
+                        {
+                            "parentF": "",
+                            "type": "LinkToNode",
+                            "id": 359,
+                            "linkId": 353
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "parentF": "",
+        "type": "*ssa.Function",
+        "id": 360,
+        "name": "Sign",
+        "valueType": {
+            "parentF": "",
+            "type": "*types.Signature",
+            "id": 361
+        },
+        "paramsNull": [
+            {
+                "parentF": "(*operators.BitOperators).Sign",
+                "type": "*ssa.Parameter",
+                "id": 362,
+                "name": "b",
+                "valueType": {
+                    "parentF": "",
+                    "type": "*types.Pointer",
+                    "id": 363,
+                    "elemType": {
+                        "parentF": "",
+                        "type": "LinkToType",
+                        "id": 364,
+                        "linkId": 5
+                    }
+                }
+            },
+            {
+                "parentF": "(*operators.BitOperators).Sign",
+                "type": "*ssa.Parameter",
+                "id": 365,
+                "name": "num",
+                "valueType": {
+                    "parentF": "",
+                    "type": "LinkToType",
+                    "id": 366,
+                    "linkId": 25
+                }
+            }
+        ],
+        "body": {
+            "parentF": "(*operators.BitOperators).Sign",
+            "type": "*ssa.BasicBlock",
+            "id": 367,
+            "instr": [
+                {
+                    "parentF": "(*operators.BitOperators).Sign",
+                    "type": "*ssa.BinOp",
+                    "id": 368,
+                    "name": "t0",
+                    "valueType": {
+                        "parentF": "",
+                        "type": "LinkToType",
+                        "id": 369,
+                        "linkId": 25
+                    },
+                    "x": {
+                        "parentF": "",
+                        "type": "LinkToNode",
+                        "id": 370,
+                        "linkId": 365
+                    },
+                    "y": {
+                        "parentF": "",
+                        "type": "*ssa.Const",
+                        "id": 371,
+                        "name": "31:uint",
+                        "valueType": {
+                            "parentF": "",
+                            "type": "LinkToType",
+                            "id": 372,
+                            "linkId": 145
+                        }
+                    },
+                    "op": "\u003e\u003e"
+                },
+                {
+                    "parentF": "(*operators.BitOperators).Sign",
+                    "type": "*ssa.UnOp",
+                    "id": 373,
+                    "name": "t1",
+                    "valueType": {
+                        "parentF": "",
+                        "type": "LinkToType",
+                        "id": 374,
+                        "linkId": 25
+                    },
+                    "op": "-",
+                    "x": {
+                        "parentF": "",
+                        "type": "LinkToNode",
+                        "id": 375,
+                        "linkId": 365
+                    },
+                    "commaOk": false
+                },
+                {
+                    "parentF": "(*operators.BitOperators).Sign",
+                    "type": "*ssa.BinOp",
+                    "id": 376,
+                    "name": "t2",
+                    "valueType": {
+                        "parentF": "",
+                        "type": "LinkToType",
+                        "id": 377,
+                        "linkId": 25
+                    },
+                    "x": {
+                        "parentF": "",
+                        "type": "LinkToNode",
+                        "id": 378,
+                        "linkId": 373
+                    },
+                    "y": {
+                        "parentF": "",
+                        "type": "*ssa.Const",
+                        "id": 379,
+                        "name": "31:uint",
+                        "valueType": {
+                            "parentF": "",
+                            "type": "LinkToType",
+                            "id": 380,
+                            "linkId": 145
+                        }
+                    },
+                    "op": "\u003e\u003e"
+                },
+                {
+                    "parentF": "(*operators.BitOperators).Sign",
+                    "type": "*ssa.BinOp",
+                    "id": 381,
+                    "name": "t3",
+                    "valueType": {
+                        "parentF": "",
+                        "type": "LinkToType",
+                        "id": 382,
+                        "linkId": 25
+                    },
+                    "x": {
+                        "parentF": "",
+                        "type": "LinkToNode",
+                        "id": 383,
+                        "linkId": 368
+                    },
+                    "y": {
+                        "parentF": "",
+                        "type": "LinkToNode",
+                        "id": 384,
+                        "linkId": 376
+                    },
+                    "op": "|"
+                },
+                {
+                    "parentF": "(*operators.BitOperators).Sign",
+                    "type": "*ssa.BinOp",
+                    "id": 385,
+                    "name": "t4",
+                    "valueType": {
+                        "parentF": "",
+                        "type": "LinkToType",
+                        "id": 386,
+                        "linkId": 37
+                    },
+                    "x": {
+                        "parentF": "",
+                        "type": "LinkToNode",
+                        "id": 387,
+                        "linkId": 381
+                    },
+                    "y": {
+                        "parentF": "",
+                        "type": "*ssa.Const",
+                        "id": 388,
+                        "name": "0:int",
+                        "valueType": {
+                            "parentF": "",
+                            "type": "LinkToType",
+                            "id": 389,
+                            "linkId": 25
+                        }
+                    },
+                    "op": "\u003e"
+                },
+                {
+                    "parentF": "(*operators.BitOperators).Sign",
+                    "type": "*ssa.If",
+                    "id": 390,
+                    "cond": {
+                        "parentF": "",
+                        "type": "LinkToNode",
+                        "id": 391,
+                        "linkId": 385
+                    },
+                    "body": {
+                        "parentF": "(*operators.BitOperators).Sign",
+                        "type": "*ssa.BasicBlock",
+                        "id": 392,
+                        "instr": [
+                            {
+                                "parentF": "(*operators.BitOperators).Sign",
+                                "type": "*ssa.Return",
+                                "id": 393,
+                                "results": [
+                                    {
+                                        "parentF": "",
+                                        "type": "*ssa.Const",
+                                        "id": 394,
+                                        "name": "1:int",
+                                        "valueType": {
+                                            "parentF": "",
+                                            "type": "LinkToType",
+                                            "id": 395,
+                                            "linkId": 25
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "elseBody": {
+                        "parentF": "(*operators.BitOperators).Sign",
+                        "type": "*ssa.BasicBlock",
+                        "id": 396,
+                        "instr": [
+                            {
+                                "parentF": "(*operators.BitOperators).Sign",
+                                "type": "*ssa.BinOp",
+                                "id": 397,
+                                "name": "t5",
+                                "valueType": {
+                                    "parentF": "",
+                                    "type": "LinkToType",
+                                    "id": 398,
+                                    "linkId": 37
+                                },
+                                "x": {
+                                    "parentF": "",
+                                    "type": "LinkToNode",
+                                    "id": 399,
+                                    "linkId": 381
+                                },
+                                "y": {
+                                    "parentF": "",
+                                    "type": "*ssa.Const",
+                                    "id": 400,
+                                    "name": "0:int",
+                                    "valueType": {
+                                        "parentF": "",
+                                        "type": "LinkToType",
+                                        "id": 401,
+                                        "linkId": 25
+                                    }
+                                },
+                                "op": "=="
+                            },
+                            {
+                                "parentF": "(*operators.BitOperators).Sign",
+                                "type": "*ssa.If",
+                                "id": 402,
+                                "cond": {
+                                    "parentF": "",
+                                    "type": "LinkToNode",
+                                    "id": 403,
+                                    "linkId": 397
+                                },
+                                "body": {
+                                    "parentF": "(*operators.BitOperators).Sign",
+                                    "type": "*ssa.BasicBlock",
+                                    "id": 404,
+                                    "instr": [
+                                        {
+                                            "parentF": "(*operators.BitOperators).Sign",
+                                            "type": "*ssa.Return",
+                                            "id": 405,
+                                            "results": [
+                                                {
+                                                    "parentF": "",
+                                                    "type": "*ssa.Const",
+                                                    "id": 406,
+                                                    "name": "0:int",
+                                                    "valueType": {
+                                                        "parentF": "",
+                                                        "type": "LinkToType",
+                                                        "id": 407,
+                                                        "linkId": 25
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                "elseBody": {
+                                    "parentF": "(*operators.BitOperators).Sign",
+                                    "type": "*ssa.BasicBlock",
+                                    "id": 408,
+                                    "instr": [
+                                        {
+                                            "parentF": "(*operators.BitOperators).Sign",
+                                            "type": "*ssa.Return",
+                                            "id": 409,
+                                            "results": [
+                                                {
+                                                    "parentF": "",
+                                                    "type": "*ssa.Const",
+                                                    "id": 410,
+                                                    "name": "-1:int",
+                                                    "valueType": {
+                                                        "parentF": "",
+                                                        "type": "LinkToType",
+                                                        "id": 411,
+                                                        "linkId": 25
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "parentF": "",
+        "type": "*ssa.Function",
+        "id": 412,
+        "name": "Ushr",
+        "valueType": {
+            "parentF": "",
+            "type": "*types.Signature",
+            "id": 413
+        },
+        "paramsNull": [
+            {
+                "parentF": "(*operators.BitOperators).Ushr",
+                "type": "*ssa.Parameter",
+                "id": 414,
+                "name": "b",
+                "valueType": {
+                    "parentF": "",
+                    "type": "*types.Pointer",
+                    "id": 415,
+                    "elemType": {
+                        "parentF": "",
+                        "type": "LinkToType",
+                        "id": 416,
+                        "linkId": 5
+                    }
+                }
+            },
+            {
+                "parentF": "(*operators.BitOperators).Ushr",
+                "type": "*ssa.Parameter",
+                "id": 417,
+                "name": "unsignedVal",
+                "valueType": {
+                    "parentF": "",
+                    "type": "LinkToType",
+                    "id": 418,
+                    "linkId": 25
+                }
+            }
+        ],
+        "body": {
+            "parentF": "(*operators.BitOperators).Ushr",
+            "type": "*ssa.BasicBlock",
+            "id": 419,
+            "instr": [
+                {
+                    "parentF": "(*operators.BitOperators).Ushr",
+                    "type": "*ssa.BinOp",
+                    "id": 420,
+                    "name": "t0",
+                    "valueType": {
+                        "parentF": "",
+                        "type": "LinkToType",
+                        "id": 421,
+                        "linkId": 25
+                    },
+                    "x": {
+                        "parentF": "",
+                        "type": "LinkToNode",
+                        "id": 422,
+                        "linkId": 417
+                    },
+                    "y": {
+                        "parentF": "",
+                        "type": "*ssa.Const",
+                        "id": 423,
+                        "name": "1:uint",
+                        "valueType": {
+                            "parentF": "",
+                            "type": "LinkToType",
+                            "id": 424,
+                            "linkId": 145
+                        }
+                    },
+                    "op": "\u003e\u003e"
+                },
+                {
+                    "parentF": "(*operators.BitOperators).Ushr",
+                    "type": "*ssa.BinOp",
+                    "id": 425,
+                    "name": "t1",
+                    "valueType": {
+                        "parentF": "",
+                        "type": "LinkToType",
+                        "id": 426,
+                        "linkId": 37
+                    },
+                    "x": {
+                        "parentF": "",
+                        "type": "LinkToNode",
+                        "id": 427,
+                        "linkId": 420
+                    },
+                    "y": {
+                        "parentF": "",
+                        "type": "*ssa.Const",
+                        "id": 428,
+                        "name": "1:int",
+                        "valueType": {
+                            "parentF": "",
+                            "type": "LinkToType",
+                            "id": 429,
+                            "linkId": 25
+                        }
+                    },
+                    "op": "=="
+                },
+                {
+                    "parentF": "(*operators.BitOperators).Ushr",
+                    "type": "*ssa.Return",
+                    "id": 430,
+                    "results": [
+                        {
+                            "parentF": "",
+                            "type": "LinkToNode",
+                            "id": 431,
+                            "linkId": 425
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "parentF": "",
+        "type": "*ssa.Function",
+        "id": 432,
+        "name": "UshrLong",
+        "valueType": {
+            "parentF": "",
+            "type": "*types.Signature",
+            "id": 433
+        },
+        "paramsNull": [
+            {
+                "parentF": "(*operators.BitOperators).UshrLong",
+                "type": "*ssa.Parameter",
+                "id": 434,
+                "name": "b",
+                "valueType": {
+                    "parentF": "",
+                    "type": "*types.Pointer",
+                    "id": 435,
+                    "elemType": {
+                        "parentF": "",
+                        "type": "LinkToType",
+                        "id": 436,
+                        "linkId": 5
+                    }
+                }
+            },
+            {
+                "parentF": "(*operators.BitOperators).UshrLong",
+                "type": "*ssa.Parameter",
+                "id": 437,
+                "name": "unsignedLongVal",
+                "valueType": {
+                    "parentF": "",
+                    "type": "LinkToType",
+                    "id": 438,
+                    "linkId": 197
+                }
+            }
+        ],
+        "body": {
+            "parentF": "(*operators.BitOperators).UshrLong",
+            "type": "*ssa.BasicBlock",
+            "id": 439,
+            "instr": [
+                {
+                    "parentF": "(*operators.BitOperators).UshrLong",
+                    "type": "*ssa.BinOp",
+                    "id": 440,
+                    "name": "t0",
+                    "valueType": {
+                        "parentF": "",
+                        "type": "LinkToType",
+                        "id": 441,
+                        "linkId": 197
+                    },
+                    "x": {
+                        "parentF": "",
+                        "type": "LinkToNode",
+                        "id": 442,
+                        "linkId": 437
+                    },
+                    "y": {
+                        "parentF": "",
+                        "type": "*ssa.Const",
+                        "id": 443,
+                        "name": "1:uint",
+                        "valueType": {
+                            "parentF": "",
+                            "type": "LinkToType",
+                            "id": 444,
+                            "linkId": 145
+                        }
+                    },
+                    "op": "\u003e\u003e"
+                },
+                {
+                    "parentF": "(*operators.BitOperators).UshrLong",
+                    "type": "*ssa.BinOp",
+                    "id": 445,
+                    "name": "t1",
+                    "valueType": {
+                        "parentF": "",
+                        "type": "LinkToType",
+                        "id": 446,
+                        "linkId": 37
+                    },
+                    "x": {
+                        "parentF": "",
+                        "type": "LinkToNode",
+                        "id": 447,
+                        "linkId": 440
+                    },
+                    "y": {
+                        "parentF": "",
+                        "type": "*ssa.Const",
+                        "id": 448,
+                        "name": "1:int64",
+                        "valueType": {
+                            "parentF": "",
+                            "type": "LinkToType",
+                            "id": 449,
+                            "linkId": 197
+                        }
+                    },
+                    "op": "=="
+                },
+                {
+                    "parentF": "(*operators.BitOperators).UshrLong",
+                    "type": "*ssa.Return",
+                    "id": 450,
+                    "results": [
+                        {
+                            "parentF": "",
+                            "type": "LinkToNode",
+                            "id": 451,
+                            "linkId": 445
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "parentF": "",
+        "type": "*ssa.Function",
+        "id": 452,
+        "name": "Xor",
+        "valueType": {
+            "parentF": "",
+            "type": "*types.Signature",
+            "id": 453
+        },
+        "paramsNull": [
+            {
+                "parentF": "(*operators.BitOperators).Xor",
+                "type": "*ssa.Parameter",
+                "id": 454,
+                "name": "b",
+                "valueType": {
+                    "parentF": "",
+                    "type": "*types.Pointer",
+                    "id": 455,
+                    "elemType": {
+                        "parentF": "",
+                        "type": "LinkToType",
+                        "id": 456,
+                        "linkId": 5
+                    }
+                }
+            },
+            {
+                "parentF": "(*operators.BitOperators).Xor",
+                "type": "*ssa.Parameter",
+                "id": 457,
+                "name": "x",
+                "valueType": {
+                    "parentF": "",
+                    "type": "LinkToType",
+                    "id": 458,
+                    "linkId": 25
+                }
+            },
+            {
+                "parentF": "(*operators.BitOperators).Xor",
+                "type": "*ssa.Parameter",
+                "id": 459,
+                "name": "y",
+                "valueType": {
+                    "parentF": "",
+                    "type": "LinkToType",
+                    "id": 460,
+                    "linkId": 25
+                }
+            }
+        ],
+        "body": {
+            "parentF": "(*operators.BitOperators).Xor",
+            "type": "*ssa.BasicBlock",
+            "id": 461,
+            "instr": [
+                {
+                    "parentF": "(*operators.BitOperators).Xor",
+                    "type": "*ssa.BinOp",
+                    "id": 462,
+                    "name": "t0",
+                    "valueType": {
+                        "parentF": "",
+                        "type": "LinkToType",
+                        "id": 463,
+                        "linkId": 25
+                    },
+                    "x": {
+                        "parentF": "",
+                        "type": "LinkToNode",
+                        "id": 464,
+                        "linkId": 457
+                    },
+                    "y": {
+                        "parentF": "",
+                        "type": "LinkToNode",
+                        "id": 465,
+                        "linkId": 459
+                    },
+                    "op": "^"
+                },
+                {
+                    "parentF": "(*operators.BitOperators).Xor",
+                    "type": "*ssa.BinOp",
+                    "id": 466,
+                    "name": "t1",
+                    "valueType": {
+                        "parentF": "",
+                        "type": "LinkToType",
+                        "id": 467,
+                        "linkId": 37
+                    },
+                    "x": {
+                        "parentF": "",
+                        "type": "LinkToNode",
+                        "id": 468,
+                        "linkId": 462
+                    },
+                    "y": {
+                        "parentF": "",
+                        "type": "*ssa.Const",
+                        "id": 469,
+                        "name": "0:int",
+                        "valueType": {
+                            "parentF": "",
+                            "type": "LinkToType",
+                            "id": 470,
+                            "linkId": 25
+                        }
+                    },
+                    "op": "=="
+                },
+                {
+                    "parentF": "(*operators.BitOperators).Xor",
+                    "type": "*ssa.Return",
+                    "id": 471,
+                    "results": [
+                        {
+                            "parentF": "",
+                            "type": "LinkToNode",
+                            "id": 472,
+                            "linkId": 466
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+]

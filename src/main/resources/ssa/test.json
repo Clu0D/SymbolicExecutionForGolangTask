@@ -1,0 +1,655 @@
+[
+    {
+        "parentF": "",
+        "type": "*ssa.Function",
+        "id": 1,
+        "name": "init",
+        "valueType": {
+            "parentF": "",
+            "type": "*types.Signature",
+            "id": 2
+        },
+        "paramsNull": null,
+        "body": {
+            "parentF": "test.init",
+            "type": "*ssa.BasicBlock",
+            "id": 3,
+            "instr": [
+                {
+                    "parentF": "test.init",
+                    "type": "*ssa.UnOp",
+                    "id": 4,
+                    "name": "t0",
+                    "valueType": {
+                        "parentF": "",
+                        "type": "*types.Basic",
+                        "id": 5,
+                        "name": "bool"
+                    },
+                    "op": "*",
+                    "x": {
+                        "parentF": "",
+                        "type": "*ssa.Global",
+                        "id": 6,
+                        "name": "init$guard",
+                        "valueType": {
+                            "parentF": "",
+                            "type": "*types.Pointer",
+                            "id": 7,
+                            "elemType": {
+                                "parentF": "",
+                                "type": "LinkToType",
+                                "id": 8,
+                                "linkId": 5
+                            }
+                        }
+                    },
+                    "commaOk": false
+                },
+                {
+                    "parentF": "test.init",
+                    "type": "*ssa.If",
+                    "id": 9,
+                    "cond": {
+                        "parentF": "",
+                        "type": "LinkToNode",
+                        "id": 10,
+                        "linkId": 4
+                    },
+                    "body": {
+                        "parentF": "test.init",
+                        "type": "*ssa.BasicBlock",
+                        "id": 11,
+                        "instr": [
+                            {
+                                "parentF": "test.init",
+                                "type": "*ssa.Return",
+                                "id": 12,
+                                "results": []
+                            }
+                        ]
+                    },
+                    "elseBody": {
+                        "parentF": "test.init",
+                        "type": "*ssa.BasicBlock",
+                        "id": 13,
+                        "instr": [
+                            {
+                                "parentF": "test.init",
+                                "type": "*ssa.Store",
+                                "id": 14,
+                                "addr": {
+                                    "parentF": "",
+                                    "type": "LinkToNode",
+                                    "id": 15,
+                                    "linkId": 6
+                                },
+                                "value": {
+                                    "parentF": "",
+                                    "type": "*ssa.Const",
+                                    "id": 16,
+                                    "name": "true:bool",
+                                    "valueType": {
+                                        "parentF": "",
+                                        "type": "LinkToType",
+                                        "id": 17,
+                                        "linkId": 5
+                                    }
+                                }
+                            },
+                            {
+                                "parentF": "test.init",
+                                "type": "*ssa.Jump",
+                                "id": 18,
+                                "successor": {
+                                    "parentF": "test.init",
+                                    "type": "LinkToBlock",
+                                    "id": 19,
+                                    "linkId": 11
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "parentF": "",
+        "type": "*ssa.Function",
+        "id": 20,
+        "name": "TestAssume",
+        "valueType": {
+            "parentF": "",
+            "type": "*types.Signature",
+            "id": 21
+        },
+        "paramsNull": [
+            {
+                "parentF": "(*test.Test).TestAssume",
+                "type": "*ssa.Parameter",
+                "id": 22,
+                "name": "a",
+                "valueType": {
+                    "parentF": "",
+                    "type": "*types.Pointer",
+                    "id": 23,
+                    "elemType": {
+                        "parentF": "",
+                        "type": "*types.Named",
+                        "id": 24,
+                        "name": "Test",
+                        "underlying": {
+                            "parentF": "",
+                            "type": "*types.Struct",
+                            "id": 25,
+                            "fields": []
+                        },
+                        "methods": [
+                            {
+                                "parentF": "",
+                                "type": "*types.Func",
+                                "id": 26
+                            },
+                            {
+                                "parentF": "",
+                                "type": "*types.Func",
+                                "id": 27
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                "parentF": "(*test.Test).TestAssume",
+                "type": "*ssa.Parameter",
+                "id": 28,
+                "name": "i",
+                "valueType": {
+                    "parentF": "",
+                    "type": "*types.Basic",
+                    "id": 29,
+                    "name": "int"
+                }
+            },
+            {
+                "parentF": "(*test.Test).TestAssume",
+                "type": "*ssa.Parameter",
+                "id": 30,
+                "name": "j",
+                "valueType": {
+                    "parentF": "",
+                    "type": "LinkToType",
+                    "id": 31,
+                    "linkId": 29
+                }
+            }
+        ],
+        "body": {
+            "parentF": "(*test.Test).TestAssume",
+            "type": "*ssa.BasicBlock",
+            "id": 32,
+            "instr": [
+                {
+                    "parentF": "(*test.Test).TestAssume",
+                    "type": "*ssa.BinOp",
+                    "id": 33,
+                    "name": "t0",
+                    "valueType": {
+                        "parentF": "",
+                        "type": "LinkToType",
+                        "id": 34,
+                        "linkId": 5
+                    },
+                    "x": {
+                        "parentF": "",
+                        "type": "LinkToNode",
+                        "id": 35,
+                        "linkId": 28
+                    },
+                    "y": {
+                        "parentF": "",
+                        "type": "LinkToNode",
+                        "id": 36,
+                        "linkId": 30
+                    },
+                    "op": "=="
+                },
+                {
+                    "parentF": "(*test.Test).TestAssume",
+                    "type": "*ssa.Call",
+                    "id": 37,
+                    "name": "t1",
+                    "valueType": {
+                        "parentF": "",
+                        "type": "*types.Tuple",
+                        "id": 38
+                    },
+                    "value": {
+                        "parentF": "",
+                        "type": "*ssa.Function",
+                        "id": 39,
+                        "name": "assume",
+                        "valueType": {
+                            "parentF": "",
+                            "type": "*types.Signature",
+                            "id": 40
+                        },
+                        "paramsNull": [
+                            {
+                                "parentF": "test.assume",
+                                "type": "*ssa.Parameter",
+                                "id": 41,
+                                "name": "b",
+                                "valueType": {
+                                    "parentF": "",
+                                    "type": "LinkToType",
+                                    "id": 42,
+                                    "linkId": 5
+                                }
+                            }
+                        ],
+                        "body": null
+                    },
+                    "args": [
+                        {
+                            "parentF": "",
+                            "type": "LinkToNode",
+                            "id": 43,
+                            "linkId": 33
+                        }
+                    ]
+                },
+                {
+                    "parentF": "(*test.Test).TestAssume",
+                    "type": "*ssa.BinOp",
+                    "id": 44,
+                    "name": "t2",
+                    "valueType": {
+                        "parentF": "",
+                        "type": "LinkToType",
+                        "id": 45,
+                        "linkId": 5
+                    },
+                    "x": {
+                        "parentF": "",
+                        "type": "LinkToNode",
+                        "id": 46,
+                        "linkId": 28
+                    },
+                    "y": {
+                        "parentF": "",
+                        "type": "*ssa.Const",
+                        "id": 47,
+                        "name": "0:int",
+                        "valueType": {
+                            "parentF": "",
+                            "type": "LinkToType",
+                            "id": 48,
+                            "linkId": 29
+                        }
+                    },
+                    "op": "=="
+                },
+                {
+                    "parentF": "(*test.Test).TestAssume",
+                    "type": "*ssa.Call",
+                    "id": 49,
+                    "name": "t3",
+                    "valueType": {
+                        "parentF": "",
+                        "type": "LinkToType",
+                        "id": 50,
+                        "linkId": 38
+                    },
+                    "value": {
+                        "parentF": "",
+                        "type": "LinkToNode",
+                        "id": 51,
+                        "linkId": 39
+                    },
+                    "args": [
+                        {
+                            "parentF": "",
+                            "type": "LinkToNode",
+                            "id": 52,
+                            "linkId": 44
+                        }
+                    ]
+                },
+                {
+                    "parentF": "(*test.Test).TestAssume",
+                    "type": "*ssa.BinOp",
+                    "id": 53,
+                    "name": "t4",
+                    "valueType": {
+                        "parentF": "",
+                        "type": "LinkToType",
+                        "id": 54,
+                        "linkId": 5
+                    },
+                    "x": {
+                        "parentF": "",
+                        "type": "LinkToNode",
+                        "id": 55,
+                        "linkId": 30
+                    },
+                    "y": {
+                        "parentF": "",
+                        "type": "*ssa.Const",
+                        "id": 56,
+                        "name": "1:int",
+                        "valueType": {
+                            "parentF": "",
+                            "type": "LinkToType",
+                            "id": 57,
+                            "linkId": 29
+                        }
+                    },
+                    "op": "=="
+                },
+                {
+                    "parentF": "(*test.Test).TestAssume",
+                    "type": "*ssa.Call",
+                    "id": 58,
+                    "name": "t5",
+                    "valueType": {
+                        "parentF": "",
+                        "type": "LinkToType",
+                        "id": 59,
+                        "linkId": 38
+                    },
+                    "value": {
+                        "parentF": "",
+                        "type": "LinkToNode",
+                        "id": 60,
+                        "linkId": 39
+                    },
+                    "args": [
+                        {
+                            "parentF": "",
+                            "type": "LinkToNode",
+                            "id": 61,
+                            "linkId": 53
+                        }
+                    ]
+                },
+                {
+                    "parentF": "(*test.Test).TestAssume",
+                    "type": "*ssa.BinOp",
+                    "id": 62,
+                    "name": "t6",
+                    "valueType": {
+                        "parentF": "",
+                        "type": "LinkToType",
+                        "id": 63,
+                        "linkId": 29
+                    },
+                    "x": {
+                        "parentF": "",
+                        "type": "LinkToNode",
+                        "id": 64,
+                        "linkId": 28
+                    },
+                    "y": {
+                        "parentF": "",
+                        "type": "LinkToNode",
+                        "id": 65,
+                        "linkId": 30
+                    },
+                    "op": "+"
+                },
+                {
+                    "parentF": "(*test.Test).TestAssume",
+                    "type": "*ssa.Return",
+                    "id": 66,
+                    "results": [
+                        {
+                            "parentF": "",
+                            "type": "LinkToNode",
+                            "id": 67,
+                            "linkId": 62
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "parentF": "",
+        "type": "LinkToNode",
+        "id": 68,
+        "linkId": 39
+    },
+    {
+        "parentF": "",
+        "type": "*ssa.Function",
+        "id": 69,
+        "name": "TestMakeSymbolic",
+        "valueType": {
+            "parentF": "",
+            "type": "*types.Signature",
+            "id": 70
+        },
+        "paramsNull": [
+            {
+                "parentF": "(*test.Test).TestMakeSymbolic",
+                "type": "*ssa.Parameter",
+                "id": 71,
+                "name": "a",
+                "valueType": {
+                    "parentF": "",
+                    "type": "*types.Pointer",
+                    "id": 72,
+                    "elemType": {
+                        "parentF": "",
+                        "type": "LinkToType",
+                        "id": 73,
+                        "linkId": 24
+                    }
+                }
+            }
+        ],
+        "body": {
+            "parentF": "(*test.Test).TestMakeSymbolic",
+            "type": "*ssa.BasicBlock",
+            "id": 74,
+            "instr": [
+                {
+                    "parentF": "(*test.Test).TestMakeSymbolic",
+                    "type": "*ssa.MakeInterface",
+                    "id": 75,
+                    "name": "t0",
+                    "valueType": {
+                        "parentF": "",
+                        "type": "*types.Alias",
+                        "id": 76,
+                        "rhs": {
+                            "parentF": "",
+                            "type": "*types.Interface",
+                            "id": 77,
+                            "methods": [],
+                            "embedded": []
+                        }
+                    },
+                    "x": {
+                        "parentF": "",
+                        "type": "*ssa.Const",
+                        "id": 78,
+                        "name": "0:int",
+                        "valueType": {
+                            "parentF": "",
+                            "type": "LinkToType",
+                            "id": 79,
+                            "linkId": 29
+                        }
+                    }
+                },
+                {
+                    "parentF": "(*test.Test).TestMakeSymbolic",
+                    "type": "*ssa.Call",
+                    "id": 80,
+                    "name": "t1",
+                    "valueType": {
+                        "parentF": "",
+                        "type": "LinkToType",
+                        "id": 81,
+                        "linkId": 76
+                    },
+                    "value": {
+                        "parentF": "",
+                        "type": "*ssa.Function",
+                        "id": 82,
+                        "name": "makeSymbolic",
+                        "valueType": {
+                            "parentF": "",
+                            "type": "*types.Signature",
+                            "id": 83
+                        },
+                        "paramsNull": [
+                            {
+                                "parentF": "test.makeSymbolic",
+                                "type": "*ssa.Parameter",
+                                "id": 84,
+                                "name": "a",
+                                "valueType": {
+                                    "parentF": "",
+                                    "type": "LinkToType",
+                                    "id": 85,
+                                    "linkId": 76
+                                }
+                            }
+                        ],
+                        "body": null
+                    },
+                    "args": [
+                        {
+                            "parentF": "",
+                            "type": "LinkToNode",
+                            "id": 86,
+                            "linkId": 75
+                        }
+                    ]
+                },
+                {
+                    "parentF": "(*test.Test).TestMakeSymbolic",
+                    "type": "*ssa.MakeInterface",
+                    "id": 87,
+                    "name": "t2",
+                    "valueType": {
+                        "parentF": "",
+                        "type": "LinkToType",
+                        "id": 88,
+                        "linkId": 76
+                    },
+                    "x": {
+                        "parentF": "",
+                        "type": "*ssa.Const",
+                        "id": 89,
+                        "name": "1:int",
+                        "valueType": {
+                            "parentF": "",
+                            "type": "LinkToType",
+                            "id": 90,
+                            "linkId": 29
+                        }
+                    }
+                },
+                {
+                    "parentF": "(*test.Test).TestMakeSymbolic",
+                    "type": "*ssa.BinOp",
+                    "id": 91,
+                    "name": "t3",
+                    "valueType": {
+                        "parentF": "",
+                        "type": "LinkToType",
+                        "id": 92,
+                        "linkId": 5
+                    },
+                    "x": {
+                        "parentF": "",
+                        "type": "LinkToNode",
+                        "id": 93,
+                        "linkId": 80
+                    },
+                    "y": {
+                        "parentF": "",
+                        "type": "LinkToNode",
+                        "id": 94,
+                        "linkId": 87
+                    },
+                    "op": "=="
+                },
+                {
+                    "parentF": "(*test.Test).TestMakeSymbolic",
+                    "type": "*ssa.If",
+                    "id": 95,
+                    "cond": {
+                        "parentF": "",
+                        "type": "LinkToNode",
+                        "id": 96,
+                        "linkId": 91
+                    },
+                    "body": {
+                        "parentF": "(*test.Test).TestMakeSymbolic",
+                        "type": "*ssa.BasicBlock",
+                        "id": 97,
+                        "instr": [
+                            {
+                                "parentF": "(*test.Test).TestMakeSymbolic",
+                                "type": "*ssa.Return",
+                                "id": 98,
+                                "results": [
+                                    {
+                                        "parentF": "",
+                                        "type": "*ssa.Const",
+                                        "id": 99,
+                                        "name": "42:int",
+                                        "valueType": {
+                                            "parentF": "",
+                                            "type": "LinkToType",
+                                            "id": 100,
+                                            "linkId": 29
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "elseBody": {
+                        "parentF": "(*test.Test).TestMakeSymbolic",
+                        "type": "*ssa.BasicBlock",
+                        "id": 101,
+                        "instr": [
+                            {
+                                "parentF": "(*test.Test).TestMakeSymbolic",
+                                "type": "*ssa.Return",
+                                "id": 102,
+                                "results": [
+                                    {
+                                        "parentF": "",
+                                        "type": "*ssa.Const",
+                                        "id": 103,
+                                        "name": "0:int",
+                                        "valueType": {
+                                            "parentF": "",
+                                            "type": "LinkToType",
+                                            "id": 104,
+                                            "linkId": 29
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "parentF": "",
+        "type": "LinkToNode",
+        "id": 105,
+        "linkId": 82
+    }
+]

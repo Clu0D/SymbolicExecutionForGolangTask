@@ -112,14 +112,13 @@ fun main() = runBlocking {
                 } catch (_: TimeoutCancellationException) {
                     printlnError("$funcName\n\ttimeout")
                     timeout++
+                } catch (e: Exception) {
+                    printlnError("$funcName\n\terror:\n\t\t\t ${e.localizedMessage}")
+                    errors++
+                } catch (e: Error) {
+                    printlnError("$funcName\n\terror:\n\t\t\t ${e.localizedMessage}")
+                    errors++
                 }
-//                catch (e: Exception) {
-//                    printlnError("$funcName\n\terror:\n\t\t\t ${e.localizedMessage}")
-//                    errors++
-//                } catch (e: Error) {
-//                    printlnError("$funcName\n\terror:\n\t\t\t ${e.localizedMessage}")
-//                    errors++
-//                }
 
                 val curTime = System.currentTimeMillis()
 

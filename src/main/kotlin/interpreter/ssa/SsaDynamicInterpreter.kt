@@ -108,7 +108,7 @@ class SsaDynamicInterpreter(
 
         updateDistancesToTerminal(node)
 
-        state.mem.addResults(args.requireNoNulls())
+        state.mem.addResults(args.filterNotNull())
 
         var result: SsaNode = node
         while (true) {
