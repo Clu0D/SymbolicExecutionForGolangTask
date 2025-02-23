@@ -143,7 +143,6 @@ open class SsaStaticInterpreter() : SsaInterpreter() {
 
             val result = try {
                 translator(startedNode, state.executionStatistics).second(mem, childrenResults)
-                    ?.let { StarSymbolic.removeFake(it, mem) }
             } catch (_: UnSatPathException) {
                 StopSymbolic
             }
@@ -422,6 +421,7 @@ open class SsaStaticInterpreter() : SsaInterpreter() {
             is StoreSsaNode -> Pair(
                 { _, _ -> listOf(node.addr, node.value) },
                 { mem, args ->
+                    val name = node.printItself() // todo remove
                     val address = args[0]!! as StarSymbolic
                     val value = args[1]!!
 
@@ -433,9 +433,9 @@ open class SsaStaticInterpreter() : SsaInterpreter() {
             is AllocSsaNode -> Pair(
                 { _, _ -> listOf() },
                 { mem, _ ->
-                    val type = Type.fromSsa(node.valueType!!, mem) as StarType
+                    val starType = Type.fromSsa(node.valueType!!, mem) as StarType
 
-                    visitAlloc(type.elementType, mem)
+                    visitAlloc(starType, mem)
                 }
             )
 
@@ -478,10 +478,10 @@ open class SsaStaticInterpreter() : SsaInterpreter() {
                         is Float64Type -> Float64Type().fromDouble(value.toDouble(), mem)
 
                         is ArrayType if (value == "nil") ->
-                            NilLocalStarSymbolic(StarType(type, false))
+                            NilLocalStarSymbolic(StarType(type))
 
                         is StarType  if (value == "nil") ->
-                            NilLocalStarSymbolic(StarType(type, false))
+                            NilLocalStarSymbolic(StarType(type))
 
                         is UninterpretedType -> UninterpretedType.fromString(value, mem)
 
@@ -560,16 +560,28 @@ open class SsaStaticInterpreter() : SsaInterpreter() {
                     listOf(node.x, node.index)
                 },
                 { mem, args ->
+                    val name = node.printItself() // todo remove
                     val address = IntType.cast(args[1]!!, Int64Type(), mem).int64(mem)
+                    val array = when (val x = args[0]!!) {
+                        is StarSymbolic -> x.get(mem)
+                        is FiniteArraySymbolic -> x
+                        else -> error("should be [] or *[]")
+                    } as FiniteArraySymbolic
 
-                    ArrayStarSymbolic(
-                        address, when (val x = StarSymbolic.removeFake(args[0]!!, mem)) {
-                            is FiniteArraySymbolic -> x
-                            is StarSymbolic -> (x.dereference(mem) as FiniteArraySymbolic)
-                            else -> error("only [] or *[], not ${x.javaClass.name}")
-                        },
-                        false
-                    )
+//                    ArrayStarSymbolic(address, arrayStar)
+//
+//                    val newArray = array.put(address, value, mem)
+//
+//                    arrayStar.put(array, mem)
+//                    TODO()
+                    array.get(address, mem)
+//                    ArrayStarSymbolic(
+//                        address, when (val x = args[0]!!) {
+//                            is FiniteArraySymbolic -> x
+//                            is StarSymbolic -> x.get(mem) as FiniteArraySymbolic
+//                            else -> error("only [] or *[], not ${x.javaClass.name}")
+//                        }
+//                    )
                 }
             )
 
@@ -583,7 +595,7 @@ open class SsaStaticInterpreter() : SsaInterpreter() {
                 },
                 { mem, args ->
                     val i = args.last()
-                    NilLocalStarSymbolic(StarType(UninterpretedType("$i"), false))
+                    NilLocalStarSymbolic(StarType(UninterpretedType("$i")))
                 }
             )
 
@@ -592,14 +604,11 @@ open class SsaStaticInterpreter() : SsaInterpreter() {
                 { mem, args ->
                     val len = args[0]!!
                     val type = Type.fromSsa(node.valueType!!, mem) as ArrayType
-                    val array = StarSymbolic.removeFake(visitAlloc(type, mem), mem)
+                    val array = visitAlloc(StarType(type), mem)
 
                     visitSlice(
                         len,
-                        if (array is StarSymbolic)
-                            array.dereference(mem)
-                        else
-                            array,
+                        array,
                         mem
                     )
                 }
@@ -654,14 +663,13 @@ open class SsaStaticInterpreter() : SsaInterpreter() {
                     val x = args[0]!!
                     val high = args.getOrNull(1)
 
+//                    LocalStarSymbolic(
                     visitSlice(
                         high,
-                        if (x is StarSymbolic)
-                            x.star(mem).dereference(mem)
-                        else
-                            x,
+                        x,
                         mem
                     )
+//                    )
                 }
             )
 

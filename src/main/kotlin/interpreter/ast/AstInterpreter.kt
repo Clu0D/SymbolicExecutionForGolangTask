@@ -1,5 +1,6 @@
 package interpreter.ast
 
+import com.jetbrains.rd.util.printlnError
 import interpreter.ssa.SsaInterpreter.Companion.visitOp
 import interpreter.ssa.SsaNode
 import memory.Memory
@@ -39,7 +40,7 @@ abstract class AstInterpreter(
 
         fun visitSelector(selectorName: String, x: Symbolic?, mem: Memory) = when (x) {
             is StarSymbolic -> {
-                val obj = x.dereference(mem)
+                val obj = x.get(mem)
                 (obj.struct(mem)).fields[selectorName]
             }
 
@@ -113,7 +114,8 @@ abstract class AstInterpreter(
                 }
             }.flatten()
 
-            assert(lhs.size == memObjects.size) { "lhs size != rhs size" }
+            if (lhs.size == memObjects.size)
+                printlnError("ERROR lhs size != rhs size")
 
             lhs.zip(memObjects).forEach { (nameAst, value) ->
                 val name = (nameAst as AstIdent).name

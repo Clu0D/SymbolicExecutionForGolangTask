@@ -67,7 +67,7 @@ abstract class SsaInterpreter {
             return with(mem.ctx) {
                 if (args.size == 1 && op == "*") {
                     when (val star = args[0]) {
-                        is StarSymbolic -> star.dereference(mem)
+                        is StarSymbolic -> star.get(mem)
                         else -> star
                     }
                 } else when (val arg0 = args[0]) {
@@ -192,8 +192,8 @@ abstract class SsaInterpreter {
                         when {
                             a is StarSymbolic && b is StarSymbolic && op == "==" -> a.eq(b, mem)
                             a is StarSymbolic && b is StarSymbolic && op == "!=" -> a.eq(b, mem).not(mem)
-                            a is StarSymbolic -> visitOp(op, listOf(a, LocalStarSymbolic(b, a.isStarFake)), mem)
-                            b is StarSymbolic -> visitOp(op, listOf(LocalStarSymbolic(a, b.isStarFake), b), mem)
+                            a is StarSymbolic -> visitOp(op, listOf(a, LocalStarSymbolic(b)), mem)
+                            b is StarSymbolic -> visitOp(op, listOf(LocalStarSymbolic(a), b), mem)
                             else -> error("op: '${op}' $a $b")
                         }
                     }
@@ -201,87 +201,70 @@ abstract class SsaInterpreter {
             }
         }
 
-        fun visitAlloc(type: Type, mem: Memory): Symbolic {
-            val (realType, isFake) = (type as ArrayType).toSimple(type.length!!)
-            val address = mem.addNewDefaultStar(realType, isFake)
-            return GlobalStarSymbolic(StarType(realType, isFake), address, BoolType.`false`(mem), isFake)
+        fun visitAlloc(starType: StarType, mem: Memory): Symbolic {
+            val address = mem.addNewDefaultStar(starType.elementType)
+            return GlobalStarSymbolic(starType, address, BoolType.`false`(mem))
         }
 
-        fun visitSlice(high: Symbolic?, x: Symbolic, mem: Memory): Symbolic = when {
-            high == null -> x
-            x is FiniteArraySymbolic -> {
-                FiniteArraySymbolic(
-                    IntType.cast(high, Int64Type(), mem).int64(mem),
-                    x,
-                    mem
-                )
+        fun visitSlice(high: Symbolic?, x: Symbolic, mem: Memory): Symbolic {
+            return when {
+                high == null -> x
+
+                x is StarSymbolic -> {
+                    val array = x.get(mem) as FiniteArraySymbolic
+                    val newArray = FiniteArraySymbolic(
+                        ArrayType(
+                            array.arrayType.elementType(),
+                            IntType.cast(high, Int64Type(), mem).int64(mem)
+                        ),
+                        array.array,
+                        array.arrayBehaviour,
+                        mem
+                    )
+                    x.put(newArray, mem)
+                }
+
+                x is StopSymbolic -> x
+                else -> error("should be an array, not ${x.javaClass.name}")
             }
-
-            x is CombinedArray -> {
-                FiniteArraySymbolic(
-                    IntType.cast(high, Int64Type(), mem).int64(mem),
-                    x,
-                    mem
-                )
-            }
-
-
-//            x is InfiniteArray -> {
-//        todo remove        val size = IntType.cast(high, Int64Type(), mem).int64(mem)
-//                FiniteArraySymbolic(
-//                    size,
-//                    mem, x,
-//                    DefaultArrayBehaviour(false, size)
-//                )
-//            }
-
-            x is StarSymbolic ->
-                visitSlice(high, x.dereference(mem), mem)
-
-            x is StopSymbolic -> x
-            else -> error("should be an array, not ${x.javaClass.name}")
         }
 
         val knownFunctions: Map<String, (List<Symbolic>, Memory) -> Symbolic> = mapOf(
             "real" to { args: List<Symbolic>, mem: Memory ->
-                assert(args.size == 1)
                 (args[0].complex(mem)).real
             },
             "imag" to { args, mem ->
-                assert(args.size == 1)
                 (args[0].complex(mem)).img
             },
             "float64" to { args, mem ->
-                assert(args.size == 1)
                 args[0].floatExpr(mem).toFloatSymbolic()
             },
             "len" to { args, mem ->
-                assert(args.size == 1)
-
+                  println("LEN ${when (val arr = args[0]) {
+                      is FiniteArraySymbolic -> arr
+                      is StarSymbolic -> arr.get(mem).array(mem)
+                      else -> error("should be [] or *[], not ${arr.javaClass.name}")
+                  }.length()}")
                 when (val arr = args[0]) {
                     is FiniteArraySymbolic -> arr
-                    is StarSymbolic -> arr.dereference(mem).array(mem)
+                    is StarSymbolic -> arr.get(mem).array(mem)
                     else -> error("should be [] or *[], not ${arr.javaClass.name}")
                 }.length()
             },
             "make" to { args, mem ->
-                assert(args.size == 2)
                 val type = args[0].type as ArrayType
                 val length = args[1].int64(mem)
                 val arrayWithLenType = ArrayType(type.elementType, length)
                 arrayWithLenType.defaultSymbolic(mem)
             },
             "external:New" to { args, _ ->
-                assert(args.size == 1)
 //                actually it should be a wrapper
                 args[0]
             },
             "external:IsNaN" to { args, mem ->
-                assert(args.size == 1)
                 mem.ctx.mkFpIsNaNExpr(args[0].floatExpr(mem)).toBoolSymbolic()
             },
             "external:Inf" to { args, mem ->
-                assert(args.size == 1)
                 with(mem.ctx) {
                     mem.ite(
                         mkBvSignedGreaterExpr(
@@ -294,7 +277,6 @@ abstract class SsaInterpreter {
                 }
             },
             "external:Sprintf" to { args, mem ->
-                assert(args.size > 1)
                 println("Sprintf is not emulated properly")
                 UninterpretedType.fromString("Sprintf", mem)
             }

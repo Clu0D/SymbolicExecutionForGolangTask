@@ -43,7 +43,7 @@ fun main() = runBlocking {
         val nodesList = Json.decodeFromString<List<SsaNode>>(reader)
 
         val ctx = KContext(
-            simplificationMode = KContext.SimplificationMode.NO_SIMPLIFY
+//            simplificationMode = KContext.SimplificationMode.NO_SIMPLIFY
         )
 
         val funcDeclarations = nodesList
@@ -62,11 +62,11 @@ fun main() = runBlocking {
         val interpretationResults = funcDeclarations
             .filter {
                 listOf(
-                    "SizesWithoutTouchingTheElements"
+                    "test"
                 ).contains(it.key)
             } // for testing 1 function
             .map { (funcName, node) ->
-//                generateDotFile(fileName, node) // generates nice images of ssa graphs in /ssaGraphPictures/..
+                generateDotFile(fileName, node) // generates nice images of ssa graphs in /ssaGraphPictures/..
 
                 var results = listOf<SymbolicResult<SsaNode>>()
                 var createdConsts = mapOf<String, KSort>()
@@ -77,7 +77,7 @@ fun main() = runBlocking {
 
                 println(funcName)
                 try {
-                    withTimeout(6000_000L) {
+                    withTimeout(6900_000L) {
 
                         node.getAllReachable(allNodes)
                         val terminalNodes =
@@ -137,7 +137,7 @@ fun main() = runBlocking {
 
         println("\nGENERATING TESTS")
 
-        val testGenerator = TestGenerator(30_000L)
+        val testGenerator = TestGenerator(15_000L)
 
         val tests = interpretationResults.associate { (resultsList, createdConsts, functionInfo) ->
             val testGenerationStart = System.currentTimeMillis()

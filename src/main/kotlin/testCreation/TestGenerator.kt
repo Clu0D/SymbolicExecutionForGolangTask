@@ -157,7 +157,7 @@ class TestGenerator(
                     }
 
                     is FiniteArraySymbolic -> {
-                        "\"todo[${it.length}]\""
+                        "\"todo[${it.length()}]\""
                     }
 
                     is UninterpretedSymbolic -> kExprToString(bestModel.eval(it.expr))

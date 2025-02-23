@@ -79,7 +79,6 @@ class DynamicAstInterpreter(
                 is AstFor -> translator(startedNode).second(state.mem, listOf())
 //                this removes visibility layer and potentially pops solver (so push and pops are consistent)
                 is EndBranchNode -> translator(startedNode).second(state.mem, listOf())
-                    ?.let { StarSymbolic.removeFake(it, state.mem) }
 
                 else -> continue
             }

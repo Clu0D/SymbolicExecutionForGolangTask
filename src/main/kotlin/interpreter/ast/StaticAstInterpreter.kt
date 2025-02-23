@@ -106,7 +106,6 @@ open class StaticAstInterpreter(
                 )
             }
             val result = translator(startedNode).second(mem, childrenResults)
-                ?.let { StarSymbolic.removeFake(it, mem) }
 
             if (waitingNodes.isEmpty()) {
                 return Triple(pathCond, result, startedNodes.size)
