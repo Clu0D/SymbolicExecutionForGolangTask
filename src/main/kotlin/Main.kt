@@ -60,11 +60,11 @@ fun main() = runBlocking {
         var errors = 0
 
         val interpretationResults = funcDeclarations
-            .filter {
-                listOf(
-                    "ExceptionInNestedMethod"
-                ).contains(it.key)
-            } // for testing 1 function
+//            .filter {
+//                listOf(
+//                    "ExceptionInNestedMethod"
+//                ).contains(it.key)
+//            } // for testing 1 function
             .map { (funcName, node) ->
 //                generateDotFile(fileName, node) // generates nice images of ssa graphs in /ssaGraphPictures/..
 

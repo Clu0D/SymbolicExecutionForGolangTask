@@ -1,9 +1,5 @@
 package memory
 
-import interpreter.ast.AstArrayType
-import interpreter.ast.AstIdent
-import interpreter.ast.AstStar
-import interpreter.ast.AstNode
 import interpreter.ssa.*
 import io.ksmt.expr.KExpr
 import io.ksmt.expr.KFpRoundingMode
@@ -48,13 +44,6 @@ sealed interface Type {
             is KFp64Sort -> Float64Symbolic(expr as KExpr<KFp64Sort>)
             is KUninterpretedSort -> UninterpretedSymbolic(expr as KExpr<KUninterpretedSort>)
             else -> error("toSymbolic from ${expr.sort}")
-        }
-
-        fun fromAst(node: AstNode): Type = when (node) {
-            is AstIdent -> fromName(node.name)
-            is AstArrayType -> InfArrayType(fromAst(node.elementType) as StarType)
-            is AstStar -> StarType(fromAst(node.x))
-            else -> error("not type \"${node.javaClass.name}\"")
         }
 
         fun fromSsa(node: SsaType, mem: Memory): Type {
@@ -398,7 +387,7 @@ class ComplexType : BaseType(), FiniteType {
     override fun toString() = "COMPLEX"
 }
 
-// todo is it simple?
+// todo is it SimpleType?
 class UninterpretedType(val typeName: String) : BaseType(), NonStarType, FiniteType {
     companion object {
         fun fromString(string: String, mem: Memory): UninterpretedSymbolic = with(mem.ctx) {
