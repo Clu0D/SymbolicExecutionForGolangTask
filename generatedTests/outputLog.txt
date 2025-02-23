@@ -1,0 +1,1572 @@
+FILE arrays
+BooleanArray
+	graph analyzed
+		in	0'126  ms
+	interpretation finished
+		in	0'342  ms
+CreateNewThreeDimensionalArray
+	graph analyzed
+		in	1'785  ms
+	interpretation finished
+		in	0'332  ms
+ReallyMultiDimensionalArray
+	graph analyzed
+		in	0'130  ms
+	interpretation finished
+		in	0'097  ms
+ShortSizeAndIndex
+	graph analyzed
+		in	0'073  ms
+	interpretation finished
+		in	0'103  ms
+ByteSizeAndIndex
+	graph analyzed
+		in	0'070  ms
+	interpretation finished
+		in	0'082  ms
+CharArray
+	graph analyzed
+		in	0'032  ms
+	interpretation finished
+		in	0'049  ms
+CharSizeAndIndex
+	graph analyzed
+		in	0'071  ms
+	interpretation finished
+		in	0'120  ms
+DefaultBooleanValues
+	graph analyzed
+		in	0'020  ms
+	interpretation finished
+		in	0'029  ms
+DefaultDoubleValues
+	graph analyzed
+		in	0'023  ms
+	interpretation finished
+		in	0'036  ms
+DoubleArray
+	graph analyzed
+		in	0'035  ms
+	interpretation finished
+		in	0'053  ms
+CopyArray
+	graph analyzed
+		in	0'333  ms
+	interpretation finished
+		in	1'243  ms
+DefaultValues
+	graph analyzed
+		in	0'023  ms
+	interpretation finished
+		in	0'030  ms
+ObjectArray
+	graph analyzed
+		in	0'155  ms
+	interpretation finished
+		in	0'088  ms
+ShortArray
+	graph analyzed
+		in	0'031  ms
+	interpretation finished
+		in	0'047  ms
+CreateNewMultiDimensionalArray
+	graph analyzed
+		in	1'615  ms
+	interpretation finished
+		in	0'278  ms
+LongArray
+	graph analyzed
+		in	0'034  ms
+	interpretation finished
+		in	0'082  ms
+NewObjectWithPrimitivesClassWithParams
+	graph analyzed
+		in	0'015  ms
+	interpretation finished
+		in	0'002  ms
+DefaultIntValues
+	graph analyzed
+		in	0'022  ms
+	interpretation finished
+		in	0'027  ms
+FloatArray
+	graph analyzed
+		in	0'035  ms
+	interpretation finished
+		in	0'053  ms
+DefaultValuesWithoutTwoDimensions
+	graph analyzed
+		in	1'256  ms
+	stopped by timeout
+DefaultValuesWithoutTwoDimensions
+	timeout
+	interpretation finished
+		in	8'762  ms
+CreateArray
+	graph analyzed
+		in	0'383  ms
+	interpretation finished
+		in	0'160  ms
+ByteArray
+	graph analyzed
+		in	0'034  ms
+	interpretation finished
+		in	0'051  ms
+IntArray
+	graph analyzed
+		in	0'032  ms
+	interpretation finished
+		in	0'060  ms
+DefaultValuesWithoutLastDimension
+	graph analyzed
+		in	1'568  ms
+	interpretation finished
+		in	0'271  ms
+FillMultiArrayWithArray
+	graph analyzed
+		in	1'562  ms
+	interpretation finished
+		in	0'212  ms
+SizesWithoutTouchingTheElements
+	graph analyzed
+		in	1'447  ms
+	interpretation finished
+		in	0'237  ms
+DefaultValuesNewMultiArray
+	graph analyzed
+		in	0'046  ms
+	interpretation finished
+		in	0'032  ms
+IsIdentityMatrix
+	graph analyzed
+		in	0'494  ms
+	interpretation finished
+		in	0'206  ms
+MultiDimensionalObjectsArray
+	graph analyzed
+		in	0'014  ms
+	interpretation finished
+		in	0'025  ms
+
+GENERATING TESTS
+	coverage: 100,00%
+TESTS GENERATED FOR BooleanArray
+	in	0'512  ms
+	coverage: 95,59%
+TESTS GENERATED FOR CreateNewThreeDimensionalArray
+	in	0'200  ms
+	coverage: 96,97%
+TESTS GENERATED FOR ReallyMultiDimensionalArray
+	in	27'370  ms
+	coverage: 100,00%
+TESTS GENERATED FOR ShortSizeAndIndex
+	in	0'574  ms
+	coverage: 100,00%
+TESTS GENERATED FOR ByteSizeAndIndex
+	in	0'666  ms
+	coverage: 100,00%
+TESTS GENERATED FOR CharArray
+	in	0'315  ms
+	coverage: 100,00%
+TESTS GENERATED FOR CharSizeAndIndex
+	in	0'613  ms
+	not all terminal nodes covered in DefaultBooleanValues
+	1/2
+	remaining terminal nodes: [903Return]
+	coverage: 81,82%
+TESTS GENERATED FOR DefaultBooleanValues
+	in	0'052  ms
+	not all terminal nodes covered in DefaultDoubleValues
+	1/2
+	remaining terminal nodes: [941Return]
+	coverage: 83,33%
+TESTS GENERATED FOR DefaultDoubleValues
+	in	0'096  ms
+	coverage: 100,00%
+TESTS GENERATED FOR DoubleArray
+	in	15'311  ms
+	coverage: 95,92%
+TESTS GENERATED FOR CopyArray
+	in	15'258  ms
+	not all terminal nodes covered in DefaultValues
+	1/2
+	remaining terminal nodes: [2586Return]
+	coverage: 83,33%
+TESTS GENERATED FOR DefaultValues
+	in	0'055  ms
+	coverage: 100,00%
+TESTS GENERATED FOR ObjectArray
+	in	30'805  ms
+	coverage: 100,00%
+TESTS GENERATED FOR ShortArray
+	in	1'663  ms
+	coverage: 90,48%
+TESTS GENERATED FOR CreateNewMultiDimensionalArray
+	in	0'379  ms
+	coverage: 100,00%
+TESTS GENERATED FOR LongArray
+	in	3'937  ms
+	coverage: 100,00%
+TESTS GENERATED FOR NewObjectWithPrimitivesClassWithParams
+	in	0'614  ms
+	coverage: 83,33%
+TESTS GENERATED FOR DefaultIntValues
+	in	0'092  ms
+	not all terminal nodes covered in DefaultIntValues
+	1/2
+	remaining terminal nodes: [1720Return]
+	coverage: 100,00%
+TESTS GENERATED FOR FloatArray
+	in	15'483  ms
+	not all terminal nodes covered in DefaultValuesWithoutTwoDimensions
+	2/3
+	remaining terminal nodes: [1911Return]
+	coverage: 91,18%
+TESTS GENERATED FOR DefaultValuesWithoutTwoDimensions
+	in	30'031  ms
+	coverage: 97,37%
+TESTS GENERATED FOR CreateArray
+	in	15'266  ms
+	coverage: 100,00%
+TESTS GENERATED FOR ByteArray
+	in	1'193  ms
+	coverage: 100,00%
+TESTS GENERATED FOR IntArray
+	in	0'667  ms
+	not all terminal nodes covered in DefaultValuesWithoutLastDimension
+	0/2
+	remaining terminal nodes: [2754Return, 2757Return]
+	coverage: 82,35%
+TESTS GENERATED FOR DefaultValuesWithoutLastDimension
+	in	0'120  ms
+	coverage: 95,35%
+TESTS GENERATED FOR FillMultiArrayWithArray
+	in	14'362  ms
+	coverage: 94,44%
+TESTS GENERATED FOR SizesWithoutTouchingTheElements
+	in	0'057  ms
+	not all terminal nodes covered in DefaultValuesNewMultiArray
+	1/2
+	remaining terminal nodes: [3142Return]
+	coverage: 90,91%
+TESTS GENERATED FOR DefaultValuesNewMultiArray
+	in	0'075  ms
+	not all terminal nodes covered in IsIdentityMatrix
+	4/5
+	remaining terminal nodes: [3343Return]
+	coverage: 86,11%
+TESTS GENERATED FOR IsIdentityMatrix
+	in	16'107  ms
+	coverage: 100,00%
+TESTS GENERATED FOR MultiDimensionalObjectsArray
+	in	0'152  ms
+generatedTests/test_arrays.go
+
+SUCCESSFUL 29/29 (TIMEOUT 1/29, ERROR 0/29))
+	graph analysis duration:
+		11'464  ms
+	interpretation duration:
+		13'109  ms
+
+	tests generating duration:
+		192'025  ms
+
+FILE basic
+complexMagnitude
+	graph analyzed
+		in	0'018  ms
+	interpretation finished
+		in	0'003  ms
+combinedBitwise
+	graph analyzed
+		in	0'033  ms
+	interpretation finished
+		in	0'053  ms
+basicComplexOperations
+	graph analyzed
+		in	0'043  ms
+	interpretation finished
+		in	0'066  ms
+compareElement
+	graph analyzed
+		in	0'021  ms
+	interpretation finished
+		in	0'090  ms
+compareAge
+	graph analyzed
+		in	0'026  ms
+	interpretation finished
+		in	0'085  ms
+nestedBitwise
+	graph analyzed
+		in	0'028  ms
+	interpretation finished
+		in	0'049  ms
+complexComparison
+	graph analyzed
+		in	0'021  ms
+UNKNOWN sat on path (continuing this branch), reason: timeout
+UNKNOWN sat on path (continuing this branch), reason: timeout
+UNKNOWN sat on path (continuing this branch), reason: timeout
+UNKNOWN sat on path (continuing this branch), reason: canceled
+	interpretation finished
+		in	2'366  ms
+advancedBitwise
+	graph analyzed
+		in	0'018  ms
+	interpretation finished
+		in	0'041  ms
+integerOperations
+	graph analyzed
+		in	0'017  ms
+	interpretation finished
+		in	0'043  ms
+mixedOperations
+	graph analyzed
+		in	0'049  ms
+UNKNOWN sat on path (continuing this branch), reason: canceled
+UNKNOWN sat on path (continuing this branch), reason: canceled
+UNKNOWN sat on error (saving as an error, but not removing from path):
+	reason:canceled
+UNKNOWN sat on error (saving as an error, but not removing from path):
+	reason:canceled
+UNKNOWN sat on error (saving as an error, but not removing from path):
+	reason:canceled
+	interpretation finished
+		in	2'880  ms
+nestedComplexOperations
+	graph analyzed
+		in	0'038  ms
+	interpretation finished
+		in	0'057  ms
+nestedConditions
+	graph analyzed
+		in	0'023  ms
+	interpretation finished
+		in	0'040  ms
+pushPopIncrementality
+	graph analyzed
+		in	0'041  ms
+	interpretation finished
+		in	0'171  ms
+compareAndIncrement
+	graph analyzed
+		in	0'008  ms
+	interpretation finished
+		in	0'040  ms
+complexOperations
+	graph analyzed
+		in	0'057  ms
+	interpretation finished
+		in	0'166  ms
+bitwiseOperations
+	graph analyzed
+		in	0'040  ms
+	interpretation finished
+		in	0'074  ms
+floatOperations
+	graph analyzed
+		in	0'014  ms
+	interpretation finished
+		in	0'046  ms
+
+GENERATING TESTS
+	coverage: 100,00%
+TESTS GENERATED FOR complexMagnitude
+	in	0'088  ms
+	coverage: 100,00%
+TESTS GENERATED FOR combinedBitwise
+	in	0'184  ms
+	coverage: 100,00%
+TESTS GENERATED FOR basicComplexOperations
+	in	0'290  ms
+	coverage: 100,00%
+TESTS GENERATED FOR compareElement
+	in	0'626  ms
+	coverage: 100,00%
+TESTS GENERATED FOR compareAge
+	in	0'711  ms
+	coverage: 100,00%
+TESTS GENERATED FOR nestedBitwise
+	in	0'183  ms
+	coverage: 100,00%
+TESTS GENERATED FOR complexComparison
+	in	47'696  ms
+	coverage: 100,00%
+TESTS GENERATED FOR advancedBitwise
+	in	0'165  ms
+	coverage: 100,00%
+TESTS GENERATED FOR integerOperations
+	in	0'164  ms
+	coverage: 93,55%
+TESTS GENERATED FOR mixedOperations
+	in	50'505  ms
+	coverage: 100,00%
+TESTS GENERATED FOR nestedComplexOperations
+	in	0'404  ms
+	coverage: 100,00%
+TESTS GENERATED FOR nestedConditions
+	in	0'295  ms
+	coverage: 92,00%
+TESTS GENERATED FOR pushPopIncrementality
+	in	0'103  ms
+	coverage: 100,00%
+TESTS GENERATED FOR compareAndIncrement
+	in	0'211  ms
+	coverage: 100,00%
+TESTS GENERATED FOR complexOperations
+	in	0'591  ms
+	coverage: 100,00%
+TESTS GENERATED FOR bitwiseOperations
+	in	0'116  ms
+	coverage: 100,00%
+TESTS GENERATED FOR floatOperations
+	in	0'321  ms
+generatedTests/test_basic.go
+
+SUCCESSFUL 17/17 (TIMEOUT 0/17, ERROR 0/17))
+	graph analysis duration:
+		0'495  ms
+	interpretation duration:
+		6'270  ms
+
+	tests generating duration:
+		294'678  ms
+
+FILE flow
+InnerWhile
+	graph analyzed
+		in	0'031  ms
+	interpretation finished
+		in	0'030  ms
+DivideByZeroCheckWithCycles
+	graph analyzed
+		in	0'252  ms
+	stopped by timeout
+DivideByZeroCheckWithCycles
+	timeout
+	interpretation finished
+		in	9'763  ms
+ForCycleFour
+	graph analyzed
+		in	0'026  ms
+	interpretation finished
+		in	0'191  ms
+LoopWithConcreteBoundAndSymbolicBranching
+	graph analyzed
+		in	0'066  ms
+	interpretation finished
+		in	0'571  ms
+MoveToException
+	graph analyzed
+		in	0'184  ms
+	stopped by timeout
+MoveToException
+	timeout
+	interpretation finished
+		in	9'864  ms
+Factorial
+	graph analyzed
+		in	0'163  ms
+	interpretation finished
+		in	0'091  ms
+LoopWithSymbolicBound
+	graph analyzed
+		in	0'047  ms
+	interpretation finished
+		in	0'199  ms
+TwoCondition
+	graph analyzed
+		in	0'053  ms
+	interpretation finished
+		in	0'150  ms
+LoopInsideLoop
+	graph analyzed
+		in	0'139  ms
+	interpretation finished
+		in	4'899  ms
+CallInnerWhile
+	graph analyzed
+		in	0'031  ms
+	interpretation finished
+		in	0'030  ms
+ForCycleFromJayHorn
+	graph analyzed
+		in	0'026  ms
+	interpretation finished
+		in	0'028  ms
+StructureLoop
+	graph analyzed
+		in	0'025  ms
+	interpretation finished
+		in	0'146  ms
+Pow
+	graph analyzed
+		in	0'206  ms
+	interpretation finished
+		in	0'647  ms
+InnerLoop
+	graph analyzed
+		in	0'065  ms
+	interpretation finished
+		in	0'046  ms
+LoopWithSymbolicBoundAndComplexControlFlow
+	graph analyzed
+		in	0'106  ms
+	interpretation finished
+		in	0'689  ms
+InfiniteRecursion
+	graph analyzed
+		in	0'006  ms
+	interpretation finished
+		in	0'015  ms
+LoopWithSymbolicBoundAndSymbolicBranching
+	graph analyzed
+		in	0'092  ms
+	interpretation finished
+		in	0'809  ms
+WhileCycle
+	graph analyzed
+		in	0'026  ms
+	interpretation finished
+		in	0'029  ms
+Fib
+	graph analyzed
+		in	0'245  ms
+	interpretation finished
+		in	0'569  ms
+Sum
+	graph analyzed
+		in	0'048  ms
+UNKNOWN sat on path (continuing this branch), reason: timeout
+UNKNOWN sat on path (continuing this branch), reason: canceled
+UNKNOWN sat on path (continuing this branch), reason: canceled
+UNKNOWN sat on path (continuing this branch), reason: timeout
+UNKNOWN sat on error (saving as an error, but not removing from path):
+	reason:canceled
+UNKNOWN sat on error (saving as an error, but not removing from path):
+	reason:canceled
+UNKNOWN sat on error (saving as an error, but not removing from path):
+	reason:canceled
+	interpretation finished
+		in	3'702  ms
+FiniteCycle
+	graph analyzed
+		in	0'018  ms
+	interpretation finished
+		in	0'123  ms
+ForCycle
+	graph analyzed
+		in	0'025  ms
+	interpretation finished
+		in	0'242  ms
+LoopWithConcreteBound
+	graph analyzed
+		in	0'023  ms
+	interpretation finished
+		in	0'170  ms
+
+GENERATING TESTS
+	coverage: 87,50%
+TESTS GENERATED FOR InnerWhile
+	in	0'098  ms
+	coverage: 95,45%
+TESTS GENERATED FOR DivideByZeroCheckWithCycles
+	in	0'133  ms
+	coverage: 95,00%
+TESTS GENERATED FOR ForCycleFour
+	in	0'081  ms
+	coverage: 96,55%
+TESTS GENERATED FOR LoopWithConcreteBoundAndSymbolicBranching
+	in	0'062  ms
+	not all terminal nodes covered in MoveToException
+	1/2
+	remaining terminal nodes: [408Return]
+	coverage: 86,96%
+TESTS GENERATED FOR MoveToException
+	in	0'061  ms
+	coverage: 100,00%
+TESTS GENERATED FOR Factorial
+	in	0'083  ms
+	coverage: 95,65%
+TESTS GENERATED FOR LoopWithSymbolicBound
+	in	0'074  ms
+	coverage: 95,83%
+TESTS GENERATED FOR TwoCondition
+	in	0'099  ms
+	coverage: 86,84%
+TESTS GENERATED FOR LoopInsideLoop
+	in	0'224  ms
+	coverage: 100,00%
+TESTS GENERATED FOR CallInnerWhile
+	in	0'034  ms
+	coverage: 82,35%
+TESTS GENERATED FOR ForCycleFromJayHorn
+	in	0'090  ms
+	coverage: 95,00%
+TESTS GENERATED FOR StructureLoop
+	in	0'082  ms
+	coverage: 100,00%
+TESTS GENERATED FOR Pow
+	in	0'092  ms
+	coverage: 100,00%
+TESTS GENERATED FOR InnerLoop
+	in	0'036  ms
+	coverage: 97,50%
+TESTS GENERATED FOR LoopWithSymbolicBoundAndComplexControlFlow
+	in	0'119  ms
+	not all terminal nodes covered in InfiniteRecursion
+	0/1
+	remaining terminal nodes: [1042Return]
+	coverage: 50,00%
+TESTS GENERATED FOR InfiniteRecursion
+	in	0'044  ms
+	coverage: 97,22%
+TESTS GENERATED FOR LoopWithSymbolicBoundAndSymbolicBranching
+	in	0'113  ms
+	coverage: 76,47%
+TESTS GENERATED FOR WhileCycle
+	in	0'082  ms
+	coverage: 100,00%
+TESTS GENERATED FOR Fib
+	in	0'070  ms
+	coverage: 100,00%
+TESTS GENERATED FOR Sum
+	in	20'127  ms
+	coverage: 87,50%
+TESTS GENERATED FOR FiniteCycle
+	in	0'359  ms
+	coverage: 95,00%
+TESTS GENERATED FOR ForCycle
+	in	0'072  ms
+	coverage: 94,12%
+TESTS GENERATED FOR LoopWithConcreteBound
+	in	0'044  ms
+generatedTests/test_flow.go
+
+SUCCESSFUL 23/23 (TIMEOUT 2/23, ERROR 0/23))
+	graph analysis duration:
+		1'903  ms
+	interpretation duration:
+		33'003  ms
+
+	tests generating duration:
+		316'957  ms
+
+FILE invokes
+changeArrayValues
+	graph analyzed
+		in	0'388  ms
+	interpretation finished
+		in	0'030  ms
+DivBy
+	graph analyzed
+		in	0'388  ms
+	interpretation finished
+		in	0'824  ms
+thirdLevelWithException
+	graph analyzed
+		in	0'293  ms
+	interpretation finished
+		in	0'027  ms
+secondLevelWithException
+	graph analyzed
+		in	0'399  ms
+	interpretation finished
+		in	0'041  ms
+half
+	graph analyzed
+		in	0'162  ms
+	interpretation finished
+		in	0'032  ms
+NestedMethodWithException
+	graph analyzed
+		in	0'241  ms
+	interpretation finished
+		in	0'029  ms
+NullAsParameter
+	graph analyzed
+		in	0'370  ms
+	interpretation finished
+		in	0'014  ms
+ConstraintsFromInside
+	graph analyzed
+		in	0'057  ms
+	interpretation finished
+		in	0'067  ms
+GetNullOrValue
+	graph analyzed
+		in	0'517  ms
+	interpretation finished
+		in	0'039  ms
+UpdateValue
+	graph analyzed
+		in	0'586  ms
+	interpretation finished
+		in	0'059  ms
+ArrayCopyExample
+	graph analyzed
+		in	0'655  ms
+	interpretation finished
+		in	0'044  ms
+ExceptionInNestedMethod
+	graph analyzed
+		in	0'274  ms
+	interpretation finished
+		in	0'026  ms
+changeTwoObjects
+	graph analyzed
+		in	0'114  ms
+	interpretation finished
+		in	0'013  ms
+changeAndReturnArray
+	graph analyzed
+		in	0'346  ms
+	interpretation finished
+		in	0'032  ms
+ParticularValue
+	graph analyzed
+		in	0'497  ms
+	interpretation finished
+		in	0'039  ms
+ChangeArrayByMethod
+	graph analyzed
+		in	0'461  ms
+	interpretation finished
+		in	0'035  ms
+CreateObjectFromValue
+	graph analyzed
+		in	0'023  ms
+	interpretation finished
+		in	0'027  ms
+mult
+	graph analyzed
+		in	0'130  ms
+	interpretation finished
+		in	0'013  ms
+AlwaysNPE
+	graph analyzed
+		in	0'552  ms
+	interpretation finished
+		in	0'048  ms
+ConstraintsFromOutside
+	graph analyzed
+		in	0'699  ms
+	interpretation finished
+		in	0'141  ms
+changeValue
+	graph analyzed
+		in	0'149  ms
+	interpretation finished
+		in	0'038  ms
+FewNestedException
+	graph analyzed
+		in	0'604  ms
+	interpretation finished
+		in	0'043  ms
+ChangeArrayWithAssignFromMethod
+	graph analyzed
+		in	0'457  ms
+	interpretation finished
+		in	0'038  ms
+UpdateValues
+	graph analyzed
+		in	0'271  ms
+	interpretation finished
+		in	0'036  ms
+ChangeObjectValueByMethod
+	graph analyzed
+		in	0'222  ms
+	interpretation finished
+		in	0'020  ms
+SimpleFormula
+	graph analyzed
+		in	0'572  ms
+	interpretation finished
+		in	0'040  ms
+
+GENERATING TESTS
+	coverage: 90,91%
+TESTS GENERATED FOR changeArrayValues
+	in	0'244  ms
+	coverage: 90,48%
+TESTS GENERATED FOR DivBy
+	in	0'109  ms
+	coverage: 100,00%
+TESTS GENERATED FOR thirdLevelWithException
+	in	0'117  ms
+	coverage: 100,00%
+TESTS GENERATED FOR secondLevelWithException
+	in	0'102  ms
+	coverage: 100,00%
+TESTS GENERATED FOR half
+	in	0'040  ms
+	coverage: 100,00%
+TESTS GENERATED FOR NestedMethodWithException
+	in	0'101  ms
+	not all terminal nodes covered in NullAsParameter
+	0/1
+	remaining terminal nodes: [408Return]
+	coverage: 57,14%
+TESTS GENERATED FOR NullAsParameter
+	in	0'057  ms
+	coverage: 95,00%
+TESTS GENERATED FOR ConstraintsFromInside
+	in	0'118  ms
+	coverage: 100,00%
+TESTS GENERATED FOR GetNullOrValue
+	in	0'091  ms
+	not all terminal nodes covered in UpdateValue
+	4/5
+	remaining terminal nodes: [649Return]
+	coverage: 84,85%
+TESTS GENERATED FOR UpdateValue
+	in	0'149  ms
+	not all terminal nodes covered in ArrayCopyExample
+	2/3
+	remaining terminal nodes: [854Return]
+	coverage: 56,25%
+TESTS GENERATED FOR ArrayCopyExample
+	in	0'211  ms
+	coverage: 100,00%
+TESTS GENERATED FOR ExceptionInNestedMethod
+	in	0'076  ms
+	coverage: 100,00%
+TESTS GENERATED FOR changeTwoObjects
+	in	0'053  ms
+	coverage: 91,67%
+TESTS GENERATED FOR changeAndReturnArray
+	in	0'245  ms
+	coverage: 100,00%
+TESTS GENERATED FOR ParticularValue
+	in	0'090  ms
+	coverage: 100,00%
+TESTS GENERATED FOR ChangeArrayByMethod
+	in	0'125  ms
+	coverage: 91,67%
+TESTS GENERATED FOR CreateObjectFromValue
+	in	0'105  ms
+	coverage: 100,00%
+TESTS GENERATED FOR mult
+	in	0'048  ms
+	not all terminal nodes covered in AlwaysNPE
+	0/3
+	remaining terminal nodes: [1254Return, 1284Return, 1299Return]
+	coverage: 77,78%
+TESTS GENERATED FOR AlwaysNPE
+	in	0'128  ms
+	not all terminal nodes covered in ConstraintsFromOutside
+	1/2
+	remaining terminal nodes: [1383Return]
+	coverage: 75,00%
+TESTS GENERATED FOR ConstraintsFromOutside
+	in	0'042  ms
+	coverage: 100,00%
+TESTS GENERATED FOR changeValue
+	in	0'053  ms
+	coverage: 100,00%
+TESTS GENERATED FOR FewNestedException
+	in	0'051  ms
+	coverage: 100,00%
+TESTS GENERATED FOR ChangeArrayWithAssignFromMethod
+	in	0'080  ms
+	coverage: 100,00%
+TESTS GENERATED FOR UpdateValues
+	in	0'127  ms
+	coverage: 100,00%
+TESTS GENERATED FOR ChangeObjectValueByMethod
+	in	0'048  ms
+	coverage: 100,00%
+TESTS GENERATED FOR SimpleFormula
+	in	0'171  ms
+generatedTests/test_invokes.go
+
+SUCCESSFUL 26/26 (TIMEOUT 0/26, ERROR 0/26))
+	graph analysis duration:
+		9'427  ms
+	interpretation duration:
+		1'795  ms
+
+	tests generating duration:
+		319'738  ms
+
+FILE objects
+CompareTwoDifferentObjectsFromArguments
+	graph analyzed
+		in	0'091  ms
+	interpretation finished
+		in	0'082  ms
+DefaultValue
+	graph analyzed
+		in	0'087  ms
+	interpretation finished
+		in	0'066  ms
+Equals
+	graph analyzed
+		in	0'175  ms
+	interpretation finished
+		in	0'301  ms
+CompareTwoIdenticalObjectsFromArguments
+	graph analyzed
+		in	0'015  ms
+	interpretation finished
+		in	0'042  ms
+WriteObjectField
+	graph analyzed
+		in	0'030  ms
+	interpretation finished
+		in	0'033  ms
+CompareTwoRefEqualObjects
+	graph analyzed
+		in	0'191  ms
+	interpretation finished
+		in	0'032  ms
+CompareTwoObjectsWithNullRefField
+	graph analyzed
+		in	0'011  ms
+	interpretation finished
+		in	0'032  ms
+FieldWithDefaultValue
+	graph analyzed
+		in	0'032  ms
+	interpretation finished
+		in	0'013  ms
+Memory
+	graph analyzed
+		in	0'040  ms
+	interpretation finished
+		in	0'028  ms
+CompareTwoObjectsWithTheSameRefField
+	graph analyzed
+		in	0'016  ms
+	interpretation finished
+		in	0'030  ms
+CompareTwoDifferentObjects
+	graph analyzed
+		in	0'175  ms
+	interpretation finished
+		in	0'027  ms
+CompareTwoNullObjects
+	graph analyzed
+		in	0'527  ms
+	interpretation finished
+		in	0'092  ms
+InheritorsFields
+	graph analyzed
+		in	0'013  ms
+	interpretation finished
+		in	0'016  ms
+ReadFromArrayField
+	graph analyzed
+		in	0'023  ms
+	interpretation finished
+		in	0'048  ms
+DefaultValueForSuperclassFields
+	graph analyzed
+		in	0'015  ms
+	interpretation finished
+		in	0'028  ms
+String
+	graph analyzed
+		in	0'088  ms
+	interpretation finished
+		in	0'016  ms
+ValueByDefault
+	graph analyzed
+		in	0'224  ms
+	interpretation finished
+		in	0'015  ms
+CompareTwoObjectsWithTheDifferentRefField
+	graph analyzed
+		in	0'008  ms
+	interpretation finished
+		in	0'017  ms
+ReadFromRefTypeField
+	graph analyzed
+		in	0'040  ms
+	interpretation finished
+		in	0'045  ms
+WriteToArrayField
+	graph analyzed
+		in	0'284  ms
+	interpretation finished
+		in	0'131  ms
+CreateObject
+	graph analyzed
+		in	0'289  ms
+	interpretation finished
+		in	0'030  ms
+NextValue
+	graph analyzed
+		in	0'186  ms
+	interpretation finished
+		in	0'067  ms
+CompareTwoObjectsWithDifferentRefField
+	graph analyzed
+		in	0'018  ms
+	interpretation finished
+		in	0'033  ms
+WriteToRefTypeField
+	graph analyzed
+		in	0'175  ms
+	interpretation finished
+		in	0'041  ms
+CompareTwoOuterObjects
+	graph analyzed
+		in	0'016  ms
+	interpretation finished
+		in	0'042  ms
+CreateWithConstructor
+	graph analyzed
+		in	0'030  ms
+	interpretation finished
+		in	0'014  ms
+GetOrDefault
+	graph analyzed
+		in	0'204  ms
+	interpretation finished
+		in	0'101  ms
+CompareObjectWithArgument
+	graph analyzed
+		in	0'179  ms
+	interpretation finished
+		in	0'029  ms
+CreateWithSuperConstructor
+	graph analyzed
+		in	0'015  ms
+	interpretation finished
+		in	0'013  ms
+IgnoredInputParameters
+	graph analyzed
+		in	0'215  ms
+	interpretation finished
+		in	0'014  ms
+DefaultFieldValues
+	graph analyzed
+		in	0'003  ms
+	interpretation finished
+		in	0'013  ms
+Example
+	graph analyzed
+		in	0'017  ms
+	interpretation finished
+		in	0'033  ms
+Max
+	graph analyzed
+		in	0'097  ms
+	interpretation finished
+		in	0'048  ms
+NullExample
+	graph analyzed
+		in	0'023  ms
+	interpretation finished
+		in	0'049  ms
+
+GENERATING TESTS
+	not all terminal nodes covered in CompareTwoDifferentObjectsFromArguments
+	2/4
+	remaining terminal nodes: [85Panic, 87Return]
+	coverage: 80,49%
+TESTS GENERATED FOR CompareTwoDifferentObjectsFromArguments
+	in	0'349  ms
+	not all terminal nodes covered in DefaultValue
+	1/2
+	remaining terminal nodes: [239Return]
+	coverage: 71,43%
+TESTS GENERATED FOR DefaultValue
+	in	0'078  ms
+	not all terminal nodes covered in Equals
+	2/3
+	remaining terminal nodes: [317Return]
+	coverage: 82,98%
+TESTS GENERATED FOR Equals
+	in	0'066  ms
+	coverage: 100,00%
+TESTS GENERATED FOR CompareTwoIdenticalObjectsFromArguments
+	in	0'237  ms
+	coverage: 79,17%
+TESTS GENERATED FOR WriteObjectField
+	in	0'127  ms
+	not all terminal nodes covered in CompareTwoRefEqualObjects
+	1/2
+	remaining terminal nodes: [647Panic]
+	coverage: 76,92%
+TESTS GENERATED FOR CompareTwoRefEqualObjects
+	in	0'082  ms
+	coverage: 100,00%
+TESTS GENERATED FOR CompareTwoObjectsWithNullRefField
+	in	0'609  ms
+	coverage: 100,00%
+TESTS GENERATED FOR FieldWithDefaultValue
+	in	0'066  ms
+	coverage: 96,00%
+TESTS GENERATED FOR Memory
+	in	0'233  ms
+	coverage: 100,00%
+TESTS GENERATED FOR CompareTwoObjectsWithTheSameRefField
+	in	0'681  ms
+	not all terminal nodes covered in CompareTwoDifferentObjects
+	1/2
+	remaining terminal nodes: [961Panic]
+	coverage: 81,25%
+TESTS GENERATED FOR CompareTwoDifferentObjects
+	in	0'130  ms
+	not all terminal nodes covered in CompareTwoNullObjects
+	1/2
+	remaining terminal nodes: [1075Panic]
+	coverage: 81,58%
+TESTS GENERATED FOR CompareTwoNullObjects
+	in	0'108  ms
+	coverage: 100,00%
+TESTS GENERATED FOR InheritorsFields
+	in	0'075  ms
+	coverage: 100,00%
+TESTS GENERATED FOR ReadFromArrayField
+	in	0'312  ms
+	not all terminal nodes covered in DefaultValueForSuperclassFields
+	1/2
+	remaining terminal nodes: [1263Return]
+	coverage: 83,33%
+TESTS GENERATED FOR DefaultValueForSuperclassFields
+	in	0'061  ms
+	not all terminal nodes covered in String
+	0/2
+	remaining terminal nodes: [1394Return, 2154Return]
+	coverage: 47,22%
+TESTS GENERATED FOR String
+	in	0'086  ms
+	coverage: 100,00%
+TESTS GENERATED FOR ValueByDefault
+	in	0'090  ms
+	coverage: 100,00%
+TESTS GENERATED FOR CompareTwoObjectsWithTheDifferentRefField
+	in	0'226  ms
+	coverage: 100,00%
+TESTS GENERATED FOR ReadFromRefTypeField
+	in	0'433  ms
+	coverage: 96,97%
+TESTS GENERATED FOR WriteToArrayField
+	in	0'647  ms
+	coverage: 100,00%
+TESTS GENERATED FOR CreateObject
+	in	0'167  ms
+	coverage: 96,43%
+TESTS GENERATED FOR NextValue
+	in	0'398  ms
+	coverage: 100,00%
+TESTS GENERATED FOR CompareTwoObjectsWithDifferentRefField
+	in	3'690  ms
+	not all terminal nodes covered in WriteToRefTypeField
+	2/3
+	remaining terminal nodes: [1995Return]
+	coverage: 62,96%
+TESTS GENERATED FOR WriteToRefTypeField
+	in	0'258  ms
+	not all terminal nodes covered in CompareTwoOuterObjects
+	1/2
+	remaining terminal nodes: [2024Panic]
+	coverage: 75,00%
+TESTS GENERATED FOR CompareTwoOuterObjects
+	in	0'092  ms
+	coverage: 100,00%
+TESTS GENERATED FOR CreateWithConstructor
+	in	0'250  ms
+	not all terminal nodes covered in GetOrDefault
+	2/3
+	remaining terminal nodes: [2130Return]
+	coverage: 91,67%
+TESTS GENERATED FOR GetOrDefault
+	in	0'362  ms
+	not all terminal nodes covered in CompareObjectWithArgument
+	1/2
+	remaining terminal nodes: [2179Panic]
+	coverage: 72,73%
+TESTS GENERATED FOR CompareObjectWithArgument
+	in	0'126  ms
+	coverage: 100,00%
+TESTS GENERATED FOR CreateWithSuperConstructor
+	in	0'075  ms
+	coverage: 100,00%
+TESTS GENERATED FOR IgnoredInputParameters
+	in	0'081  ms
+	coverage: 100,00%
+TESTS GENERATED FOR DefaultFieldValues
+	in	0'085  ms
+	coverage: 100,00%
+TESTS GENERATED FOR Example
+	in	0'254  ms
+	not all terminal nodes covered in Max
+	1/3
+	remaining terminal nodes: [2388Return, 2433Return]
+	coverage: 53,85%
+TESTS GENERATED FOR Max
+	in	0'141  ms
+	coverage: 100,00%
+TESTS GENERATED FOR NullExample
+	in	0'400  ms
+generatedTests/test_objects.go
+
+SUCCESSFUL 34/34 (TIMEOUT 0/34, ERROR 0/34))
+	graph analysis duration:
+		3'552  ms
+	interpretation duration:
+		1'621  ms
+
+	tests generating duration:
+		330'813  ms
+
+FILE operators
+And
+	graph analyzed
+		in	0'002  ms
+	interpretation finished
+		in	0'012  ms
+BooleanNot
+	graph analyzed
+		in	0'011  ms
+	interpretation finished
+		in	0'098  ms
+BooleanXor
+	graph analyzed
+		in	0'002  ms
+	interpretation finished
+		in	0'015  ms
+BooleanXorCompare
+	graph analyzed
+		in	0'002  ms
+	interpretation finished
+		in	0'027  ms
+Shl
+	graph analyzed
+		in	0'002  ms
+	interpretation finished
+		in	0'013  ms
+Shr
+	graph analyzed
+		in	0'001  ms
+	interpretation finished
+		in	0'013  ms
+Complement
+	graph analyzed
+		in	0'002  ms
+	interpretation finished
+		in	0'015  ms
+ShlWithBigLongShift
+	graph analyzed
+		in	0'005  ms
+	interpretation finished
+		in	0'059  ms
+BooleanAnd
+	graph analyzed
+		in	0'005  ms
+	interpretation finished
+		in	0'041  ms
+BooleanOr
+	graph analyzed
+		in	0'003  ms
+	interpretation finished
+		in	0'027  ms
+ShlLong
+	graph analyzed
+		in	0'002  ms
+	interpretation finished
+		in	0'012  ms
+ShrLong
+	graph analyzed
+		in	0'002  ms
+	interpretation finished
+		in	0'011  ms
+Or
+	graph analyzed
+		in	0'003  ms
+	interpretation finished
+		in	0'013  ms
+Sign
+	graph analyzed
+		in	0'003  ms
+	interpretation finished
+		in	0'050  ms
+Ushr
+	graph analyzed
+		in	0'002  ms
+	interpretation finished
+		in	0'013  ms
+UshrLong
+	graph analyzed
+		in	0'002  ms
+	interpretation finished
+		in	0'014  ms
+Xor
+	graph analyzed
+		in	0'002  ms
+	interpretation finished
+		in	0'014  ms
+
+GENERATING TESTS
+	coverage: 100,00%
+TESTS GENERATED FOR And
+	in	0'044  ms
+	coverage: 91,67%
+TESTS GENERATED FOR BooleanNot
+	in	0'097  ms
+	coverage: 100,00%
+TESTS GENERATED FOR BooleanXor
+	in	0'027  ms
+	coverage: 100,00%
+TESTS GENERATED FOR BooleanXorCompare
+	in	0'059  ms
+	coverage: 100,00%
+TESTS GENERATED FOR Shl
+	in	0'039  ms
+	coverage: 100,00%
+TESTS GENERATED FOR Shr
+	in	0'039  ms
+	coverage: 100,00%
+TESTS GENERATED FOR Complement
+	in	0'044  ms
+	not all terminal nodes covered in ShlWithBigLongShift
+	2/3
+	remaining terminal nodes: [224Return]
+	coverage: 86,67%
+TESTS GENERATED FOR ShlWithBigLongShift
+	in	0'111  ms
+	coverage: 90,91%
+TESTS GENERATED FOR BooleanAnd
+	in	0'069  ms
+	coverage: 91,67%
+TESTS GENERATED FOR BooleanOr
+	in	0'033  ms
+	coverage: 100,00%
+TESTS GENERATED FOR ShlLong
+	in	0'041  ms
+	coverage: 100,00%
+TESTS GENERATED FOR ShrLong
+	in	0'049  ms
+	coverage: 100,00%
+TESTS GENERATED FOR Or
+	in	0'049  ms
+	not all terminal nodes covered in Sign
+	2/3
+	remaining terminal nodes: [393Return]
+	coverage: 88,89%
+TESTS GENERATED FOR Sign
+	in	0'102  ms
+	coverage: 100,00%
+TESTS GENERATED FOR Ushr
+	in	0'053  ms
+	coverage: 100,00%
+TESTS GENERATED FOR UshrLong
+	in	0'050  ms
+	coverage: 100,00%
+TESTS GENERATED FOR Xor
+	in	0'062  ms
+generatedTests/test_operators.go
+
+SUCCESSFUL 17/17 (TIMEOUT 0/17, ERROR 0/17))
+	graph analysis duration:
+		0'051  ms
+	interpretation duration:
+		0'447  ms
+
+	tests generating duration:
+		331'781  ms
+
+FILE primitives
+SimpleNonLinearEquation
+	graph analyzed
+		in	0'004  ms
+UNKNOWN sat on path (continuing this branch), reason: canceled
+	interpretation finished
+		in	0'581  ms
+Mul
+	graph analyzed
+		in	0'054  ms
+UNKNOWN sat on path (continuing this branch), reason: canceled
+UNKNOWN sat on path (continuing this branch), reason: canceled
+UNKNOWN sat on path (continuing this branch), reason: canceled
+UNKNOWN sat on path (continuing this branch), reason: canceled
+UNKNOWN sat on path (continuing this branch), reason: timeout
+UNKNOWN sat on error (saving as an error, but not removing from path):
+	reason:canceled
+UNKNOWN sat on path (continuing this branch), reason: canceled
+UNKNOWN sat on error (saving as an error, but not removing from path):
+	reason:canceled
+	interpretation finished
+		in	5'432  ms
+SimpleMul
+	graph analyzed
+		in	0'036  ms
+UNKNOWN sat on path (continuing this branch), reason: canceled
+UNKNOWN sat on path (continuing this branch), reason: canceled
+UNKNOWN sat on path (continuing this branch), reason: canceled
+UNKNOWN sat on error (saving as an error, but not removing from path):
+	reason:canceled
+	interpretation finished
+		in	3'073  ms
+ShortOverflow
+	graph analyzed
+		in	0'013  ms
+	interpretation finished
+		in	0'072  ms
+Div
+	graph analyzed
+		in	0'003  ms
+	interpretation finished
+		in	0'012  ms
+SimpleSum
+	graph analyzed
+		in	0'037  ms
+UNKNOWN sat on path (continuing this branch), reason: canceled
+	interpretation finished
+		in	1'460  ms
+CompareSum
+	graph analyzed
+		in	0'003  ms
+	interpretation finished
+		in	0'134  ms
+CheckNaN
+	graph analyzed
+		in	0'009  ms
+	interpretation finished
+		in	0'068  ms
+SimpleEquation
+	graph analyzed
+		in	0'004  ms
+	interpretation finished
+		in	0'591  ms
+UnaryMinus
+	graph analyzed
+		in	0'003  ms
+	interpretation finished
+		in	0'031  ms
+CheckNonInteger
+	graph analyzed
+		in	0'005  ms
+	interpretation finished
+		in	0'047  ms
+Compare
+	graph analyzed
+		in	0'004  ms
+	interpretation finished
+		in	0'033  ms
+DoubleInfinity
+	graph analyzed
+		in	0'029  ms
+	interpretation finished
+		in	0'046  ms
+CompareWithDiv
+	graph analyzed
+		in	0'004  ms
+UNKNOWN sat on path (continuing this branch), reason: canceled
+UNKNOWN sat on path (continuing this branch), reason: timeout
+	interpretation finished
+		in	1'091  ms
+Sum
+	graph analyzed
+		in	0'056  ms
+UNKNOWN sat on path (continuing this branch), reason: canceled
+UNKNOWN sat on path (continuing this branch), reason: canceled
+UNKNOWN sat on error (saving as an error, but not removing from path):
+	reason:canceled
+	interpretation finished
+		in	1'926  ms
+
+GENERATING TESTS
+	coverage: 100,00%
+TESTS GENERATED FOR SimpleNonLinearEquation
+	in	7'435  ms
+	coverage: 100,00%
+TESTS GENERATED FOR Mul
+	in	49'519  ms
+	coverage: 100,00%
+TESTS GENERATED FOR SimpleMul
+	in	31'071  ms
+	coverage: 100,00%
+TESTS GENERATED FOR ShortOverflow
+	in	0'207  ms
+	coverage: 100,00%
+TESTS GENERATED FOR Div
+	in	0'113  ms
+	coverage: 100,00%
+TESTS GENERATED FOR SimpleSum
+	in	17'873  ms
+	coverage: 100,00%
+TESTS GENERATED FOR CompareSum
+	in	2'144  ms
+	coverage: 100,00%
+TESTS GENERATED FOR CheckNaN
+	in	15'166  ms
+	coverage: 100,00%
+TESTS GENERATED FOR SimpleEquation
+	in	9'331  ms
+	coverage: 100,00%
+TESTS GENERATED FOR UnaryMinus
+	in	0'106  ms
+	coverage: 100,00%
+TESTS GENERATED FOR CheckNonInteger
+	in	0'157  ms
+	coverage: 100,00%
+TESTS GENERATED FOR Compare
+	in	0'181  ms
+	coverage: 100,00%
+TESTS GENERATED FOR DoubleInfinity
+	in	0'153  ms
+	coverage: 100,00%
+TESTS GENERATED FOR CompareWithDiv
+	in	35'886  ms
+	coverage: 100,00%
+TESTS GENERATED FOR Sum
+	in	13'333  ms
+generatedTests/test_primitives.go
+
+SUCCESSFUL 15/15 (TIMEOUT 0/15, ERROR 0/15))
+	graph analysis duration:
+		0'264  ms
+	interpretation duration:
+		14'597  ms
+
+	tests generating duration:
+		514'456  ms
+
+FILE test
+TestAssume
+	graph analyzed
+		in	0'001  ms
+	interpretation finished
+		in	0'014  ms
+TestMakeSymbolic
+	graph analyzed
+		in	0'001  ms
+	interpretation finished
+		in	0'025  ms
+
+GENERATING TESTS
+	coverage: 0,00%
+TESTS GENERATED FOR TestAssume
+	in	0'000  ms
+	not all terminal nodes covered in TestAssume
+	0/1
+	remaining terminal nodes: [66Return]
+	coverage: 100,00%
+TESTS GENERATED FOR TestMakeSymbolic
+	in	0'071  ms
+generatedTests/test_test.go
+
+SUCCESSFUL 2/2 (TIMEOUT 0/2, ERROR 0/2))
+	graph analysis duration:
+		0'002  ms
+	interpretation duration:
+		0'039  ms
+
+	tests generating duration:
+		514'527  ms
+
+
+OVERALL:
+SUCCESSFUL 163/163 (TIMEOUT 3/163, ERROR 0/163)
+	overall graph analysis duration:
+		27'158  ms
+	overall interpretation duration:
+		70'881  ms
+	overall tests generating duration:
+		514'527  ms
