@@ -464,8 +464,6 @@ open class SsaStaticInterpreter() : SsaInterpreter() {
                     val value = nameParts[0]
 
                     when (val type = Type.fromSsa(node.valueType!!, mem)) {
-//                        is FunctionType -> Symbolic(FunctionType)
-
                         is BoolType -> BoolType.fromBool(value.toBoolean(), mem)
 
                         is Int8Type -> Int8Type().fromInt(value.toLong(), mem)
@@ -539,7 +537,7 @@ open class SsaStaticInterpreter() : SsaInterpreter() {
                     listOf(SsaKeepResult(ListSymbolic(args.filterNotNull())))
                 },
                 { mem, args ->
-                    (args[0]!!.list(mem)).list[node.index]
+                    (args[0]!!.list(mem)).list.getOrNull(node.index)
                 }
             )
 
@@ -580,8 +578,7 @@ open class SsaStaticInterpreter() : SsaInterpreter() {
                     listOf(node.x)
                 },
                 { mem, args ->
-                    val i = args.last()
-                    NilLocalStarSymbolic(StarType(UninterpretedType("$i")), "")
+                    args.last()
                 }
             )
 
@@ -649,13 +646,11 @@ open class SsaStaticInterpreter() : SsaInterpreter() {
                     val x = args[0]!!
                     val high = args.getOrNull(1)
 
-//                    LocalStarSymbolic(
                     visitSlice(
                         high,
                         x,
                         mem
                     )
-//                    )
                 }
             )
 

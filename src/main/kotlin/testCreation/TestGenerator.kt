@@ -131,9 +131,6 @@ class TestGenerator(
             solver
         ) ?: firstModel
 
-//        println(modelToMap(bestModel).joinToString("\n") { "${it.first}\t${it.second}" } +
-//                "\n\t -> " + symbolicToString(result, bestModel)
-//        )
         return TestCase(modelToMap(bestModel), symbolicToString(result, bestModel))
     }
 
@@ -536,12 +533,17 @@ class TestGenerator(
             for ((index, testCase) in testCases.withIndex()) {
                 code.append("\n\t// Test case ${index + 1}\n")
 
-                testCase.input.joinToString("\n") { (variable, value) ->
+                val paramInput =
+                    testCase.input.filter { it.first.contains("param#") || it.first.contains("makeSymbolic#") }
+
+                paramInput.joinToString("\n") { (variable, value) ->
                     code.append("\t$variable := $value\n")
                 }
                 code.append(
                     """
-                        result := $funcName(${testCase.input.joinToString(", ") { it.first }})
+                        result := $funcName(${
+                        paramInput.filter { it.first.contains("param#") }.joinToString(", ") { it.first }
+                    })
                     if result != ${testCase.output} {
                         t.Errorf("test_${funcName}${index + 1} failed")
                     }

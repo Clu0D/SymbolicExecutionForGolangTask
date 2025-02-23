@@ -18,7 +18,7 @@ abstract class SsaInterpreter {
 
             is ParamSsaNode -> {
                 val type = Type.fromSsa(value.valueType!!, mem)
-                val symbolic = type.createSymbolic("param:${value.name}", mem)
+                val symbolic = type.createSymbolic("param#${value.name}", mem)
 
                 return symbolic
             }
@@ -276,18 +276,26 @@ abstract class SsaInterpreter {
                 UninterpretedType.fromString("Sprintf", mem)
             },
             "assume" to { args, mem ->
-                if (mem.addCond(args[0].bool(mem), false))
-                    null
-                else
-                    StopSymbolic
+                assume(args, mem)
             },
             "external:assume" to { args, mem ->
-                if (mem.addCond(args[0].bool(mem), false))
-                    null
-                else
-                    StopSymbolic
+                assume(args, mem)
+            },
+            "makeSymbolic" to { args, mem ->
+                makeSymbolic(args, mem)
+            },
+            "external:makeSymbolic" to { args, mem ->
+                makeSymbolic(args, mem)
             }
         )
 
+        private fun assume(args: List<Symbolic>, mem: Memory): Symbolic? =
+            if (mem.addCond(args[0].bool(mem), false))
+                null
+            else
+                StopSymbolic
+
+        private fun makeSymbolic(args: List<Symbolic>, mem: Memory): Symbolic =
+            args[0].type.createSymbolic("makeSymbolic#", mem)
     }
 }

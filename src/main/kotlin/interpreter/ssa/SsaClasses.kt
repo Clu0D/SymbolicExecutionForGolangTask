@@ -41,7 +41,6 @@ sealed class SsaNode {
 
                 val returnToParents =
                     v.parents()
-//                        .filter { visited.contains(it) }
                         .map { (node, i) -> node to (i + 1) }
 
                 deque.addAll(returnToParents)
@@ -461,7 +460,6 @@ sealed class SsaType {
     val parentF: String = "" // should not work in types
     val id: Int = 0
 
-
     abstract fun printItself(): String
 
     init {
@@ -493,8 +491,7 @@ data class StructTypeNode(
 @SerialName("Field")
 data class StructFieldNode(
     val name: String,
-    val elemType: SsaType,
-//    val tag: String? = null
+    val elemType: SsaType
 ) : SsaType() {
     override fun printItself() = "${id}StructField"
 }

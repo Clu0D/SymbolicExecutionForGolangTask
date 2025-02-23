@@ -61,7 +61,8 @@ fun main() = runBlocking {
         val interpretationResults = funcDeclarations
 //            .filter {
 //                listOf(
-//                    "ExceptionInNestedMethod"
+//                    "TestAssume",
+//                    "TestMakeSymbolic"
 //                ).contains(it.key)
 //            } // for testing 1 function
             .map { (funcName, node) ->
