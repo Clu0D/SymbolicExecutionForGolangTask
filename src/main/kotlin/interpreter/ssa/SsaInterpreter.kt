@@ -9,7 +9,7 @@ import memory.*
 import memory.ssa.SsaState
 
 abstract class SsaInterpreter {
-    var print = true
+    var print = false
     val maxExecutionDepth = 150
 
     private fun createSymbolicParam(value: SsaNode, mem: Memory): Symbolic {
@@ -18,7 +18,7 @@ abstract class SsaInterpreter {
 
             is ParamSsaNode -> {
                 val type = Type.fromSsa(value.valueType!!, mem)
-                val symbolic = type.createSymbolic(value.name, mem)
+                val symbolic = type.createSymbolic("param:${value.name}", mem)
 
                 return symbolic
             }
@@ -192,8 +192,8 @@ abstract class SsaInterpreter {
                         when {
                             a is StarSymbolic && b is StarSymbolic && op == "==" -> a.eq(b, mem)
                             a is StarSymbolic && b is StarSymbolic && op == "!=" -> a.eq(b, mem).not(mem)
-                            a is StarSymbolic -> visitOp(op, listOf(a, LocalStarSymbolic(b)), mem)
-                            b is StarSymbolic -> visitOp(op, listOf(LocalStarSymbolic(a), b), mem)
+                            a is StarSymbolic -> visitOp(op, listOf(a, LocalStarSymbolic(b, a.field)), mem)
+                            b is StarSymbolic -> visitOp(op, listOf(LocalStarSymbolic(a, b.field), b), mem)
                             else -> error("op: '${op}' $a $b")
                         }
                     }
@@ -202,8 +202,8 @@ abstract class SsaInterpreter {
         }
 
         fun visitAlloc(starType: StarType, mem: Memory): Symbolic {
-            val address = mem.addNewDefaultStar(starType.elementType)
-            return GlobalStarSymbolic(starType, address, BoolType.`false`(mem))
+            val address = mem.addNewDefaultStar("", starType.elementType)
+            return GlobalStarSymbolic(starType, address, BoolType.`false`(mem), "")
         }
 
         fun visitSlice(high: Symbolic?, x: Symbolic, mem: Memory): Symbolic {
@@ -229,7 +229,7 @@ abstract class SsaInterpreter {
             }
         }
 
-        val knownFunctions: Map<String, (List<Symbolic>, Memory) -> Symbolic> = mapOf(
+        val knownFunctions: Map<String, (List<Symbolic>, Memory) -> Symbolic?> = mapOf(
             "real" to { args: List<Symbolic>, mem: Memory ->
                 (args[0].complex(mem)).real
             },
@@ -240,11 +240,6 @@ abstract class SsaInterpreter {
                 args[0].floatExpr(mem).toFloatSymbolic()
             },
             "len" to { args, mem ->
-                  println("LEN ${when (val arr = args[0]) {
-                      is FiniteArraySymbolic -> arr
-                      is StarSymbolic -> arr.get(mem).array(mem)
-                      else -> error("should be [] or *[], not ${arr.javaClass.name}")
-                  }.length()}")
                 when (val arr = args[0]) {
                     is FiniteArraySymbolic -> arr
                     is StarSymbolic -> arr.get(mem).array(mem)
@@ -279,6 +274,18 @@ abstract class SsaInterpreter {
             "external:Sprintf" to { args, mem ->
                 println("Sprintf is not emulated properly")
                 UninterpretedType.fromString("Sprintf", mem)
+            },
+            "assume" to { args, mem ->
+                if (mem.addCond(args[0].bool(mem), false))
+                    null
+                else
+                    StopSymbolic
+            },
+            "external:assume" to { args, mem ->
+                if (mem.addCond(args[0].bool(mem), false))
+                    null
+                else
+                    StopSymbolic
             }
         )
 

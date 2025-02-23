@@ -447,20 +447,20 @@ class StarType(val elementType: Type) : BaseType(), SimpleType {
     override fun sort(mem: Memory): KSort = Int64Type().sort(mem)
 
     override fun createSymbolic(name: String, mem: Memory): Symbolic {
-        val address = mem.addNewSymbolicStar(elementType, true, name)
+        val address = mem.addNewSymbolicStar("", elementType, true, name)
 
-        return GlobalStarSymbolic(this, address, BoolType.`true`(mem))
+        return GlobalStarSymbolic(this, address, BoolType.`true`(mem), "")
     }
 
     override fun defaultSymbolic(mem: Memory): Symbolic {
-        return NilLocalStarSymbolic(this)
+        return NilLocalStarSymbolic(this, "")
     }
 
     override fun toString() =
         "*$elementType"
 }
 
-interface ArrayAbstractType {
+interface ArrayAbstractType: Type {
     fun elementType(): Type
 }
 
@@ -538,14 +538,9 @@ class InfArraySimpleType(elementType: SimpleType) :
 open class ArrayType(var elementType: Type, val length: Int64Symbolic) : BaseType(), FiniteType,
     ArrayAbstractType {
     override fun createSymbolic(name: String, mem: Memory): Symbolic {
-        return FiniteArraySymbolic(
-            ArrayType(
-                elementType(),
-                length
-            ),
-            CombinedArrayBehaviour("$name:", BoolType.`true`(mem)),
-            mem
-        )
+        val address = mem.addNewSymbolicStar("", elementType, true, name)
+
+        return GlobalStarSymbolic(StarType(this), address, BoolType.`true`(mem), "")
     }
 
     override fun defaultSymbolic(mem: Memory): Symbolic {

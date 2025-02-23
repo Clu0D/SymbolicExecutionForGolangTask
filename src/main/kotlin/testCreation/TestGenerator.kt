@@ -109,7 +109,7 @@ class TestGenerator(
             }
 
             KSolverStatus.UNSAT -> {
-                printlnError("UNSAT in test generation")
+                printlnError("UNSAT in test.go generation")
                 printlnError("\tresult\t${result}")
                 printlnError("\texpr\t${cond.expr}")
                 return null
@@ -164,7 +164,9 @@ class TestGenerator(
                     is NamedSymbolic -> it.toString()
                     is StarSymbolic -> it.toString()
 
-                    else -> error("unsupported type ${it.type}")
+                    is ListSymbolic -> it.list.joinToString(", ")
+
+                    else -> error("unsupported type ${it.javaClass.name}")
                 }
             }
 
@@ -401,9 +403,13 @@ class TestGenerator(
     }
 
     private fun modelToMap(model: KModel): List<Pair<String, String>> =
-        model.declarations.map { declaration ->
-            val result = model.eval(declaration.apply(listOf()))
-            declaration.name to kExprToString(result)
+        model.declarations.mapNotNull { declaration ->
+            try {
+                val result = model.eval(declaration.apply(listOf()))
+                declaration.name to kExprToString(result)
+            } catch (_: Exception) {
+                null
+            }
         }
 
     @OptIn(ExperimentalStdlibApi::class)

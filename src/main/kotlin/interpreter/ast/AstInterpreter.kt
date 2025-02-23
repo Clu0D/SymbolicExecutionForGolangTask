@@ -35,7 +35,7 @@ abstract class AstInterpreter(
                 null
             }
 
-            else -> TODO(node.typeNode.printItself())
+            else -> error(node.typeNode.printItself())
         }
 
         fun visitSelector(selectorName: String, x: Symbolic?, mem: Memory) = when (x) {

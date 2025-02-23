@@ -62,11 +62,11 @@ fun main() = runBlocking {
         val interpretationResults = funcDeclarations
             .filter {
                 listOf(
-                    "test"
+                    "ExceptionInNestedMethod"
                 ).contains(it.key)
             } // for testing 1 function
             .map { (funcName, node) ->
-                generateDotFile(fileName, node) // generates nice images of ssa graphs in /ssaGraphPictures/..
+//                generateDotFile(fileName, node) // generates nice images of ssa graphs in /ssaGraphPictures/..
 
                 var results = listOf<SymbolicResult<SsaNode>>()
                 var createdConsts = mapOf<String, KSort>()
@@ -77,7 +77,7 @@ fun main() = runBlocking {
 
                 println(funcName)
                 try {
-                    withTimeout(6900_000L) {
+                    withTimeout(10_000L) {
 
                         node.getAllReachable(allNodes)
                         val terminalNodes =
@@ -163,19 +163,20 @@ fun main() = runBlocking {
         globalTimeout += timeout
         globalTests += funcDeclarations.size
         globalGraphAnalyzingTime += fileGraphAnalyzingTime
+        globalInterpretationTime += fileInterpretationTime
         globalTestGenerationTime += fileTestGenerationTime
 
         println("\nSUCCESSFUL $done/${funcDeclarations.size} (TIMEOUT $timeout/${funcDeclarations.size}, ERROR $errors/${funcDeclarations.size}))")
         println("\tgraph analysis duration: \n\t\t${timeToString(fileGraphAnalyzingTime)}")
         println("\tinterpretation duration: \n\t\t${timeToString(fileInterpretationTime)}\n")
-        println("\ttest generating duration: \n\t\t${timeToString(globalTestGenerationTime)}\n")
+        println("\ttests generating duration: \n\t\t${timeToString(globalTestGenerationTime)}\n")
     }
     println()
     println("OVERALL:")
     println("SUCCESSFUL $globalDone/$globalTests (TIMEOUT $globalTimeout/$globalTests, ERROR $globalErrors/$globalTests)")
     println("\toverall graph analysis duration: \n\t\t${timeToString(globalGraphAnalyzingTime)}")
     println("\toverall interpretation duration: \n\t\t${timeToString(globalInterpretationTime)}")
-    println("\toverall test generating duration: \n\t\t${timeToString(globalTestGenerationTime)}\n")
+    println("\toverall tests generating duration: \n\t\t${timeToString(globalTestGenerationTime)}\n")
 }
 
 fun timeToString(time: Long) =

@@ -24,10 +24,10 @@ data class Memory(
     private val declaredTypeFields: MutableMap<String, Map<String, Type>> = mutableMapOf(),
     private var pathCond: MutableList<Pair<BoolSymbolic, Boolean>> = mutableListOf(),
     val createdConsts: MutableMap<String, KSort> = mutableMapOf(),
-    private val solver: KZ3Solver = KZ3Solver(ctx)
+    internal val solver: KZ3Solver = KZ3Solver(ctx)
 ) {
-    val print = 1
-    private val SOLVER_TIMEOUT = 0.5.seconds
+    val print = 0
+    internal val SOLVER_TIMEOUT = 0.5.seconds
 
     private val uniqueCounter: GlobalUniqueCounter = globalUniqueCounter
 
@@ -60,10 +60,6 @@ data class Memory(
         removeVisibilityLevel()
         localVariablesStack.removeFirst()
         val results = returns()
-// todo remove
-//        addCond(with(ctx) {
-//            mkOr(results.map { it.cond.boolExpr(this@Memory) })
-//        }.toBoolSymbolic(), false)
         returnsStack.removeFirst()
         instrOnPathStack.removeFirst()
         return results
@@ -80,9 +76,11 @@ data class Memory(
         else -> error("only ValueNodes allowed ${node.printItself()}")
     }
 
-    fun readValue(name: String): Symbolic = when (name) {
-        "nil" -> Int64Type().zero(this)
-        else -> localVariables()[name] ?: error("mem does not have \"$name\"")
+    fun readValue(name: String): Symbolic {
+        return when (name) {
+            "nil" -> Int64Type().zero(this)
+            else -> localVariables()[name] ?: error("mem does not have \"$name\"")
+        }
     }
 
     fun readValue(node: SsaNode): Symbolic? = when (node) {
@@ -171,17 +169,8 @@ data class Memory(
             }
 
             KSolverStatus.UNSAT -> {
-                if (print > 1) {
+                if (print > 1)
                     println("UNSAT sat on path")
-
-//                    println("")
-//                    println("PATH COND:")
-//                    println(pathCond.joinToString("\n") { (a, b) -> if (b) "needToPush! $a" else "$a" })
-//                    println("ERRORS:")
-//                    println(errors.joinToString("\n") { "${it.cond}\t:\n\t${it.error}" })
-//                    println("")
-                }
-
                 false
             }
 
@@ -232,9 +221,8 @@ data class Memory(
         writeAll(*newArgs)
     }
 
-    // todo length??????
-    fun globalArrayName(type: Type): String {
-        val globalArrayName = "$type"
+    fun globalArrayName(field: String, type: Type): String {
+        val globalArrayName = "$field:$type"
         if (globalValues[globalArrayName] == null) {
             if (print > 0)
                 println(
@@ -244,20 +232,12 @@ data class Memory(
                 InfArrayType(type.elementType)
             else
                 type
+
             val array1 = InfAbstractArray.create(
                 infType,
                 SymbolicArrayBehaviour(globalArrayName),
                 this
             )
-            if (print > 0)
-                println(
-                    "GLOBAL ARRAY ${array1.javaClass.name} ${array1.arrayType}"
-                )
-            val inner = (array1 as? FiniteArraysArray)?.array
-            if (print > 0)
-                println(
-                    "GLOBAL ARRAY ${inner?.javaClass?.name} ${inner?.arrayType}"
-                )
             val array2 = InfAbstractArray.create(
                 infType,
                 DefaultArrayBehaviour,
@@ -270,13 +250,22 @@ data class Memory(
                     array2
                 )
             )
+            if (type is StructType) {
+                TODO()
+//                type.fields.map { (name, fieldType) ->
+//                    globalArrayName(name, fieldType)
+//                }
+            } else if (type is NamedType) {
+                type.underlying.fields.map { (name, fieldType) ->
+                    globalArrayName("${type.name}:$name", fieldType)
+                }
+            }
         }
         return globalArrayName
     }
 
-    fun addNewSymbolicStar(type: Type, canBeNull: Boolean, name: String): Int64Symbolic {
-        println("addNewSymbolicStar")
-        val globalArrayName = globalArrayName(type)
+    fun addNewSymbolicStar(field: String, type: Type, canBeNull: Boolean, name: String): Int64Symbolic {
+        val globalArrayName = globalArrayName(field, type)
 
         val (areSymbolic, arraySymbolic, arrayDefault) = globalValues[globalArrayName]!!
 
@@ -315,76 +304,51 @@ data class Memory(
         }
     }
 
-    fun addNewDefaultStar(type: Type): Int64Symbolic {
-        println("addNewDefaultStar")
-        val globalArrayName = globalArrayName(type)
+    fun addNewDefaultStar(field: String, type: Type): Int64Symbolic {
+        val globalArrayName = globalArrayName(field, type)
 
         val (areSymbolic, arraySymbolic, arrayDefault) = globalValues[globalArrayName]!!
 
         val newSize = areSymbolic.size + 2L
+        if (print > 1) println("NEWDEFAULT ${newSize} $type")
         globalValues[globalArrayName] = Triple(areSymbolic + false, arraySymbolic, arrayDefault)
 
         return Int64Type().fromInt(newSize, this)
     }
 
     fun putStar(
+        field: String,
         type: Type,
         address: Int64Symbolic,
         value: Symbolic,
         isSymbolic: BoolSymbolic
     ) {
-        val globalArrayName = globalArrayName(type)
+        val globalArrayName = globalArrayName(field, type)
 
         val (areSymbolic, arraySymbolic, arrayDefault) = globalValues[globalArrayName]!!
 
-        if (type is NonStarType) {
-            TODO()
-        } else {
-            val oldSymbolic = arraySymbolic.get(address, this@Memory)
-                .toSymbolic(SymbolicArrayBehaviour(globalArrayName), this)
-            val oldDefault = arrayDefault.get(address, this@Memory)
-                .toSymbolic(DefaultArrayBehaviour, this)
+        val oldSymbolic = arraySymbolic.get(address, this@Memory)
+            .toSymbolic(SymbolicArrayBehaviour(globalArrayName), this)
+        val oldDefault = arrayDefault.get(address, this@Memory)
+            .toSymbolic(DefaultArrayBehaviour, this)
 
+        if (oldSymbolic is AbstractArray && oldDefault is AbstractArray && value is StarSymbolic) {
+            val valueArray = value.get(this@Memory)
+            arraySymbolic.put(address, ite(isSymbolic, valueArray, oldSymbolic), this@Memory)
+            arrayDefault.put(address, ite(isSymbolic, oldDefault, valueArray), this@Memory)
+        } else {
             arraySymbolic.put(address, ite(isSymbolic, value, oldSymbolic), this@Memory)
             arrayDefault.put(address, ite(isSymbolic, oldDefault, value), this@Memory)
         }
-//
-//        val symbolic = arraySymbolic.get(address, this@Memory)
-////            .toSymbolic(SymbolicArrayBehaviour(globalArrayName), this)
-//        val default = arrayDefault.get(address, this@Memory)
-////            .toSymbolic(DefaultArrayBehaviour, this)
-//        if (symbolic is FiniteArraySymbolic) {
-//            default as FiniteArraySymbolic
-//
-//            symbolic.put(address, value, this@Memory)
-//            default.put(address, value, this@Memory)
-//
-////            arraySymbolic.put(address, oldSymbolic, this@Memory)
-////            arrayDefault.put(address, oldDefault, this@Memory)
-//
-//            val oldSymbolic = arraySymbolic.get(address, this@Memory)
-//                .toSymbolic(SymbolicArrayBehaviour(globalArrayName), this)
-//            val oldDefault = arrayDefault.get(address, this@Memory)
-//                .toSymbolic(DefaultArrayBehaviour, this)
-//
-//
-//            arraySymbolic.put(address, ite(isSymbolic, symbolic, oldSymbolic), this@Memory)
-//            arrayDefault.put(address, ite(isSymbolic, oldDefault, default), this@Memory)
-//        } else {
-////            arraySymbolic.put(address, value, this@Memory)
-////            arrayDefault.put(address, value, this@Memory)
-//
-//            arraySymbolic.put(address, ite(isSymbolic, value, TODO()), this@Memory)
-//            arrayDefault.put(address, ite(isSymbolic, TODO(), value), this@Memory)
-//        }
     }
 
     fun getStar(
+        field: String,
         type: Type,
         address: Int64Symbolic,
         isSymbolic: BoolSymbolic
     ): Symbolic {
-        val globalArrayName = globalArrayName(type)
+        val globalArrayName = globalArrayName(field, type)
 
         val (areSymbolic, arraySymbolic, arrayDefault) = globalValues[globalArrayName]!!
 
@@ -413,8 +377,16 @@ data class Memory(
         instrOnPathStack.removeFirst()
     }
 
-    fun ite(cond: BoolSymbolic, fromBody: Symbolic, fromElse: Symbolic): Symbolic =
-        with(ctx) {
+    fun ite(cond: BoolSymbolic, fromBody: Symbolic, fromElse: Symbolic): Symbolic {
+        val result1 = solver.checkWithAssumptions(listOf(cond.expr), SOLVER_TIMEOUT / 5)
+        if (result1 == KSolverStatus.UNSAT)
+            return fromElse
+
+        val result2 = solver.checkWithAssumptions(listOf(cond.not(this).expr), SOLVER_TIMEOUT / 5)
+        if (result2 == KSolverStatus.UNSAT)
+            return fromBody
+
+        return with(ctx) {
             val condExpr = cond.boolExpr(this@Memory)
             when (fromBody) {
                 is ComplexSymbolic -> {
@@ -513,7 +485,8 @@ data class Memory(
                         GlobalStarSymbolic(
                             fromBody.starType,
                             ite(cond, fromBody.address, fromElse.address).int64(this@Memory),
-                            ite(cond, fromBody.isSymbolic, fromElse.isSymbolic).bool(this@Memory)
+                            ite(cond, fromBody.isSymbolic, fromElse.isSymbolic).bool(this@Memory),
+                            fromBody.field
                         )
                     } else {
                         ite(
@@ -527,6 +500,7 @@ data class Memory(
                 else -> error(fromBody.javaClass.simpleName)
             }
         }
+    }
 
     companion object {
 

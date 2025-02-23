@@ -159,7 +159,7 @@ open class UninterpretedSymbolic(val expr: KExpr<KUninterpretedSort>) :
     override fun toString() = expr.sort.name
 }
 
-sealed class StarSymbolic(val starType: StarType) :
+sealed class StarSymbolic(val field: String, val starType: StarType) :
     Symbolic(StarType(starType.elementType)) {
 
     abstract fun address(mem: Memory): IntSymbolic
@@ -185,105 +185,52 @@ sealed class StarSymbolic(val starType: StarType) :
         } as NamedType
 
         val (name, type) = namedType.underlying.fields[field]
-        return toFieldStar(name, type, mem)
+        return toFieldStar("${namedType.name}:${name}", type, mem)
     }
 
     abstract fun toFieldStar(name: String, type: Type, mem: Memory): StarSymbolic
 }
 
-class ArrayStarSymbolic(val address: Int64Symbolic, val arrayStar: StarSymbolic) :
-    StarSymbolic(StarType((arrayStar.starType.elementType as ArrayType).elementType())) {
-    override fun address(mem: Memory): IntSymbolic {
-        TODO("Not yet implemented")
-    }
-
-    override fun toGlobal(mem: Memory): GlobalStarSymbolic {
-        val array = arrayStar.get(mem) as FiniteArraySymbolic
-        // todo probably does not work
-        return array.get(address, mem)
-    }
-
-    override fun put(value: Symbolic, mem: Memory): StarSymbolic {
-        val array = arrayStar.get(mem) as FiniteArraySymbolic
-
-        array.put(address, value, mem)
-
-        return arrayStar.put(array, mem)
-    }
-
-    override fun get(mem: Memory): Symbolic {
-        return (arrayStar.get(mem) as FiniteArraySymbolic).get(address, mem)
-    }
-
-    override fun toFieldStar(name: String, type: Type, mem: Memory): StarSymbolic {
-        TODO("Not yet implemented")
-    }
-
-}
-//class ArrayStarSymbolic(val address: Int64Symbolic, val array: FiniteArraySymbolic) :
-//    StarSymbolic(StarType(array.arrayType.elementType())) {
-//    override fun address(mem: Memory) = address
-//
-//    override fun toGlobal(mem: Memory): GlobalStarSymbolic {
-//        val starType = StarType(array.arrayType)
-//        val globalAddress = mem.addNewDefaultStar(starType.elementType)
-//        val isSymbolic = BoolType.`false`(mem)
-//
-//        val arrayStar = GlobalStarSymbolic(starType, globalAddress, isSymbolic)
-//
-//        val newArrayStar = arrayStar.put(array, mem)
-//
-//        val globalStar = GlobalStarSymbolic(starType, globalAddress, isSymbolic)
-//
-//        return globalStar
-//    }
-//
-//    override fun get(mem: Memory): Symbolic {
-//        val get = array.get(address, mem)
-//        println("GET A ${starType} ${get}")
-//        return array.get(address, mem)
-//    }
-//
-//    override fun toFieldStar(name: String, type: Type, mem: Memory): StarSymbolic {
-//        return this.toGlobal(mem).toFieldStar(name, type, mem)
-//    }
-//
-//    override fun toString() =
-//        "A*(${starType.elementType})"
-//}
-
-class LocalStarSymbolic(private var symbolic: Symbolic) :
-    StarSymbolic(StarType(symbolic.type)) {
+class LocalStarSymbolic(
+    private var symbolic: Symbolic,
+    field: String
+) :
+    StarSymbolic(field, StarType(symbolic.type)) {
     override fun address(mem: Memory): IntSymbolic =
         toGlobal(mem).address
 
     override fun toGlobal(mem: Memory): GlobalStarSymbolic {
         val starType = StarType(symbolic.type)
-        val globalAddress = mem.addNewDefaultStar(starType.elementType)
+        val globalAddress = mem.addNewDefaultStar(field, starType.elementType)
         val isSymbolic = BoolType.`false`(mem)
 
-        mem.putStar(symbolic.type, globalAddress, symbolic, isSymbolic)
-        return GlobalStarSymbolic(starType, globalAddress, isSymbolic)
+        mem.putStar(field, symbolic.type, globalAddress, symbolic, isSymbolic)
+        return GlobalStarSymbolic(starType, globalAddress, isSymbolic, field)
     }
 
     override fun get(mem: Memory): Symbolic {
+        if (symbolic is FiniteArraySymbolic)
+            (symbolic as FiniteArraySymbolic).addressToSelf = this
         return symbolic
     }
 
     override fun toFieldStar(name: String, type: Type, mem: Memory): LocalStarSymbolic {
-        return LocalStarSymbolic(FieldSymbolic((symbolic.named(mem)).underlying, name))
+        return LocalStarSymbolic((symbolic.named(mem)).underlying.fields[name]!!, name)
     }
 
     override fun toString() =
         "L*(${starType.elementType})"
 }
 
-class NilLocalStarSymbolic(starType: StarType) : StarSymbolic(starType) {
+class NilLocalStarSymbolic(
+    starType: StarType,
+    field: String
+) : StarSymbolic(field, starType) {
     override fun address(mem: Memory): IntSymbolic =
         Int64Type().zero(mem)
 
     override fun toGlobal(mem: Memory): GlobalStarSymbolic {
-        return GlobalStarSymbolic(starType, Int64Type().zero(mem).int64(mem), BoolType.`false`(mem))
+        return GlobalStarSymbolic(starType, Int64Type().zero(mem).int64(mem), BoolType.`false`(mem), field)
     }
 
     override fun findField(field: Int, mem: Memory): Symbolic {
@@ -325,41 +272,46 @@ class NilLocalStarSymbolic(starType: StarType) : StarSymbolic(starType) {
 class GlobalStarSymbolic(
     starType: StarType,
     val address: Int64Symbolic,
-    val isSymbolic: BoolSymbolic
-) : StarSymbolic(starType) {
-
+    val isSymbolic: BoolSymbolic,
+    field: String
+) : StarSymbolic(field, starType) {
     override fun address(mem: Memory): IntSymbolic =
         address
 
     override fun toGlobal(mem: Memory): GlobalStarSymbolic =
-        GlobalStarSymbolic(starType, address, isSymbolic)
+        GlobalStarSymbolic(starType, address, isSymbolic, field)
 
     override fun get(mem: Memory): Symbolic {
-        val get = mem.getStar(starType.elementType, address, isSymbolic)
-        println("GET address $address")
-        when (get) {
-            is FiniteArraySymbolic -> println("GET $starType len  ${get.arrayType.length}")
-            is GlobalStarSymbolic -> println("GET $starType addr ${get.address}")
-            else -> println("GET $starType $get")
+        val get = mem.getStar(field, starType.elementType, address, isSymbolic)
+        if (get is FiniteArraySymbolic)
+            get.addressToSelf = this
+
+        if (mem.print > 2) {
+            println("GET address $address $starType")
+            when (get) {
+                is FiniteArraySymbolic -> println("GET len  ${get.arrayType.length}")
+                is GlobalStarSymbolic -> println("GET addr ${get.address}")
+                else -> println("GET $get")
+            }
         }
         return get
     }
 
     override fun put(value: Symbolic, mem: Memory): StarSymbolic {
-        println("PUT address $address")
-        when (value) {
-            is FiniteArraySymbolic -> println("PUT $starType len  ${value.arrayType.length}")
-            is GlobalStarSymbolic -> println("PUT $starType addr ${value.address}")
-            else -> println("PUT $starType $value")
+        if (mem.print > 2) {
+            println("PUT address $address $starType")
+            when (value) {
+                is FiniteArraySymbolic -> println("PUT len  ${value.arrayType.length}")
+                is GlobalStarSymbolic -> println("PUT addr ${value.address}")
+                else -> println("PUT $value")
+            }
         }
-        mem.putStar(starType.elementType, address, value, isSymbolic)
+        mem.putStar(field, starType.elementType, address, value, isSymbolic)
         return this
     }
 
     override fun toFieldStar(name: String, type: Type, mem: Memory): StarSymbolic {
-        // todo add name as a prefix to address?
-        TODO()
-//        return GlobalStarSymbolic(type, address, isSymbolic, isStarFake)
+        return GlobalStarSymbolic(StarType(type), address, isSymbolic, name)
     }
 
     override fun toString() =
@@ -368,16 +320,9 @@ class GlobalStarSymbolic(
 
 class StructSymbolic(
     type: StructType,
-    val fields: MutableMap<String, Symbolic>
+    val fields: Map<String, Symbolic>
 ) : Symbolic(type) {
     override fun toString() = "Struct(${fields.keys})"
-}
-
-class FieldSymbolic(
-    val struct: StructSymbolic,
-    val name: String
-) : Symbolic(struct.fields[name]!!.type) {
-    override fun toString() = "Field($name)"
 }
 
 class NamedSymbolic(type: NamedType, val underlying: StructSymbolic) : Symbolic(type) {
