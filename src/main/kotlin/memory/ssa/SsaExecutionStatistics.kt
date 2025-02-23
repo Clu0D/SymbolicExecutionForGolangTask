@@ -44,18 +44,4 @@ class SsaExecutionStatistics(
     fun popFromStack() {
         localVisitCounter.removeFirst()
     }
-
-//    // todo
-//    fun isLoopRepeatExceeded(node: IfSsaNode, cond: Boolean, maxRepeat: Int): Boolean {
-//        var nextNode = if (cond)
-//            node.body
-//        else
-//            node.elseBody
-//
-//        if (nextNode is LinkToSsaNode)
-//            nextNode = nextNode.deLink()
-//
-//        val localCount = localVisitCounter.first()[nextNode] ?: 0
-//        return localCount > maxRepeat
-//    }
 }

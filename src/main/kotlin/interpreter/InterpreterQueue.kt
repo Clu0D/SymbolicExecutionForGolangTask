@@ -3,7 +3,6 @@ package interpreter
 import memory.State
 import java.util.*
 import kotlin.math.max
-import kotlin.math.min
 import kotlin.random.Random
 
 interface InterpreterQueue<T> {

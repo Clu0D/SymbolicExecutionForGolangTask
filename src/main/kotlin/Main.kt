@@ -1,5 +1,4 @@
 import com.jetbrains.rd.util.printlnError
-import interpreter.InterpreterQueue.Companion.dfsQueue
 import interpreter.InterpreterQueue.Companion.randomTimeAfterNewCodeQueue
 import interpreter.ssa.*
 import io.ksmt.KContext

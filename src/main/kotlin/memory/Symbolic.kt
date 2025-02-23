@@ -1,6 +1,5 @@
 package memory
 
-import com.jetbrains.rd.util.printlnError
 import io.ksmt.expr.KExpr
 import io.ksmt.sort.*
 
@@ -53,7 +52,6 @@ open class Symbolic(val type: Type) : MemoryObject {
             this is GlobalStarSymbolic -> this.address.expr as KExpr<KSort>
             this is LocalStarSymbolic -> this.toGlobal(mem).address.expr as KExpr<KSort>
             this is NilLocalStarSymbolic -> Int64Type().zeroExpr(mem) as KExpr<KSort>
-//            this is AbstractArray -> this.toArrayExpr(mem) as KExpr<KSort>
             else -> TODO("${this.javaClass.name}")
         }
     }
@@ -75,7 +73,7 @@ open class Symbolic(val type: Type) : MemoryObject {
     fun list(mem: Memory): ListSymbolic = this as ListSymbolic
 
     fun floatExpr(mem: Memory): KExpr<KFpSort> = when (val x = this) {
-        is IntSymbolic -> Float64Type().round(x, mem) as KExpr<KFpSort>
+        is IntSymbolic -> Float64Type().round(x, mem).expr as KExpr<KFpSort>
         is Float64Symbolic -> x.expr as KExpr<KFpSort>
         is Float32Symbolic -> x.expr as KExpr<KFpSort>
         else -> error("can't cast $this to fp64Expr")
@@ -88,7 +86,6 @@ open class Symbolic(val type: Type) : MemoryObject {
     fun uninterpretedExpr(mem: Memory) = (this as UninterpretedSymbolic).expr
 
     fun array(mem: Memory): FiniteArraySymbolic = this as FiniteArraySymbolic
-    fun infArray(mem: Memory): InfAbstractArray = this as InfAbstractArray
 
     fun struct(mem: Memory) = this as StructSymbolic
 
@@ -290,7 +287,7 @@ class GlobalStarSymbolic(
             println("GET address $address $starType")
             when (get) {
                 is FiniteArraySymbolic -> println("GET len  ${get.arrayType.length}")
-                is GlobalStarSymbolic -> println("GET addr ${get.address}")
+                is GlobalStarSymbolic -> println("GET address ${get.address}")
                 else -> println("GET $get")
             }
         }
@@ -302,7 +299,7 @@ class GlobalStarSymbolic(
             println("PUT address $address $starType")
             when (value) {
                 is FiniteArraySymbolic -> println("PUT len  ${value.arrayType.length}")
-                is GlobalStarSymbolic -> println("PUT addr ${value.address}")
+                is GlobalStarSymbolic -> println("PUT address ${value.address}")
                 else -> println("PUT $value")
             }
         }

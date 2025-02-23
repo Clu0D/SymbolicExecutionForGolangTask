@@ -21,7 +21,6 @@ data class Memory(
     internal val instrOnPathStack: MutableList<MutableList<SsaNode>> = mutableListOf(mutableListOf()),
     val errors: MutableList<SymbolicError<SsaNode>> = mutableListOf(),
     private val globalValues: MutableMap<String, Triple<List<Boolean>, InfAbstractArray, InfAbstractArray>> = mutableMapOf(),
-    private val declaredTypeFields: MutableMap<String, Map<String, Type>> = mutableMapOf(),
     private var pathCond: MutableList<Pair<BoolSymbolic, Boolean>> = mutableListOf(),
     val createdConsts: MutableMap<String, KSort> = mutableMapOf(),
     internal val solver: KZ3Solver = KZ3Solver(ctx)
@@ -128,7 +127,7 @@ data class Memory(
                 }
 
                 KSolverStatus.UNSAT -> {
-//                do nothing, this error can't happen
+//                do nothing, error can't happen
                 }
 
                 KSolverStatus.UNKNOWN -> {
@@ -190,37 +189,6 @@ data class Memory(
         }
     }
 
-    /** adds new local variables
-     * using arg values
-     * or creating new symbolic if there is null
-     */
-    fun addArgsSymbolic(
-        fields: Map<String, Type?>,
-        args: List<Symbolic?>,
-    ) {
-        var i = 0
-        val newArgs = fields.map { (name, type) ->
-            name to (args.getOrNull(i) ?: type!!.createSymbolic(name, this)).also { i++ }
-        }.toTypedArray()
-        writeAll(*newArgs)
-    }
-
-    /** adds new local variables
-     * using arg values
-     * or creating new default if there is null
-     */
-    fun addArgsDefault(
-        fields: Map<String, Type>,
-        args: List<Symbolic>
-    ) {
-        var i = 1
-        val newArgs = fields.map { (name, type) ->
-            if (print > 0) println("GEN name $name ${args.getOrNull(i)}")
-            name to (args.getOrNull(i) ?: type.defaultSymbolic(this)).also { i++ }
-        }.toTypedArray()
-        writeAll(*newArgs)
-    }
-
     fun globalArrayName(field: String, type: Type): String {
         val globalArrayName = "$field:$type"
         if (globalValues[globalArrayName] == null) {
@@ -252,9 +220,6 @@ data class Memory(
             )
             if (type is StructType) {
                 TODO()
-//                type.fields.map { (name, fieldType) ->
-//                    globalArrayName(name, fieldType)
-//                }
             } else if (type is NamedType) {
                 type.underlying.fields.map { (name, fieldType) ->
                     globalArrayName("${type.name}:$name", fieldType)
@@ -360,10 +325,6 @@ data class Memory(
         return ite(isSymbolic, oldSymbolic, oldDefault)
     }
 
-    fun addType(name: String, fields: Map<String, Type>) {
-        declaredTypeFields += mapOf(name to fields)
-    }
-
     fun addVisibilityLevel() {
         instrOnPathStack.add(0, mutableListOf())
         variablesVisibilityLevel.add(0, mutableSetOf())
@@ -422,11 +383,6 @@ data class Memory(
                 ).let { Type.toSymbolic(it) }
 
                 is FiniteArraySymbolic -> {
-//                    val elseArray = when (fromElse as AbstractArray) {
-////                        is InfiniteArray -> FiniteArraySymbolic(fromBody.arrayType, fromElse, this@Memory)
-//                        is FiniteArraySymbolic -> fromElse
-//                        is FiniteArraysArray -> error("should not happen")
-//                    } as FiniteArraySymbolic
                     val elseArray = fromElse as FiniteArraySymbolic
                     val length = ite(cond, fromBody.length(), elseArray.length()).int64(this@Memory)
                     val combinedArray = InfCombinedArray(
@@ -443,42 +399,6 @@ data class Memory(
                         this@Memory
                     )
                 }
-
-//                is InfiniteArray -> {
-//                    when (fromElse as AbstractArray) {
-//                        is InfiniteArray -> CombinedArray(
-//                            fromBody.arrayType,
-//                            fromBody, fromElse, cond
-//                        )
-//
-//                        is FiniteArraySymbolic ->
-//                            ite(cond.not(this@Memory), fromElse, fromBody)
-//
-//                        is CombinedArray -> error("should not happen")
-//                        is FiniteArraysArray -> error("should not happen")
-//                    }
-//                    TODO()
-//                }
-//                    val length = ite(cond, fromBody.length(), elseArray.length()).int64(this@Memory)
-//                    val combinedArray = CombinedArray(fromBody.arrayType, fromBody.array, elseArray.array, cond)
-//
-//                    FiniteArraySymbolic(
-//                        ArrayType(
-//                            fromBody.arrayType.elementType,
-//                            length
-//                        ),
-//                        combinedArray,
-//                        this@Memory
-//                    )
-//                    TODO()
-//                }
-
-//                is AbstractArray -> {
-//                    CombinedArray(
-//                        fromBody.arrayType,
-//                        fromBody, fromElse as AbstractArray, cond
-//                    )
-//                }
 
                 is StarSymbolic -> {
                     if (fromBody is GlobalStarSymbolic && fromElse is GlobalStarSymbolic) {
@@ -524,7 +444,6 @@ data class Memory(
         instrOnPathStack.map { a -> a.map { it }.toMutableList() }.toMutableList(),
         errors.map { it }.toMutableList(),
         globalValues.map { (a, b) -> a to b }.toMap().toMutableMap(),
-        declaredTypeFields.map { (a, b) -> a to b }.toMap().toMutableMap(),
         pathCond.map { it }.toMutableList(),
         createdConsts,
         KZ3Solver(ctx).apply {

@@ -421,7 +421,6 @@ open class SsaStaticInterpreter() : SsaInterpreter() {
             is StoreSsaNode -> Pair(
                 { _, _ -> listOf(node.addr, node.value) },
                 { mem, args ->
-                    val name = node.printItself() // todo remove
                     val address = args[0]!! as StarSymbolic
                     val value = args[1]!!
 
@@ -560,7 +559,6 @@ open class SsaStaticInterpreter() : SsaInterpreter() {
                     listOf(node.x, node.index)
                 },
                 { mem, args ->
-                    val name = node.printItself() // todo remove
                     val address = IntType.cast(args[1]!!, Int64Type(), mem).int64(mem)
                     val x = args[0]!!
                     val array = when (x) {

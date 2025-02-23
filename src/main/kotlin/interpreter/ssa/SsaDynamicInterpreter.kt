@@ -62,7 +62,7 @@ class SsaDynamicInterpreter(
         while (queue.size() > 0) {
             try {
                 yield()
-            } catch (e: CancellationException) {
+            } catch (_: CancellationException) {
                 while (queue.size() > 0) {
                     val state = queue.get()
                     results.addAll(state.mem.errors)

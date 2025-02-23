@@ -27,12 +27,6 @@ sealed interface Type {
      */
     fun defaultSymbolic(mem: Memory): Symbolic
 
-    fun toSimple(): SimpleType =
-        when (this) {
-            is SimpleType -> this
-            else -> StarType(this)
-        }
-
     companion object {
         fun toSymbolic(expr: KExpr<out KSort>): Symbolic = when (expr.sort) {
             is KBoolSort -> BoolSymbolic(expr as KExpr<KBoolSort>)
@@ -91,9 +85,13 @@ sealed interface Type {
 
                 is AliasTypeNode -> fromSsa(node.rhs, mem)
 
-//                is InterfaceTypeNode -> UnknownType
                 is InterfaceTypeNode -> UninterpretedType("interface")
-                else -> TODO()
+                is FuncTypeNode -> TODO()
+                is LinkFuncSsa -> TODO()
+                is SignatureTypeNode -> TODO()
+                is StructFieldNode -> TODO()
+                is TupleTypeNode -> TODO()
+                is UnknownSsaTypeNode -> TODO()
             }
         }
 
@@ -452,31 +450,6 @@ class StarType(val elementType: Type) : BaseType(), SimpleType {
 interface ArrayAbstractType: Type {
     fun elementType(): Type
 }
-
-//class ArraySimpleType(elementType: SimpleType, length: Int64Symbolic) :
-//    ArrayType(elementType, length), SimpleType {
-//
-//    override fun createSymbolicExpr(
-//        name: String,
-//        mem: Memory
-//    ): KExpr<out KSort> =
-//        mem.ctx.mkArrayConst(
-//            mem.ctx.mkArraySort(Int64Type().sort(mem), (elementType() as SimpleType).sort(mem)),
-//            (elementType() as SimpleType).createSymbolicExpr(name, mem) as KExpr<KSort>
-//        )
-//
-//    override fun defaultSymbolicExpr(mem: Memory): KExpr<out KSort> =
-//        mem.ctx.mkArrayConst(
-//            mem.ctx.mkArraySort(Int64Type().sort(mem), (elementType() as SimpleType).sort(mem)),
-//            (elementType() as SimpleType).defaultSymbolicExpr(mem) as KExpr<KSort>
-//        )
-//
-//    override fun asSymbolic(expr: KExpr<out KSort>, mem: Memory): Symbolic =
-//        error("should not be used, as there is not enough information about symbolicName or isFake")
-//
-//    override fun sort(mem: Memory): KSort =
-//        mem.ctx.mkArraySort(Int64Type().sort(mem), (elementType() as SimpleType).sort(mem))
-//}
 
 open class InfArrayType(var elementType: Type) : BaseType(), ArrayAbstractType {
     override fun createSymbolic(name: String, mem: Memory): Symbolic {
